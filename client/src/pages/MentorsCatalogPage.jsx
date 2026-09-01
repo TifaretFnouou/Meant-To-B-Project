@@ -9,18 +9,21 @@ import {
   Alert,
   Button,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import PageHeader from "../components/common/PageHeader";
 import MentorCard from "../components/mentorship/MentorCard";
 import { useAuth } from "../context/AuthContext";
+import { useRoleMode } from "../context/RoleModeContext";
 import { useScheduling } from "../context/SchedulingContext";
 import { useAdminConfig } from "../context/AdminConfigContext";
 import { useLanguage } from "../context/LanguageContext";
-import { ROLES } from "../constants";
+import { getCatalogMentors } from "../utils/mentors";
+import { USER_MODES } from "../constants";
 
 export default function MentorsCatalogPage() {
-  const { users, currentUser, isMentor } = useAuth();
+  const { users, currentUser, isMentor, isAdmin } = useAuth();
+  const { isMenteeMode, isMentorMode, setMode } = useRoleMode();
   const { createRequest, sessions } = useScheduling();
   const { techStack, adviceTopics } = useAdminConfig();
   const { t } = useLanguage();
@@ -32,14 +35,8 @@ export default function MentorsCatalogPage() {
   const [message, setMessage] = useState("");
 
   const mentors = useMemo(
-    () =>
-      users.filter(
-        (u) =>
-          u.roles?.includes(ROLES.MENTOR) &&
-          u.mentorProfile?.isActive &&
-          u.id !== currentUser?.id
-      ),
-    [users, currentUser]
+    () => getCatalogMentors(users, currentUser?.id),
+    [users, currentUser?.id]
   );
 
   const filtered = mentors.filter((m) => {
@@ -69,7 +66,12 @@ export default function MentorsCatalogPage() {
         s.schedulingState !== "completed"
     );
 
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+
   const handleInterest = async (mentor) => {
+    if (!isMenteeMode) return;
     await createRequest(
       mentor.id,
       currentUser.id,
@@ -83,19 +85,37 @@ export default function MentorsCatalogPage() {
       <PageHeader
         title={t("mentors.title")}
         action={
-          !isMentor && (
+          isMenteeMode && (
             <Button variant="outlined" onClick={() => navigate("/become-mentor")}>
-              {t("mentors.becomeMentor")}
+              {isMentor ? t("nav.mentorProfile") : t("mentors.becomeMentor")}
             </Button>
           )
         }
       />
+
+      {isMentor && isMentorMode && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => setMode(USER_MODES.MENTEE)}>
+              {t("mode.learning")}
+            </Button>
+          }
+        >
+          {t("mentors.mentorModeBanner")}
+        </Alert>
+      )}
 
       {message && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage("")}>
           {message}
         </Alert>
       )}
+
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {t("mentors.resultsCount", { count: filtered.length })}
+      </Typography>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
@@ -146,12 +166,13 @@ export default function MentorsCatalogPage() {
               mentor={mentor}
               onExpressInterest={handleInterest}
               hasPendingRequest={hasPendingWith(mentor.id)}
+              canExpressInterest={isMenteeMode}
             />
           </Grid>
         ))}
         {filtered.length === 0 && (
           <Grid item xs={12}>
-            <Alert severity="info">לא נמצאו מנטוריות לפי הסינון</Alert>
+            <Alert severity="info">{t("mentors.noResults")}</Alert>
           </Grid>
         )}
       </Grid>

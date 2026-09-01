@@ -9,6 +9,7 @@ import { createAppTheme } from "./theme";
 import AppRoutes from "./routes/AppRoutes";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
+import { RoleModeProvider } from "./context/RoleModeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { SchedulingProvider } from "./context/SchedulingContext";
 import { AdminConfigProvider } from "./context/AdminConfigContext";
@@ -27,16 +28,18 @@ function ThemedApp() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <AuthProvider>
-          <AdminConfigProvider>
-            <NotificationProvider>
-              <SchedulingProvider>
-                <Router>
-                  <AppRoutes />
-                  <FeedbackReminder />
-                </Router>
-              </SchedulingProvider>
-            </NotificationProvider>
-          </AdminConfigProvider>
+          <RoleModeProvider>
+            <AdminConfigProvider>
+              <NotificationProvider>
+                <SchedulingProvider>
+                  <Router>
+                    <AppRoutes />
+                    <FeedbackReminder />
+                  </Router>
+                </SchedulingProvider>
+              </NotificationProvider>
+            </AdminConfigProvider>
+          </RoleModeProvider>
         </AuthProvider>
       </ThemeProvider>
     </CacheProvider>

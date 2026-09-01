@@ -13,6 +13,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import { useAuth } from "../context/AuthContext";
+import { useRoleMode } from "../context/RoleModeContext";
 import { useLanguage } from "../context/LanguageContext";
 
 const features = [
@@ -22,7 +23,8 @@ const features = [
 ];
 
 export default function HomePage() {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isMentor, isAdmin } = useAuth();
+  const { isMenteeMode, isMentorMode } = useRoleMode();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -76,22 +78,50 @@ export default function HomePage() {
               {t("home.greeting", { name: currentUser.firstName })}
             </Typography>
             <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/mentors")}
-                size="large"
-              >
-                {t("home.findMentors")}
-              </Button>
-              <Button
-                variant="outlined"
-                sx={{ color: "white", borderColor: "rgba(255,255,255,0.6)" }}
-                onClick={() => navigate("/sessions")}
-                size="large"
-              >
-                {t("home.mySessions")}
-              </Button>
+              {isAdmin ? (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => navigate("/admin")}
+                  size="large"
+                >
+                  {t("nav.admin")}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => navigate("/mentors")}
+                    size="large"
+                  >
+                    {t("home.findMentors")}
+                  </Button>
+                  <Button
+                    variant={isMenteeMode ? "outlined" : "contained"}
+                    color={isMenteeMode ? undefined : "secondary"}
+                    sx={
+                      isMenteeMode
+                        ? { color: "white", borderColor: "rgba(255,255,255,0.6)" }
+                        : undefined
+                    }
+                    onClick={() => navigate("/sessions")}
+                    size="large"
+                  >
+                    {isMentorMode ? t("nav.sessionsAsMentor") : t("home.mySessions")}
+                  </Button>
+                  {isMenteeMode && (
+                    <Button
+                      variant="outlined"
+                      sx={{ color: "white", borderColor: "rgba(255,255,255,0.6)" }}
+                      onClick={() => navigate("/become-mentor")}
+                      size="large"
+                    >
+                      {isMentor ? t("nav.mentorProfile") : t("mentors.becomeMentor")}
+                    </Button>
+                  )}
+                </>
+              )}
             </Stack>
           </Box>
         ) : (

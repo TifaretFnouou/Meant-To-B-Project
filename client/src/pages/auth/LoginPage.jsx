@@ -105,6 +105,7 @@ export default function LoginPage() {
             <Typography variant="caption" display="block">admin@queenb.com / Admin123!</Typography>
             <Typography variant="caption" display="block">mentor@queenb.com / Mentor123!</Typography>
             <Typography variant="caption" display="block">mentee@queenb.com / Mentee123!</Typography>
+            <Typography variant="caption" display="block">dual@queenb.com / Dual123! (מנטית + מנטורית)</Typography>
           </Alert>
         </Paper>
       </Box>

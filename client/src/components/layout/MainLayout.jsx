@@ -12,9 +12,12 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import NotificationBell from "../common/NotificationBell";
 import LanguageToggle from "../common/LanguageToggle";
+import RoleModeSwitcher from "../common/RoleModeSwitcher";
+import { useRoleMode } from "../../context/RoleModeContext";
 
 export default function MainLayout({ children }) {
-  const { currentUser, logout, isAdmin } = useAuth();
+  const { currentUser, logout, isAdmin, isMentor } = useAuth();
+  const { isMenteeMode, isMentorMode } = useRoleMode();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -47,22 +50,37 @@ export default function MainLayout({ children }) {
 
           <LanguageToggle />
 
+          {currentUser && <RoleModeSwitcher />}
+
           {currentUser ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-              <Button color="inherit" onClick={() => navigate("/mentors")}>
-                {t("nav.mentors")}
-              </Button>
-              <Button color="inherit" onClick={() => navigate("/sessions")}>
-                {t("nav.sessions")}
-              </Button>
-              <Button color="inherit" onClick={() => navigate("/profile")}>
-                {t("nav.profile")}
-              </Button>
-              {isAdmin && (
+              {isAdmin ? (
                 <Button color="inherit" onClick={() => navigate("/admin")}>
                   {t("nav.admin")}
                 </Button>
+              ) : (
+                <>
+                  <Button color="inherit" onClick={() => navigate("/mentors")}>
+                    {t("nav.mentors")}
+                  </Button>
+                  {isMenteeMode && (
+                    <Button color="inherit" onClick={() => navigate("/become-mentor")}>
+                      {isMentor ? t("nav.mentorProfile") : t("mentors.becomeMentor")}
+                    </Button>
+                  )}
+                  {isMentorMode && isMentor && (
+                    <Button color="inherit" onClick={() => navigate("/become-mentor")}>
+                      {t("nav.mentorProfile")}
+                    </Button>
+                  )}
+                  <Button color="inherit" onClick={() => navigate("/sessions")}>
+                    {isMentorMode ? t("nav.sessionsAsMentor") : t("nav.sessions")}
+                  </Button>
+                </>
               )}
+              <Button color="inherit" onClick={() => navigate("/profile")}>
+                {t("nav.profile")}
+              </Button>
               <NotificationBell />
               <Typography variant="body2" sx={{ mx: 1, fontWeight: 600 }}>
                 {currentUser.firstName}

@@ -15,7 +15,12 @@ import TimerIcon from "@mui/icons-material/Timer";
 import EventIcon from "@mui/icons-material/Event";
 import { useLanguage } from "../../context/LanguageContext";
 
-export default function MentorCard({ mentor, onExpressInterest, hasPendingRequest }) {
+export default function MentorCard({
+  mentor,
+  onExpressInterest,
+  hasPendingRequest,
+  canExpressInterest = true,
+}) {
   const { t } = useLanguage();
   const profile = mentor.mentorProfile;
   const initials = `${mentor.firstName?.[0] || ""}${mentor.lastName?.[0] || ""}`;
@@ -72,14 +77,20 @@ export default function MentorCard({ mentor, onExpressInterest, hasPendingReques
         </Stack>
       </CardContent>
       <CardActions sx={{ p: 2, pt: 0 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={() => onExpressInterest(mentor)}
-          disabled={hasPendingRequest}
-        >
-          {hasPendingRequest ? t("mentors.requestPending") : t("mentors.expressInterest")}
-        </Button>
+        {canExpressInterest ? (
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => onExpressInterest(mentor)}
+            disabled={hasPendingRequest}
+          >
+            {hasPendingRequest ? t("mentors.requestPending") : t("mentors.expressInterest")}
+          </Button>
+        ) : (
+          <Button fullWidth variant="outlined" disabled>
+            {t("mentors.browseOnly")}
+          </Button>
+        )}
       </CardActions>
     </Card>
   );

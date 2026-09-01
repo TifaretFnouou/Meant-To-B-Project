@@ -11,15 +11,19 @@ import {
   MenuItem,
   Alert,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import { useAuth } from "../context/AuthContext";
+import { useRoleMode } from "../context/RoleModeContext";
 import { useAdminConfig } from "../context/AdminConfigContext";
-import { ROLES, SESSION_LENGTHS } from "../constants";
+import { useLanguage } from "../context/LanguageContext";
+import { ROLES, SESSION_LENGTHS, USER_MODES } from "../constants";
 
 export default function BecomeMentorPage() {
-  const { currentUser, updateProfile } = useAuth();
+  const { currentUser, updateProfile, isMentor, isAdmin } = useAuth();
+  const { isMentorMode, setMode } = useRoleMode();
   const { adviceTopics } = useAdminConfig();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const existing = currentUser?.mentorProfile;
 
@@ -30,11 +34,20 @@ export default function BecomeMentorPage() {
     sessionLengthMinutes: existing?.sessionLengthMinutes || 60,
   });
 
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (isMentorMode && !isMentor) {
+    return <Navigate to="/sessions" replace />;
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const roles = currentUser.roles.includes(ROLES.MENTOR)
-      ? currentUser.roles
-      : [...currentUser.roles, ROLES.MENTOR];
+    const isNewMentor = !currentUser.roles.includes(ROLES.MENTOR);
+    const roles = isNewMentor
+      ? [...currentUser.roles, ROLES.MENTOR]
+      : currentUser.roles;
 
     updateProfile({
       roles,
@@ -45,7 +58,14 @@ export default function BecomeMentorPage() {
         sessionLengthMinutes: Number(form.sessionLengthMinutes),
       },
     });
-    navigate("/mentors");
+
+    if (isNewMentor) {
+      setMode(USER_MODES.MENTOR);
+      navigate("/sessions");
+      return;
+    }
+
+    navigate(isMentorMode ? "/sessions" : "/mentors");
   };
 
   return (

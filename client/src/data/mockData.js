@@ -17,7 +17,7 @@ export const mockUsers = [
     githubUrl: "",
     linkedinUrl: "",
     mentorProfile: null,
-    menteeProfile: { isActive: true, learningGoals: "" },
+    menteeProfile: null,
   },
   {
     id: "mentor-1",
@@ -108,7 +108,7 @@ export const mockUsers = [
     linkedinUrl: "",
     mentorProfile: {
       isActive: true,
-      bio: "יזמית טכנולוגיה — בונה MVP, גיוס, וליווי junior שרוצים להיכנס ל-startup",
+      bio: "יזמית טכנווגיה — בונה MVP, גיוס, וליווי junior שרוצים להיכנס ל-startup",
       topics: ["Startup", "Full Stack", "Frontend"],
       maxSessions: 5,
       sessionLengthMinutes: 45,
@@ -206,6 +206,33 @@ export const mockUsers = [
     menteeProfile: {
       isActive: true,
       learningGoals: "להתכונן לראיונות עבודה ולשפר React",
+    },
+  },
+  {
+    id: "dual-1",
+    email: "dual@queenb.com",
+    password: "Dual123!",
+    username: "tamar_dual",
+    firstName: "תמר",
+    lastName: "לוי",
+    roles: [ROLES.MENTEE, ROLES.MENTOR],
+    techStack: ["TypeScript", "React", "Node.js"],
+    company: "TechFlow",
+    jobTitle: "Full Stack Developer",
+    yearsOfExperience: 5,
+    profilePicture: "",
+    githubUrl: "",
+    linkedinUrl: "",
+    mentorProfile: {
+      isActive: true,
+      bio: "מפתחת Full Stack עם ניסיון בהנחיית junior developers",
+      topics: ["Full Stack", "ראיונות עבודה"],
+      maxSessions: 2,
+      sessionLengthMinutes: 60,
+    },
+    menteeProfile: {
+      isActive: true,
+      learningGoals: "ללמוד System Design ולהתקדם לתפקיד Senior",
     },
   },
 ];

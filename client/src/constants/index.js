@@ -4,6 +4,11 @@ export const ROLES = {
   MENTEE: "mentee",
 };
 
+export const USER_MODES = {
+  MENTEE: "mentee",
+  MENTOR: "mentor",
+};
+
 export const SESSION_STATUS = {
   PENDING: "pending",
   SLOTS_PROPOSED: "slots_proposed",

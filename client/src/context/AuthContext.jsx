@@ -1,10 +1,27 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { mockUsers } from "../data/mockData";
 import { ROLES } from "../constants";
 import { useLanguage } from "./LanguageContext";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "queenb_auth_user";
+const USERS_STORAGE_KEY = "queenb_users";
+
+function loadStoredUsers() {
+  try {
+    const raw = localStorage.getItem(USERS_STORAGE_KEY);
+    if (!raw) return mockUsers;
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return mockUsers;
+
+    const mockIds = new Set(mockUsers.map((u) => u.id));
+    const customUsers = parsed.filter((u) => !mockIds.has(u.id));
+    return [...mockUsers, ...customUsers];
+  } catch {
+    return mockUsers;
+  }
+}
 
 function loadStoredUser() {
   try {
@@ -23,8 +40,29 @@ function sanitizeUser(user) {
 
 export function AuthProvider({ children }) {
   const { t } = useLanguage();
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState(loadStoredUsers);
   const [currentUser, setCurrentUser] = useState(loadStoredUser);
+
+  useEffect(() => {
+    const customUsers = users.filter(
+      (u) => !mockUsers.some((mockUser) => mockUser.id === u.id)
+    );
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(customUsers));
+  }, [users]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fresh = users.find((u) => u.id === currentUser.id);
+    if (!fresh) return;
+
+    const safe = sanitizeUser(fresh);
+    setCurrentUser((prev) => {
+      if (!prev || JSON.stringify(prev) === JSON.stringify(safe)) return prev;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
+      return safe;
+    });
+  }, [currentUser?.id, users]);
 
   const login = async (identifier, password) => {
     const normalized = identifier.trim().toLowerCase();
