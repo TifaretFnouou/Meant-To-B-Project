@@ -18,7 +18,7 @@ const userSchema = new Schema({
     email: {
       type: String,
       required: [true, 'Email is mandatory'],
-      unique: true,
+      unique: true, 
       lowercase: true,
       trim: true,
       validate: [validator.isEmail, 'Please provide a valid email']
@@ -77,4 +77,6 @@ const userSchema = new Schema({
     this.password = await bcrypt.hash(this.password, 10); next(); }); 
     // Compare password 
     userSchema.methods.comparePassword = async function (candidatePassword) 
-    { return bcrypt.compare(candidatePassword, this.password); }; export default mongoose.model("User", userSchema);
+    { return bcrypt.compare(candidatePassword, this.password); }; 
+    
+    export default mongoose.model("user", userSchema);
