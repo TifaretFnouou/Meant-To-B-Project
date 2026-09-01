@@ -1,0 +1,160 @@
+import React, { useMemo, useState } from "react";
+import {
+  Box,
+  Typography,
+  Grid,
+  TextField,
+  Autocomplete,
+  Slider,
+  Alert,
+  Button,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import MainLayout from "../components/layout/MainLayout";
+import PageHeader from "../components/common/PageHeader";
+import MentorCard from "../components/mentorship/MentorCard";
+import { useAuth } from "../context/AuthContext";
+import { useScheduling } from "../context/SchedulingContext";
+import { useAdminConfig } from "../context/AdminConfigContext";
+import { useLanguage } from "../context/LanguageContext";
+import { ROLES } from "../constants";
+
+export default function MentorsCatalogPage() {
+  const { users, currentUser, isMentor } = useAuth();
+  const { createRequest, sessions } = useScheduling();
+  const { techStack, adviceTopics } = useAdminConfig();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [techFilter, setTechFilter] = useState([]);
+  const [topicFilter, setTopicFilter] = useState([]);
+  const [expRange, setExpRange] = useState([0, 15]);
+  const [message, setMessage] = useState("");
+
+  const mentors = useMemo(
+    () =>
+      users.filter(
+        (u) =>
+          u.roles?.includes(ROLES.MENTOR) &&
+          u.mentorProfile?.isActive &&
+          u.id !== currentUser?.id
+      ),
+    [users, currentUser]
+  );
+
+  const filtered = mentors.filter((m) => {
+    const q = search.toLowerCase();
+    const matchesSearch =
+      !q ||
+      `${m.firstName} ${m.lastName} ${m.company} ${m.jobTitle}`.toLowerCase().includes(q);
+    const matchesTech =
+      techFilter.length === 0 ||
+      techFilter.every((t) => m.techStack?.includes(t));
+    const matchesTopic =
+      topicFilter.length === 0 ||
+      topicFilter.every((t) => m.mentorProfile?.topics?.includes(t));
+    const exp = m.yearsOfExperience || 0;
+    const matchesExp = exp >= expRange[0] && exp <= expRange[1];
+    return matchesSearch && matchesTech && matchesTopic && matchesExp;
+  });
+
+  const hasPendingWith = (mentorId) =>
+    sessions.some(
+      (s) =>
+        s.mentorId === mentorId &&
+        s.menteeId === currentUser?.id &&
+        !["cancelled", "rejected", "completed"].includes(s.status) &&
+        s.schedulingState !== "cancelled" &&
+        s.schedulingState !== "rejected" &&
+        s.schedulingState !== "completed"
+    );
+
+  const handleInterest = async (mentor) => {
+    await createRequest(
+      mentor.id,
+      currentUser.id,
+      `${currentUser.firstName} ${currentUser.lastName}`
+    );
+    setMessage(t("mentors.requestSent", { name: `${mentor.firstName} ${mentor.lastName}` }));
+  };
+
+  return (
+    <MainLayout>
+      <PageHeader
+        title={t("mentors.title")}
+        action={
+          !isMentor && (
+            <Button variant="outlined" onClick={() => navigate("/become-mentor")}>
+              {t("mentors.becomeMentor")}
+            </Button>
+          )
+        }
+      />
+
+      {message && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage("")}>
+          {message}
+        </Alert>
+      )}
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            label="חיפוש"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="שם, חברה, משרה..."
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Autocomplete
+            multiple
+            options={techStack}
+            value={techFilter}
+            onChange={(_, v) => setTechFilter(v)}
+            renderInput={(params) => <TextField {...params} label="טכנולוגיה" />}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Autocomplete
+            multiple
+            options={adviceTopics}
+            value={topicFilter}
+            onChange={(_, v) => setTopicFilter(v)}
+            renderInput={(params) => <TextField {...params} label="תחום ייעוץ" />}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Typography variant="body2" gutterBottom>
+            שנות ניסיון: {expRange[0]}–{expRange[1]}
+          </Typography>
+          <Slider
+            value={expRange}
+            onChange={(_, v) => setExpRange(v)}
+            min={0}
+            max={15}
+            valueLabelDisplay="auto"
+          />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3}>
+        {filtered.map((mentor) => (
+          <Grid item xs={12} sm={6} md={4} key={mentor.id}>
+            <MentorCard
+              mentor={mentor}
+              onExpressInterest={handleInterest}
+              hasPendingRequest={hasPendingWith(mentor.id)}
+            />
+          </Grid>
+        ))}
+        {filtered.length === 0 && (
+          <Grid item xs={12}>
+            <Alert severity="info">לא נמצאו מנטוריות לפי הסינון</Alert>
+          </Grid>
+        )}
+      </Grid>
+    </MainLayout>
+  );
+}
