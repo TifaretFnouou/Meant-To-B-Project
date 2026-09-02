@@ -65,6 +65,19 @@ export default function HomePage() {
           }}
         />
 
+        <Box
+          component="img"
+          src="/logo.png"
+          alt={t("home.title")}
+          sx={{
+            width: { xs: 88, md: 112 },
+            height: { xs: 88, md: 112 },
+            objectFit: "contain",
+            mb: 2,
+            filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.15))",
+          }}
+        />
+
         <Typography variant="h3" component="h1" gutterBottom fontWeight={800}>
           {t("home.title")}
         </Typography>

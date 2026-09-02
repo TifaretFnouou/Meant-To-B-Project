@@ -25,22 +25,41 @@ export default function MainLayout({ children }) {
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <AppBar position="sticky">
-        <Toolbar sx={{ gap: 1.5, flexWrap: "wrap", py: 1.25 }}>
+        <Toolbar sx={{ gap: 1.5, flexWrap: "wrap", py: 1.5, minHeight: 80 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexShrink: 0 }}>
-            <Typography
-              variant="h6"
+            <Box
               onClick={() => navigate("/")}
               sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
                 cursor: "pointer",
                 userSelect: "none",
-                fontWeight: 800,
-                background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
               }}
             >
-              👑 {t("nav.brand")}
-            </Typography>
+              <Box
+                component="img"
+                src="/logo.png"
+                alt={t("nav.brand")}
+                sx={{
+                  width: 64,
+                  height: 64,
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 800,
+                  background: "linear-gradient(135deg, #e8a087, #c48b9f)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {t("nav.brand")}
+              </Typography>
+            </Box>
             {currentUser && <ProfileMenu />}
           </Box>
 
