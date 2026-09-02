@@ -49,7 +49,7 @@ export default function LoginPage() {
             gutterBottom
             fontWeight={700}
             sx={{
-              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+              background: "linear-gradient(135deg, #D38A9B, #F5C2B4)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}

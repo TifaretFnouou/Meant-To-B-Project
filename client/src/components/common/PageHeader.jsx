@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
+import { brand } from "../../theme/brand";
 
 export default function PageHeader({ title, subtitle, action }) {
   return (
@@ -18,7 +19,7 @@ export default function PageHeader({ title, subtitle, action }) {
           variant="h4"
           fontWeight={800}
           sx={{
-            background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+            background: `linear-gradient(135deg, ${brand.dustyRose}, ${brand.peach})`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
           }}

@@ -2,6 +2,7 @@ import React from "react";
 import { Button, Tooltip } from "@mui/material";
 import TranslateIcon from "@mui/icons-material/Translate";
 import { useLanguage } from "../../context/LanguageContext";
+import { brand } from "../../theme/brand";
 
 export default function LanguageToggle({ floating = false }) {
   const { language, toggleLanguage, t } = useLanguage();
@@ -17,28 +18,28 @@ export default function LanguageToggle({ floating = false }) {
         px: 2,
         py: 1.1,
         borderRadius: 3,
-        borderColor: "rgba(124,58,237,0.4)",
-        color: "#7c3aed",
+        borderColor: brand.dustyRose,
+        color: brand.dustyRose,
         fontWeight: 700,
         bgcolor: "rgba(255,255,255,0.96)",
-        boxShadow: "0 8px 24px rgba(124,58,237,0.22)",
+        boxShadow: `0 8px 24px ${brand.peachSoft}`,
         backdropFilter: "blur(8px)",
         "&:hover": {
-          bgcolor: "#fff",
-          borderColor: "#7c3aed",
-          boxShadow: "0 10px 28px rgba(124,58,237,0.3)",
+          bgcolor: brand.white,
+          borderColor: brand.dustyRose,
+          boxShadow: `0 10px 28px ${brand.dustyRoseSoft}`,
         },
       }
     : {
         flexShrink: 0,
         minWidth: 96,
-        borderColor: "rgba(124,58,237,0.4)",
-        color: "#7c3aed",
+        borderColor: brand.peach,
+        color: brand.dustyRose,
         fontWeight: 700,
-        bgcolor: "rgba(124,58,237,0.06)",
+        bgcolor: brand.peachSoft,
         "&:hover": {
-          bgcolor: "rgba(124,58,237,0.12)",
-          borderColor: "#7c3aed",
+          bgcolor: brand.dustyRoseSoft,
+          borderColor: brand.dustyRose,
         },
       };
 
