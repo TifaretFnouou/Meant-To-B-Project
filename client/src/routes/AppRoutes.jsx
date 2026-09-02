@@ -7,6 +7,7 @@ import ProfilePage from "../pages/ProfilePage";
 import MentorsCatalogPage from "../pages/MentorsCatalogPage";
 import BecomeMentorPage from "../pages/BecomeMentorPage";
 import MySessionsPage from "../pages/MySessionsPage";
+import CalendarPage from "../pages/CalendarPage";
 import AdminPage from "../pages/admin/AdminPage";
 import ProtectedRoute from "./ProtectedRoute";
 import { ROLES } from "../constants";
@@ -47,6 +48,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <MySessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/calendar"
+        element={
+          <ProtectedRoute>
+            <CalendarPage />
           </ProtectedRoute>
         }
       />

@@ -12,90 +12,86 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import NotificationBell from "../common/NotificationBell";
 import LanguageToggle from "../common/LanguageToggle";
+import ProfileMenu from "../common/ProfileMenu";
 import RoleModeSwitcher from "../common/RoleModeSwitcher";
 import { useRoleMode } from "../../context/RoleModeContext";
 
 export default function MainLayout({ children }) {
-  const { currentUser, logout, isAdmin, isMentor } = useAuth();
+  const { currentUser, isAdmin, isMentor } = useAuth();
   const { isMenteeMode, isMentorMode } = useRoleMode();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <AppBar position="sticky">
-        <Toolbar sx={{ gap: 1, flexWrap: "wrap", py: 1 }}>
-          <Typography
-            variant="h6"
-            onClick={() => navigate("/")}
-            sx={{
-              cursor: "pointer",
-              userSelect: "none",
-              fontWeight: 800,
-              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              flexShrink: 0,
-            }}
-          >
-            👑 {t("nav.brand")}
-          </Typography>
+        <Toolbar sx={{ gap: 1.5, flexWrap: "wrap", py: 1.25 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexShrink: 0 }}>
+            <Typography
+              variant="h6"
+              onClick={() => navigate("/")}
+              sx={{
+                cursor: "pointer",
+                userSelect: "none",
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              👑 {t("nav.brand")}
+            </Typography>
+            {currentUser && <ProfileMenu />}
+          </Box>
 
-          <Box sx={{ flexGrow: 1 }} />
+          {currentUser && !isAdmin && (
+            <Box
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                justifyContent: "center",
+                order: { xs: 3, md: 0 },
+                width: { xs: "100%", md: "auto" },
+                py: { xs: 0.5, md: 0 },
+              }}
+            >
+              <RoleModeSwitcher />
+            </Box>
+          )}
 
-          <LanguageToggle />
-
-          {currentUser && <RoleModeSwitcher />}
+          {!(currentUser && !isAdmin) && <Box sx={{ flexGrow: 1 }} />}
 
           {currentUser ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap", ml: "auto" }}>
               {isAdmin ? (
-                <Button color="inherit" onClick={() => navigate("/admin")}>
-                  {t("nav.admin")}
-                </Button>
+                <>
+                  <RoleModeSwitcher />
+                  <Button color="inherit" onClick={() => navigate("/admin")}>
+                    {t("nav.admin")}
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button color="inherit" onClick={() => navigate("/mentors")}>
                     {t("nav.mentors")}
                   </Button>
-                  {isMenteeMode && (
+                  {isMenteeMode && !isMentor && (
                     <Button color="inherit" onClick={() => navigate("/become-mentor")}>
-                      {isMentor ? t("nav.mentorProfile") : t("mentors.becomeMentor")}
-                    </Button>
-                  )}
-                  {isMentorMode && isMentor && (
-                    <Button color="inherit" onClick={() => navigate("/become-mentor")}>
-                      {t("nav.mentorProfile")}
+                      {t("mentors.becomeMentor")}
                     </Button>
                   )}
                   <Button color="inherit" onClick={() => navigate("/sessions")}>
                     {isMentorMode ? t("nav.sessionsAsMentor") : t("nav.sessions")}
                   </Button>
+                  <Button color="inherit" onClick={() => navigate("/calendar")}>
+                    {t("nav.calendar")}
+                  </Button>
                 </>
               )}
-              <Button color="inherit" onClick={() => navigate("/profile")}>
-                {t("nav.profile")}
-              </Button>
               <NotificationBell />
-              <Typography variant="body2" sx={{ mx: 1, fontWeight: 600 }}>
-                {currentUser.firstName}
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleLogout}
-                sx={{ borderColor: "rgba(124,58,237,0.3)", color: "#7c3aed" }}
-              >
-                {t("nav.logout")}
-              </Button>
             </Box>
           ) : (
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", ml: "auto" }}>
               <Button color="inherit" onClick={() => navigate("/login")}>
                 {t("nav.login")}
               </Button>
@@ -106,9 +102,12 @@ export default function MainLayout({ children }) {
           )}
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+
+      <Container maxWidth="lg" sx={{ py: 4, pb: 10 }}>
         {children}
       </Container>
+
+      <LanguageToggle floating />
     </Box>
   );
 }

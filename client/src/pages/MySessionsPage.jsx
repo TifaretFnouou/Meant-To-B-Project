@@ -99,7 +99,7 @@ export default function MySessionsPage() {
     <MainLayout>
       <PageHeader
         title={isMentorMode ? t("nav.sessionsAsMentor") : t("sessions.title")}
-        subtitle={isMentorMode ? t("mode.mentoringDesc") : t("mode.learningDesc")}
+        subtitle={isMentorMode ? t("mode.mentoringDesc") : t("mode.MenteeDesc")}
       />
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>

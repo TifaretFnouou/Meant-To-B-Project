@@ -38,7 +38,7 @@ export default function RegisterPage() {
     profilePicture: "",
     githubUrl: "",
     linkedinUrl: "",
-    learningGoals: "",
+    MenteeGoals: "",
   });
 
   const update = (field) => (e) =>

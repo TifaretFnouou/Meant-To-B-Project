@@ -1,4 +1,5 @@
-import { ROLES, SCHEDULING_STATE, SESSION_STATUS } from "../constants";
+import { ROLES } from "../constants";
+export { mockAppointments, mockSessions } from "./mockAppointments";
 
 export const mockUsers = [
   {
@@ -234,28 +235,6 @@ export const mockUsers = [
       isActive: true,
       learningGoals: "ללמוד System Design ולהתקדם לתפקיד Senior",
     },
-  },
-];
-
-export const mockSessions = [
-  {
-    id: "session-1",
-    mentorId: "mentor-1",
-    menteeId: "mentee-1",
-    status: SESSION_STATUS.SLOTS_PROPOSED,
-    schedulingState: SCHEDULING_STATE.SLOTS_PROPOSED,
-    proposedSlots: [
-      "2026-09-05T10:00:00",
-      "2026-09-05T14:00:00",
-      "2026-09-06T11:00:00",
-    ],
-    selectedSlot: null,
-    matchedSlot: null,
-    additionalSlotsUsed: false,
-    rescheduleUsed: false,
-    feedback: { mentor: null, mentee: null },
-    attendance: { mentor: null, mentee: null },
-    createdAt: "2026-09-01T08:00:00",
   },
 ];
 

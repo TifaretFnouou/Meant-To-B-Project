@@ -97,7 +97,7 @@ export function AuthProvider({ children }) {
       id: `user-${Date.now()}`,
       roles: [ROLES.MENTEE],
       mentorProfile: null,
-      menteeProfile: { isActive: true, learningGoals: payload.learningGoals || "" },
+      menteeProfile: { isActive: true, MenteeGoals: payload.MenteeGoals || "" },
       ...payload,
     };
 

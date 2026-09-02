@@ -99,7 +99,7 @@ export default function MentorsCatalogPage() {
           sx={{ mb: 2 }}
           action={
             <Button color="inherit" size="small" onClick={() => setMode(USER_MODES.MENTEE)}>
-              {t("mode.learning")}
+              {t("mode.Mentee")}
             </Button>
           }
         >

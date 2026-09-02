@@ -31,15 +31,18 @@ function resolveDefaultMode(user) {
 }
 
 export function RoleModeProvider({ children }) {
-  const { currentUser, isMentor, isAdmin } = useAuth();
+  const { currentUser, isMentor, isMentee, isAdmin } = useAuth();
   const [activeMode, setActiveModeState] = useState(() => resolveDefaultMode(currentUser));
 
   useEffect(() => {
     if (isAdmin) return;
     setActiveModeState(resolveDefaultMode(currentUser));
-  }, [currentUser?.id, isAdmin]);
+  }, [currentUser?.id, isAdmin, isMentor, isMentee]);
 
+  // Dual-role users (mentee + mentor) can switch views.
+  // Mentors without mentee role can still open mentee view to seek mentorship.
   const canSwitchMode = Boolean(isMentor && !isAdmin);
+  const isDualRole = Boolean(isMentor && isMentee && !isAdmin);
 
   const setMode = useCallback(
     (mode) => {
@@ -65,13 +68,23 @@ export function RoleModeProvider({ children }) {
       activeMode,
       setMode,
       canSwitchMode,
+      isDualRole,
       isMenteeMode,
       isMentorMode,
       isAdminMode: isAdmin,
       canActAsMentee: !isAdmin && isMenteeMode,
       canActAsMentor: !isAdmin && isMentor && isMentorMode,
     }),
-    [activeMode, canSwitchMode, isAdmin, isMenteeMode, isMentor, isMentorMode, setMode]
+    [
+      activeMode,
+      canSwitchMode,
+      isAdmin,
+      isDualRole,
+      isMenteeMode,
+      isMentor,
+      isMentorMode,
+      setMode,
+    ]
   );
 
   return (

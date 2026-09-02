@@ -140,13 +140,13 @@ export default function ProfilePage() {
                   multiline
                   rows={3}
                   label="מטרות למידה"
-                  value={form.menteeProfile.learningGoals || ""}
+                  value={form.menteeProfile.MenteeGoals || ""}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
                       menteeProfile: {
                         ...prev.menteeProfile,
-                        learningGoals: e.target.value,
+                        MenteeGoals: e.target.value,
                       },
                     }))
                   }
