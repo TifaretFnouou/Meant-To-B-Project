@@ -1,0 +1,164 @@
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Autocomplete,
+  Chip,
+  Avatar,
+  Alert,
+} from "@mui/material";
+import { useAuth } from "../context/AuthContext";
+import { useAdminConfig } from "../context/AdminConfigContext";
+import MainLayout from "../components/layout/MainLayout";
+
+export default function ProfilePage() {
+  const { currentUser, updateProfile } = useAuth();
+  const { techStack } = useAdminConfig();
+  const [saved, setSaved] = useState(false);
+  const [form, setForm] = useState({ ...currentUser });
+
+  useEffect(() => {
+    setForm({ ...currentUser });
+  }, [currentUser]);
+
+  const update = (field) => (e) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () =>
+      setForm((prev) => ({ ...prev, profilePicture: reader.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    updateProfile({
+      ...form,
+      yearsOfExperience: Number(form.yearsOfExperience) || 0,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const avatarSrc = form.profilePicture || undefined;
+  const initials = `${form.firstName?.[0] || ""}${form.lastName?.[0] || ""}`;
+
+  return (
+    <MainLayout>
+      <Paper sx={{ p: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <Avatar src={avatarSrc} sx={{ width: 72, height: 72 }}>
+            {initials}
+          </Avatar>
+          <Box>
+            <Typography variant="h5" fontWeight={600}>
+              הפרופיל שלי
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {form.email} · @{form.username}
+            </Typography>
+          </Box>
+        </Box>
+
+        {saved && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            הפרופיל עודכן בהצלחה
+          </Alert>
+        )}
+
+        <Box component="form" onSubmit={handleSubmit}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="שם פרטי" value={form.firstName || ""} onChange={update("firstName")} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="שם משפחה" value={form.lastName || ""} onChange={update("lastName")} />
+            </Grid>
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={techStack}
+                value={form.techStack || []}
+                onChange={(_, val) => setForm((prev) => ({ ...prev, techStack: val }))}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip label={option} {...getTagProps({ index })} key={option} />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="סטאק טכנולוגי" />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="מקום עבודה" value={form.company || ""} onChange={update("company")} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="משרה" value={form.jobTitle || ""} onChange={update("jobTitle")} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="שנות ניסיון"
+                value={form.yearsOfExperience || 0}
+                onChange={update("yearsOfExperience")}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Button variant="outlined" component="label" fullWidth sx={{ height: 56 }}>
+                העלאת תמונה
+                <input hidden accept="image/*" type="file" onChange={handleFileChange} />
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="קישור לתמונה"
+                value={form.profilePicture?.startsWith("data:") ? "" : form.profilePicture || ""}
+                onChange={update("profilePicture")}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="GitHub" value={form.githubUrl || ""} onChange={update("githubUrl")} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="LinkedIn" value={form.linkedinUrl || ""} onChange={update("linkedinUrl")} />
+            </Grid>
+            {form.menteeProfile && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="מטרות למידה"
+                  value={form.menteeProfile.MenteeGoals || ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      menteeProfile: {
+                        ...prev.menteeProfile,
+                        MenteeGoals: e.target.value,
+                      },
+                    }))
+                  }
+                />
+              </Grid>
+            )}
+          </Grid>
+          <Button type="submit" variant="contained" sx={{ mt: 3 }}>
+            שמירת שינויים
+          </Button>
+        </Box>
+      </Paper>
+    </MainLayout>
+  );
+}

@@ -3,27 +3,30 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.1",
-    "@mui/material": "^5.15.1",
+    "@mui/icons-material": "5.15.14",
+    "@mui/material": "5.15.14",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.7.1",
+    "react-router-dom": "6.22.3",
     "react-scripts": "5.0.1",
+    "stylis-plugin-rtl": "^2.1.1",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "chokidar-cli": "^3.0.0"
+    "chokidar-cli": "^3.0.0",
+    "react-app-rewired": "^2.2.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "watch": "react-scripts start --watch",
-    "build": "react-scripts build",
+    "start": "react-app-rewired start",
+    "watch": "react-app-rewired start --watch",
+    "build": "react-app-rewired build",
     "build:watch": "chokidar \"src/**/*\" -c \"npm run build\"",
     "test": "react-scripts test",
     "test:watch": "react-scripts test --watch",
@@ -47,5 +50,11 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5001"
+  "proxy": "http://localhost:5001",
+  "overrides": {
+    "@mui/utils": "5.15.14",
+    "@mui/system": "5.15.14",
+    "@mui/private-theming": "5.15.14",
+    "@mui/styled-engine": "5.15.14"
+  }
 }

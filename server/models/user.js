@@ -60,7 +60,7 @@ const userSchema = new Schema({
               default: true,
             },
           
-            learningGoals: {
+            MenteeGoals: {
               type: String,
               trim: true,
             },
