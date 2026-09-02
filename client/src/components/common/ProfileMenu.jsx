@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useRoleMode } from "../../context/RoleModeContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { brand } from "../../theme/brand";
 
 export default function ProfileMenu() {
   const { currentUser, logout, isAdmin, isMentor } = useAuth();
@@ -68,7 +69,7 @@ export default function ProfileMenu() {
         sx={{
           p: 0.35,
           border: "2px solid",
-          borderColor: open ? "#7c3aed" : "rgba(124,58,237,0.25)",
+          borderColor: open ? brand.dustyRose : brand.peach,
           transition: "border-color 0.2s ease",
         }}
       >
@@ -77,7 +78,7 @@ export default function ProfileMenu() {
           sx={{
             width: 36,
             height: 36,
-            bgcolor: "#7c3aed",
+            bgcolor: brand.dustyRose,
             fontSize: "0.85rem",
             fontWeight: 700,
           }}
@@ -98,7 +99,7 @@ export default function ProfileMenu() {
             mt: 1.2,
             minWidth: 300,
             borderRadius: 3,
-            border: "1px solid rgba(124,58,237,0.12)",
+            border: `1px solid ${brand.dustyRoseSoft}`,
             overflow: "hidden",
           },
         }}
@@ -108,7 +109,7 @@ export default function ProfileMenu() {
           sx={{
             px: 2,
             py: 1.5,
-            background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.08))",
+            background: `linear-gradient(135deg, ${brand.peachSoft}, ${brand.lavenderSoft})`,
           }}
         >
           <Typography variant="subtitle1" fontWeight={700}>
@@ -132,10 +133,8 @@ export default function ProfileMenu() {
             sx={{
               mt: 1.25,
               fontWeight: 700,
-              bgcolor: isMentorMode
-                ? "rgba(236,72,153,0.14)"
-                : "rgba(99,102,241,0.14)",
-              color: isMentorMode ? "#be185d" : "#4338ca",
+              bgcolor: isMentorMode ? brand.dustyRoseSoft : brand.lavenderSoft,
+              color: isMentorMode ? brand.dustyRose : brand.charcoal,
             }}
           />
         </Box>
@@ -185,7 +184,7 @@ export default function ProfileMenu() {
 
         <Divider />
 
-        <MenuItem onClick={handleLogout} sx={{ color: "#be185d", py: 1.2 }}>
+        <MenuItem onClick={handleLogout} sx={{ color: brand.dustyRose, py: 1.2 }}>
           <ListItemIcon sx={{ color: "inherit" }}>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>

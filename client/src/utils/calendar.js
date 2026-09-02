@@ -1,3 +1,5 @@
+import { brand } from "../theme/brand";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function startOfDay(date) {
@@ -77,9 +79,9 @@ export function eventsOnDay(events, day) {
 }
 
 export const EVENT_COLORS = {
-  matched: { bg: "rgba(16,185,129,0.18)", border: "#10b981", text: "#047857" },
-  proposed: { bg: "rgba(99,102,241,0.16)", border: "#6366f1", text: "#4338ca" },
-  pending: { bg: "rgba(245,158,11,0.18)", border: "#f59e0b", text: "#b45309" },
-  completed: { bg: "rgba(100,116,139,0.16)", border: "#64748b", text: "#475569" },
-  selected: { bg: "rgba(124,58,237,0.22)", border: "#7c3aed", text: "#5b21b6" },
+  matched: { bg: brand.lavenderSoft, border: brand.lavender, text: brand.charcoal },
+  proposed: { bg: brand.peachSoft, border: brand.peach, text: "#A8796C" },
+  pending: { bg: brand.yellowSoft, border: brand.pastelYellow, text: "#9A7B3C" },
+  completed: { bg: "rgba(59,59,59,0.08)", border: "#9CA3AF", text: brand.charcoal },
+  selected: { bg: brand.dustyRoseSoft, border: brand.dustyRose, text: brand.dustyRose },
 };

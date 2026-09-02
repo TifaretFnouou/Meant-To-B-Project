@@ -14,6 +14,7 @@ import {
   toSlotIso,
 } from "../../utils/calendar";
 import { useLanguage } from "../../context/LanguageContext";
+import { brand } from "../../theme/brand";
 
 /**
  * Interactive week calendar.
@@ -163,7 +164,7 @@ export default function WeekCalendar({
                       outlineOffset: -2,
                       transition: "background 0.15s ease",
                       "&:hover": selectable
-                        ? { bgcolor: selected ? EVENT_COLORS.selected.bg : "rgba(124,58,237,0.08)" }
+                        ? { bgcolor: selected ? EVENT_COLORS.selected.bg : brand.peachSoft }
                         : undefined,
                     }}
                   >

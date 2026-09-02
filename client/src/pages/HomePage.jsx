@@ -15,6 +15,7 @@ import MainLayout from "../components/layout/MainLayout";
 import { useAuth } from "../context/AuthContext";
 import { useRoleMode } from "../context/RoleModeContext";
 import { useLanguage } from "../context/LanguageContext";
+import { brand } from "../theme/brand";
 
 const features = [
   { icon: AutoAwesomeIcon, titleKey: "home.feature1Title", descKey: "home.feature1Desc" },
@@ -37,8 +38,8 @@ export default function HomePage() {
           textAlign: "center",
           position: "relative",
           overflow: "hidden",
-          background: "linear-gradient(135deg, #7c3aed 0%, #6366f1 40%, #ec4899 100%)",
-          color: "white",
+          background: `linear-gradient(135deg, ${brand.peach} 0%, ${brand.lavender} 45%, ${brand.dustyRose} 100%)`,
+          color: brand.charcoal,
           border: "none",
         }}
       >
@@ -50,7 +51,7 @@ export default function HomePage() {
             width: 200,
             height: 200,
             borderRadius: "50%",
-            background: "rgba(255,255,255,0.1)",
+            background: brand.yellowSoft,
           }}
         />
         <Box
@@ -61,7 +62,7 @@ export default function HomePage() {
             width: 150,
             height: 150,
             borderRadius: "50%",
-            background: "rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.35)",
           }}
         />
 
@@ -74,14 +75,14 @@ export default function HomePage() {
             height: { xs: 88, md: 112 },
             objectFit: "contain",
             mb: 2,
-            filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.15))",
+            filter: "drop-shadow(0 8px 20px rgba(59,59,59,0.12))",
           }}
         />
 
-        <Typography variant="h3" component="h1" gutterBottom fontWeight={800}>
+        <Typography variant="h3" component="h1" gutterBottom fontWeight={800} sx={{ color: brand.charcoal }}>
           {t("home.title")}
         </Typography>
-        <Typography variant="h6" sx={{ mb: 4, opacity: 0.92, maxWidth: 560, mx: "auto" }}>
+        <Typography variant="h6" sx={{ mb: 4, opacity: 0.85, maxWidth: 560, mx: "auto", color: brand.charcoal }}>
           {t("home.subtitle")}
         </Typography>
 
@@ -104,7 +105,7 @@ export default function HomePage() {
                 <>
                   <Button
                     variant="contained"
-                    color="secondary"
+                    color="primary"
                     onClick={() => navigate("/mentors")}
                     size="large"
                   >
@@ -112,12 +113,7 @@ export default function HomePage() {
                   </Button>
                   <Button
                     variant={isMenteeMode ? "outlined" : "contained"}
-                    color={isMenteeMode ? undefined : "secondary"}
-                    sx={
-                      isMenteeMode
-                        ? { color: "white", borderColor: "rgba(255,255,255,0.6)" }
-                        : undefined
-                    }
+                    color="primary"
                     onClick={() => navigate("/sessions")}
                     size="large"
                   >
@@ -126,7 +122,7 @@ export default function HomePage() {
                   {isMenteeMode && (
                     <Button
                       variant="outlined"
-                      sx={{ color: "white", borderColor: "rgba(255,255,255,0.6)" }}
+                      color="primary"
                       onClick={() => navigate("/become-mentor")}
                       size="large"
                     >
@@ -141,7 +137,7 @@ export default function HomePage() {
           <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={() => navigate("/register")}
               size="large"
             >
@@ -149,7 +145,7 @@ export default function HomePage() {
             </Button>
             <Button
               variant="outlined"
-              sx={{ color: "white", borderColor: "rgba(255,255,255,0.6)" }}
+              color="primary"
               onClick={() => navigate("/login")}
               size="large"
             >
@@ -173,10 +169,10 @@ export default function HomePage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(236,72,153,0.15))",
+                  background: `linear-gradient(135deg, ${brand.peachSoft}, ${brand.lavenderSoft})`,
                 }}
               >
-                <Icon sx={{ color: "#7c3aed", fontSize: 28 }} />
+                <Icon sx={{ color: brand.dustyRose, fontSize: 28 }} />
               </Box>
               <Typography variant="h6" fontWeight={700} gutterBottom>
                 {t(titleKey)}

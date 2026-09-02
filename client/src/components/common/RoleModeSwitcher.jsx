@@ -9,11 +9,8 @@ import { useRoleMode } from "../../context/RoleModeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { USER_MODES } from "../../constants";
+import { brand } from "../../theme/brand";
 
-/**
- * Main-nav role switcher: visual two-sided control that shows
- * how the user moves between Mentee and Mentor contexts.
- */
 export default function RoleModeSwitcher() {
   const { currentUser, isAdmin } = useAuth();
   const { activeMode, setMode, canSwitchMode, isMenteeMode, isMentorMode } = useRoleMode();
@@ -30,9 +27,9 @@ export default function RoleModeSwitcher() {
         label={t("mode.adminOnly")}
         sx={{
           fontWeight: 700,
-          bgcolor: "rgba(124,58,237,0.12)",
-          color: "#6d28d9",
-          border: "1px solid rgba(124,58,237,0.25)",
+          bgcolor: brand.lavenderSoft,
+          color: brand.charcoal,
+          border: `1px solid ${brand.lavender}`,
         }}
       />
     );
@@ -50,10 +47,10 @@ export default function RoleModeSwitcher() {
         }
         sx={{
           fontWeight: 700,
-          bgcolor: isMenteeMode ? "rgba(99,102,241,0.12)" : "rgba(236,72,153,0.12)",
-          color: isMenteeMode ? "#4338ca" : "#be185d",
+          bgcolor: isMenteeMode ? brand.lavenderSoft : brand.dustyRoseSoft,
+          color: isMenteeMode ? "#8B7398" : brand.dustyRose,
           border: "1px solid",
-          borderColor: isMenteeMode ? "rgba(99,102,241,0.3)" : "rgba(236,72,153,0.3)",
+          borderColor: isMenteeMode ? brand.lavender : brand.dustyRose,
         }}
       />
     );
@@ -78,108 +75,107 @@ export default function RoleModeSwitcher() {
           minWidth: { xs: 220, sm: 260 },
           p: 0.5,
           borderRadius: 999,
-          bgcolor: "rgba(255,255,255,0.95)",
-          border: "1px solid rgba(124,58,237,0.2)",
-          boxShadow: "0 4px 14px rgba(124,58,237,0.12)",
+          bgcolor: "rgba(255,255,255,0.92)",
+          border: `1px solid ${brand.dustyRoseSoft}`,
+          boxShadow: `0 4px 14px ${brand.peachSoft}`,
           flexShrink: 0,
         }}
       >
-          {/* Sliding highlight */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 4,
-              bottom: 4,
-              width: "calc(50% - 18px)",
-              left: isMentorMode ? "calc(50% + 14px)" : 4,
-              borderRadius: 999,
-              background: isMentorMode
-                ? "linear-gradient(135deg, #ec4899, #db2777)"
-                : "linear-gradient(135deg, #6366f1, #4f46e5)",
-              boxShadow: isMentorMode
-                ? "0 4px 12px rgba(236,72,153,0.35)"
-                : "0 4px 12px rgba(99,102,241,0.35)",
-              transition: "left 0.28s ease, background 0.28s ease, box-shadow 0.28s ease",
-              zIndex: 0,
-            }}
-          />
+        <Box
+          sx={{
+            position: "absolute",
+            top: 4,
+            bottom: 4,
+            width: "calc(50% - 18px)",
+            left: isMentorMode ? "calc(50% + 14px)" : 4,
+            borderRadius: 999,
+            background: isMentorMode
+              ? `linear-gradient(135deg, ${brand.dustyRose}, ${brand.peach})`
+              : `linear-gradient(135deg, ${brand.lavender}, ${brand.peach})`,
+            boxShadow: isMentorMode
+              ? `0 4px 12px ${brand.dustyRoseSoft}`
+              : `0 4px 12px ${brand.lavenderSoft}`,
+            transition: "left 0.28s ease, background 0.28s ease, box-shadow 0.28s ease",
+            zIndex: 0,
+          }}
+        />
 
-          <Box
-            component="button"
-            type="button"
-            onClick={() => selectMode(USER_MODES.MENTEE)}
-            aria-pressed={isMenteeMode}
-            sx={{
-              position: "relative",
-              zIndex: 1,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.6,
-              py: 0.85,
-              px: 1,
-              borderRadius: 999,
-              color: isMenteeMode ? "#fff" : "#64748b",
-              fontWeight: 800,
-              fontSize: "0.8rem",
-              fontFamily: "inherit",
-              transition: "color 0.2s ease",
-            }}
-          >
-            <SchoolIcon sx={{ fontSize: 18 }} />
-            {t("mode.menteeOnly")}
-          </Box>
+        <Box
+          component="button"
+          type="button"
+          onClick={() => selectMode(USER_MODES.MENTEE)}
+          aria-pressed={isMenteeMode}
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.6,
+            py: 0.85,
+            px: 1,
+            borderRadius: 999,
+            color: isMenteeMode ? brand.charcoal : "rgba(59,59,59,0.55)",
+            fontWeight: 800,
+            fontSize: "0.8rem",
+            fontFamily: "inherit",
+            transition: "color 0.2s ease",
+          }}
+        >
+          <SchoolIcon sx={{ fontSize: 18 }} />
+          {t("mode.menteeOnly")}
+        </Box>
 
-          <Box
-            sx={{
-              position: "relative",
-              zIndex: 1,
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "#fff",
-              border: "1px solid rgba(124,58,237,0.25)",
-              color: "#7c3aed",
-              boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
-            }}
-          >
-            <SyncAltIcon sx={{ fontSize: 16 }} />
-          </Box>
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: brand.white,
+            border: `1px solid ${brand.peach}`,
+            color: brand.dustyRose,
+            boxShadow: `0 2px 8px ${brand.peachSoft}`,
+          }}
+        >
+          <SyncAltIcon sx={{ fontSize: 16 }} />
+        </Box>
 
-          <Box
-            component="button"
-            type="button"
-            onClick={() => selectMode(USER_MODES.MENTOR)}
-            aria-pressed={isMentorMode}
-            sx={{
-              position: "relative",
-              zIndex: 1,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.6,
-              py: 0.85,
-              px: 1,
-              borderRadius: 999,
-              color: isMentorMode ? "#fff" : "#64748b",
-              fontWeight: 800,
-              fontSize: "0.8rem",
-              fontFamily: "inherit",
-              transition: "color 0.2s ease",
-            }}
-          >
-            <StarIcon sx={{ fontSize: 18 }} />
-            {t("mode.mentorOnly")}
-          </Box>
+        <Box
+          component="button"
+          type="button"
+          onClick={() => selectMode(USER_MODES.MENTOR)}
+          aria-pressed={isMentorMode}
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.6,
+            py: 0.85,
+            px: 1,
+            borderRadius: 999,
+            color: isMentorMode ? brand.white : "rgba(59,59,59,0.55)",
+            fontWeight: 800,
+            fontSize: "0.8rem",
+            fontFamily: "inherit",
+            transition: "color 0.2s ease",
+          }}
+        >
+          <StarIcon sx={{ fontSize: 18 }} />
+          {t("mode.mentorOnly")}
+        </Box>
       </Box>
     </Tooltip>
   );

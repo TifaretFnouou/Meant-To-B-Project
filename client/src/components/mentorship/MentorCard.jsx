@@ -14,6 +14,7 @@ import WorkIcon from "@mui/icons-material/Work";
 import TimerIcon from "@mui/icons-material/Timer";
 import EventIcon from "@mui/icons-material/Event";
 import { useLanguage } from "../../context/LanguageContext";
+import { brand } from "../../theme/brand";
 
 export default function MentorCard({
   mentor,
@@ -31,7 +32,7 @@ export default function MentorCard({
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <Avatar
             src={mentor.profilePicture || undefined}
-            sx={{ width: 48, height: 48, bgcolor: "#7c3aed" }}
+            sx={{ width: 48, height: 48, bgcolor: brand.dustyRose }}
           >
             {initials}
           </Avatar>
@@ -57,15 +58,15 @@ export default function MentorCard({
 
         <Stack direction="row" spacing={2} sx={{ mt: 1, flexWrap: "wrap", gap: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <WorkIcon fontSize="small" sx={{ color: "#7c3aed" }} />
+            <WorkIcon fontSize="small" sx={{ color: brand.dustyRose }} />
             <Typography variant="caption">{mentor.yearsOfExperience} {t("mentors.yearsExp")}</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <EventIcon fontSize="small" sx={{ color: "#7c3aed" }} />
+            <EventIcon fontSize="small" sx={{ color: brand.dustyRose }} />
             <Typography variant="caption">{t("mentors.maxSessions", { count: profile?.maxSessions })}</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <TimerIcon fontSize="small" sx={{ color: "#7c3aed" }} />
+            <TimerIcon fontSize="small" sx={{ color: brand.dustyRose }} />
             <Typography variant="caption">{t("mentors.sessionLength", { min: profile?.sessionLengthMinutes })}</Typography>
           </Box>
         </Stack>

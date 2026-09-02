@@ -78,7 +78,7 @@ export default function RegisterPage() {
       <Box sx={{ maxWidth: 720, mx: "auto" }}>
         <Paper sx={{ p: 4 }}>
           <Typography variant="h5" gutterBottom fontWeight={700}
-            sx={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            sx={{ background: "linear-gradient(135deg, #D38A9B, #F5C2B4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             {t("auth.registerTitle")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>

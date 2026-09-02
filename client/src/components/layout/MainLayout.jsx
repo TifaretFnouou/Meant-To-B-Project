@@ -15,6 +15,7 @@ import LanguageToggle from "../common/LanguageToggle";
 import ProfileMenu from "../common/ProfileMenu";
 import RoleModeSwitcher from "../common/RoleModeSwitcher";
 import { useRoleMode } from "../../context/RoleModeContext";
+import { brand } from "../../theme/brand";
 
 export default function MainLayout({ children }) {
   const { currentUser, isAdmin, isMentor } = useAuth();
@@ -52,9 +53,10 @@ export default function MainLayout({ children }) {
                 variant="h6"
                 sx={{
                   fontWeight: 800,
-                  background: "linear-gradient(135deg, #e8a087, #c48b9f)",
+                  background: `linear-gradient(135deg, ${brand.peach}, ${brand.dustyRose})`,
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
+                  color: brand.charcoal,
                 }}
               >
                 {t("nav.brand")}
