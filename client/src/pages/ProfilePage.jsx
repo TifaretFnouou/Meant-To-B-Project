@@ -19,10 +19,15 @@ export default function ProfilePage() {
   const { currentUser, updateProfile } = useAuth();
   const { techStack } = useAdminConfig();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [form, setForm] = useState({ ...currentUser });
 
   useEffect(() => {
     setForm({ ...currentUser });
+    setProfilePictureFile(null);
+    setPreviewUrl("");
   }, [currentUser]);
 
   const update = (field) => (e) =>
@@ -31,23 +36,29 @@ export default function ProfilePage() {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
-      setForm((prev) => ({ ...prev, profilePicture: reader.result }));
-    reader.readAsDataURL(file);
+    setProfilePictureFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    updateProfile({
-      ...form,
-      yearsOfExperience: Number(form.yearsOfExperience) || 0,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError("");
+    try {
+      await updateProfile({
+        ...form,
+        yearsOfExperience: Number(form.yearsOfExperience) || 0,
+        profilePictureFile,
+      });
+      setProfilePictureFile(null);
+      setPreviewUrl("");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  const avatarSrc = form.profilePicture || undefined;
+  const avatarSrc = previewUrl || form.profilePicture || undefined;
   const initials = `${form.firstName?.[0] || ""}${form.lastName?.[0] || ""}`;
 
   return (
@@ -70,6 +81,11 @@ export default function ProfilePage() {
         {saved && (
           <Alert severity="success" sx={{ mb: 2 }}>
             הפרופיל עודכן בהצלחה
+          </Alert>
+        )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
           </Alert>
         )}
 
@@ -123,8 +139,21 @@ export default function ProfilePage() {
               <TextField
                 fullWidth
                 label="קישור לתמונה"
-                value={form.profilePicture?.startsWith("data:") ? "" : form.profilePicture || ""}
-                onChange={update("profilePicture")}
+                value={
+                  profilePictureFile
+                    ? ""
+                    : form.profilePicture?.startsWith("data:")
+                      ? ""
+                      : form.profilePicture || ""
+                }
+                onChange={(e) => {
+                  setProfilePictureFile(null);
+                  setPreviewUrl("");
+                  update("profilePicture")(e);
+                }}
+                helperText={
+                  profilePictureFile ? `נבחר קובץ: ${profilePictureFile.name}` : ""
+                }
               />
             </Grid>
             <Grid item xs={12} sm={6}>

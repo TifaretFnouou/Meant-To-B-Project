@@ -1,37 +1,53 @@
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
-import dotenv from "dotenv";
+import "dotenv/config";
 
-dotenv.config();
-
-// Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-// Storage for profile pictures
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "queens-match/profile-pictures",
-    resource_type: "image",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
-    transformation: [
+const memoryStorage = multer.memoryStorage();
+
+const imageFilter = (req, file, cb) => {
+  if (!file.mimetype?.startsWith("image/")) {
+    return cb(new Error("Only image files are allowed"), false);
+  }
+  cb(null, true);
+};
+
+export const parser = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageFilter,
+});
+
+export function uploadProfileImage(file) {
+  if (!file?.buffer) {
+    return Promise.reject(new Error("No image file provided"));
+  }
+
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
       {
-        width: 500,
-        height: 500,
-        crop: "limit",
+        folder: "queens-match/profile-pictures",
+        resource_type: "image",
+        transformation: [{ width: 500, height: 500, crop: "limit" }],
       },
-    ],
-  },
-});
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+        if (!result?.secure_url) {
+          return reject(new Error("Cloudinary did not return a secure URL"));
+        }
+        resolve(result.secure_url);
+      }
+    );
 
-// Multer parser
-const parser = multer({
-  storage,
-});
+    stream.end(file.buffer);
+  });
+}
 
-export { cloudinary, parser };
+export { cloudinary };

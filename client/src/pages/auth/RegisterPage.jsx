@@ -25,6 +25,8 @@ export default function RegisterPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -47,10 +49,8 @@ export default function RegisterPage() {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
-      setForm((prev) => ({ ...prev, profilePicture: reader.result }));
-    reader.readAsDataURL(file);
+    setProfilePictureFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -66,6 +66,7 @@ export default function RegisterPage() {
       await register({
         ...form,
         yearsOfExperience: Number(form.yearsOfExperience) || 0,
+        profilePictureFile,
       });
       navigate("/profile");
     } catch (err) {
@@ -197,9 +198,20 @@ export default function RegisterPage() {
                 <TextField
                   fullWidth
                   label="קישור לתמונה (אופציונלי)"
-                  value={form.profilePicture.startsWith("data:") ? "" : form.profilePicture}
-                  onChange={update("profilePicture")}
+                  value={profilePictureFile ? "" : form.profilePicture}
+                  onChange={(e) => {
+                    setProfilePictureFile(null);
+                    setPreviewUrl("");
+                    update("profilePicture")(e);
+                  }}
                   placeholder="https://..."
+                  helperText={
+                    profilePictureFile
+                      ? `נבחר קובץ: ${profilePictureFile.name}`
+                      : previewUrl
+                        ? "תצוגה מקדימה מוכנה"
+                        : ""
+                  }
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

@@ -42,30 +42,34 @@ export default function BecomeMentorPage() {
     return <Navigate to="/sessions" replace />;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const isNewMentor = !currentUser.roles.includes(ROLES.MENTOR);
     const roles = isNewMentor
       ? [...currentUser.roles, ROLES.MENTOR]
       : currentUser.roles;
 
-    updateProfile({
-      roles,
-      mentorProfile: {
-        isActive: true,
-        ...form,
-        maxSessions: Number(form.maxSessions),
-        sessionLengthMinutes: Number(form.sessionLengthMinutes),
-      },
-    });
+    try {
+      await updateProfile({
+        roles,
+        mentorProfile: {
+          isActive: true,
+          ...form,
+          maxSessions: Number(form.maxSessions),
+          sessionLengthMinutes: Number(form.sessionLengthMinutes),
+        },
+      });
 
-    if (isNewMentor) {
-      setMode(USER_MODES.MENTOR);
-      navigate("/sessions");
-      return;
+      if (isNewMentor) {
+        setMode(USER_MODES.MENTOR);
+        navigate("/sessions");
+        return;
+      }
+
+      navigate(isMentorMode ? "/sessions" : "/mentors");
+    } catch (err) {
+      console.error(err);
     }
-
-    navigate(isMentorMode ? "/sessions" : "/mentors");
   };
 
   return (
