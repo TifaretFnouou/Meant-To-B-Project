@@ -2,10 +2,6 @@ import UserModel from "../models/user.js";
 import { sanitizeUser } from "./authService.js";
 import { uploadProfileImage } from "../config/cloudinary.js";
 
-function isHttpUrl(value) {
-  return typeof value === "string" && /^https?:\/\//i.test(value.trim());
-}
-
 function parseList(value) {
   if (value == null || value === "") return undefined;
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -38,7 +34,6 @@ export async function updateUser(userId, updateData, actor = {}) {
     "mentorProfile",
     "menteeProfile",
     "roles",
-    "profilePicture",
   ];
 
   const filteredData = {};
@@ -67,17 +62,6 @@ export async function updateUser(userId, updateData, actor = {}) {
         throw Object.assign(new Error("Invalid role value"), { status: 400 });
       }
       filteredData.roles = roles;
-      continue;
-    }
-
-    if (field === "profilePicture") {
-      if (!isHttpUrl(updateData.profilePicture)) {
-        throw Object.assign(
-          new Error("profilePicture must be an http(s) URL"),
-          { status: 400 }
-        );
-      }
-      filteredData.profilePicture = String(updateData.profilePicture).trim();
       continue;
     }
 

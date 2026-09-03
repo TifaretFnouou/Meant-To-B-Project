@@ -1,14 +1,24 @@
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import "dotenv/config";
 
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY || process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET || process.env.CLOUD_API_SECRET,
 });
 
-const memoryStorage = multer.memoryStorage();
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async () => ({
+    folder: "queens-match/profile-pictures",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [
+      { width: 500, height: 500, crop: "fill", gravity: "face", quality: "auto" },
+    ],
+  }),
+});
 
 const imageFilter = (req, file, cb) => {
   if (!file.mimetype?.startsWith("image/")) {
@@ -18,36 +28,18 @@ const imageFilter = (req, file, cb) => {
 };
 
 export const parser = multer({
-  storage: memoryStorage,
+  storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: imageFilter,
 });
 
-export function uploadProfileImage(file) {
-  if (!file?.buffer) {
-    return Promise.reject(new Error("No image file provided"));
+export async function uploadProfileImage(file) {
+  const secureUrl = file?.path || file?.secure_url;
+  if (!secureUrl) {
+    throw new Error("Cloudinary upload did not return a secure URL");
   }
 
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: "queens-match/profile-pictures",
-        resource_type: "image",
-        transformation: [{ width: 500, height: 500, crop: "limit" }],
-      },
-      (error, result) => {
-        if (error) {
-          return reject(error);
-        }
-        if (!result?.secure_url) {
-          return reject(new Error("Cloudinary did not return a secure URL"));
-        }
-        resolve(result.secure_url);
-      }
-    );
-
-    stream.end(file.buffer);
-  });
+  return secureUrl;
 }
 
 export { cloudinary };

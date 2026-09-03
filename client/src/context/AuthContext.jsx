@@ -112,13 +112,14 @@ export function AuthProvider({ children }) {
       const formData = new FormData();
       const {
         profilePictureFile,
-        profilePicture,
         techStack = [],
         roles,
         MenteeGoals,
         yearsOfExperience,
         ...rest
       } = payload;
+      delete rest.profilePicture;
+      delete rest.profilePictureUrl;
 
       Object.entries(rest).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
@@ -134,11 +135,6 @@ export function AuthProvider({ children }) {
 
       if (profilePictureFile instanceof File) {
         formData.append("profilePicture", profilePictureFile);
-      } else if (
-        typeof profilePicture === "string" &&
-        /^https?:\/\//i.test(profilePicture)
-      ) {
-        formData.append("profilePictureUrl", profilePicture);
       }
 
       const { user, token } = await registerRequest(formData);
@@ -158,7 +154,6 @@ export function AuthProvider({ children }) {
     try {
       const {
         profilePictureFile,
-        profilePicture,
         password,
         id,
         _id,
@@ -168,17 +163,11 @@ export function AuthProvider({ children }) {
         __v,
         ...safeUpdates
       } = updates;
+      delete safeUpdates.profilePicture;
 
       let updated = currentUser;
 
       if (Object.keys(safeUpdates).length > 0) {
-        if (
-          typeof profilePicture === "string" &&
-          /^https?:\/\//i.test(profilePicture) &&
-          profilePicture !== currentUser.profilePicture
-        ) {
-          safeUpdates.profilePicture = profilePicture;
-        }
         updated = await updateUserRequest(currentUser.id, safeUpdates);
       }
 

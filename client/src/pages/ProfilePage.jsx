@@ -30,6 +30,12 @@ export default function ProfilePage() {
     setPreviewUrl("");
   }, [currentUser]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const update = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -130,27 +136,11 @@ export default function ProfilePage() {
                 העלאת תמונה
                 <input hidden accept="image/*" type="file" onChange={handleFileChange} />
               </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="קישור לתמונה"
-                value={
-                  profilePictureFile
-                    ? ""
-                    : form.profilePicture?.startsWith("data:")
-                      ? ""
-                      : form.profilePicture || ""
-                }
-                onChange={(e) => {
-                  setProfilePictureFile(null);
-                  setPreviewUrl("");
-                  update("profilePicture")(e);
-                }}
-                helperText={
-                  profilePictureFile ? `נבחר קובץ: ${profilePictureFile.name}` : ""
-                }
-              />
+              {profilePictureFile && (
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
+                  {profilePictureFile.name}
+                </Typography>
+              )}
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="GitHub" value={form.githubUrl || ""} onChange={update("githubUrl")} />

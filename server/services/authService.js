@@ -28,10 +28,6 @@ function parseList(value) {
   return [String(value)].filter(Boolean);
 }
 
-function isHttpUrl(value) {
-  return typeof value === "string" && /^https?:\/\//i.test(value.trim());
-}
-
 function signToken(user) {
   return jwt.sign(
     {
@@ -83,8 +79,6 @@ export async function registerUser(body, file) {
   let profilePicture = "";
   if (file) {
     profilePicture = await uploadProfileImage(file);
-  } else if (isHttpUrl(body.profilePictureUrl || body.profilePicture)) {
-    profilePicture = String(body.profilePictureUrl || body.profilePicture).trim();
   }
 
   const menteeGoals =

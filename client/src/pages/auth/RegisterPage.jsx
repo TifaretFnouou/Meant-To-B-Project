@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Paper,
@@ -21,6 +21,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import MainLayout from "../../components/layout/MainLayout";
 import PasswordStrengthIndicator from "../../components/common/PasswordStrengthIndicator";
 import { isPasswordStrong } from "../../utils/passwordStrength";
+import UserAvatar from "../../components/common/UserAvatar";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -40,7 +41,6 @@ export default function RegisterPage() {
     company: "",
     jobTitle: "",
     yearsOfExperience: 0,
-    profilePicture: "",
     githubUrl: "",
     linkedinUrl: "",
     MenteeGoals: "",
@@ -55,6 +55,12 @@ export default function RegisterPage() {
     setProfilePictureFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -193,31 +199,31 @@ export default function RegisterPage() {
                   inputProps={{ min: 0 }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <Button variant="outlined" component="label" fullWidth sx={{ height: 56 }}>
-                  העלאת תמונת פרופיל
-                  <input hidden accept="image/*" type="file" onChange={handleFileChange} />
-                </Button>
-              </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="קישור לתמונה (אופציונלי)"
-                  value={profilePictureFile ? "" : form.profilePicture}
-                  onChange={(e) => {
-                    setProfilePictureFile(null);
-                    setPreviewUrl("");
-                    update("profilePicture")(e);
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
                   }}
-                  placeholder="https://..."
-                  helperText={
-                    profilePictureFile
-                      ? `נבחר קובץ: ${profilePictureFile.name}`
-                      : previewUrl
-                        ? "תצוגה מקדימה מוכנה"
-                        : ""
-                  }
-                />
+                >
+                  <UserAvatar user={form} src={previewUrl || undefined} size={80} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Button variant="outlined" component="label">
+                      העלאת תמונת פרופיל
+                      <input hidden accept="image/*" type="file" onChange={handleFileChange} />
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
+                      {profilePictureFile
+                        ? profilePictureFile.name
+                        : "לא נבחרה תמונה — יוצגו ראשי התיבות"}
+                    </Typography>
+                  </Box>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField

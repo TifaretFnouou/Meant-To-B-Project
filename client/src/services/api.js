@@ -60,9 +60,7 @@ export async function loginRequest(email, password) {
 }
 
 export async function registerRequest(formData) {
-  const { data } = await api.post("/auth/register", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await api.post("/auth/register", formData);
   return {
     user: normalizeUser(data.user),
     token: data.token,
@@ -88,9 +86,7 @@ export async function updateUserRequest(userId, payload) {
 export async function updateProfilePictureRequest(userId, file) {
   const formData = new FormData();
   formData.append("profilePicture", file);
-  const { data } = await api.put(`/users/${userId}/profile-picture`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await api.put(`/users/${userId}/profile-picture`, formData);
   return normalizeUser(data.user);
 }
 
