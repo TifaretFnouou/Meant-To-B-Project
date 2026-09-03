@@ -1,11 +1,13 @@
 import { createTheme } from "@mui/material";
 import { brand } from "./theme/brand";
 
-export function createAppTheme(direction = "rtl") {
+export function createAppTheme(direction = "rtl", mode = "light") {
+  const isDark = mode === "dark";
+
   return createTheme({
     direction,
     palette: {
-      mode: "light",
+      mode,
       primary: {
         main: brand.dustyRose,
         light: brand.peach,
@@ -23,23 +25,23 @@ export function createAppTheme(direction = "rtl") {
         contrastText: brand.charcoal,
       },
       background: {
-        default: brand.white,
-        paper: brand.glass,
+        default: isDark ? "#17131B" : brand.white,
+        paper: isDark ? "rgba(39, 32, 45, 0.94)" : brand.glass,
       },
       text: {
-        primary: brand.charcoal,
-        secondary: "rgba(59, 59, 59, 0.68)",
+        primary: isDark ? "#F8F2F7" : brand.charcoal,
+        secondary: isDark ? "rgba(248, 242, 247, 0.68)" : "rgba(59, 59, 59, 0.68)",
       },
-      divider: "rgba(211, 138, 155, 0.18)",
+      divider: isDark ? "rgba(245, 194, 180, 0.16)" : brand.dustyRoseSoft,
     },
     typography: {
       fontFamily:
         direction === "rtl"
           ? '"Rubik", "Arial", sans-serif'
           : '"Inter", "Rubik", sans-serif',
-      h3: { fontWeight: 800, letterSpacing: "-0.02em", color: brand.charcoal },
-      h5: { fontWeight: 700, color: brand.charcoal },
-      h6: { fontWeight: 600, color: brand.charcoal },
+      h3: { fontWeight: 800, letterSpacing: "-0.02em" },
+      h5: { fontWeight: 700 },
+      h6: { fontWeight: 600 },
       button: { fontWeight: 600 },
     },
     shape: { borderRadius: 16 },
@@ -47,9 +49,11 @@ export function createAppTheme(direction = "rtl") {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            background: `linear-gradient(160deg, ${brand.white} 0%, ${brand.yellowSoft} 35%, ${brand.peachSoft} 70%, ${brand.lavenderSoft} 100%)`,
+            background: isDark
+              ? "linear-gradient(160deg, #17131B 0%, #211A25 52%, #251C29 100%)"
+              : `linear-gradient(160deg, ${brand.white} 0%, ${brand.yellowSoft} 35%, ${brand.peachSoft} 70%, ${brand.lavenderSoft} 100%)`,
+            backgroundAttachment: "fixed",
             minHeight: "100vh",
-            color: brand.charcoal,
           },
         },
       },
@@ -90,20 +94,22 @@ export function createAppTheme(direction = "rtl") {
         styleOverrides: {
           root: {
             borderRadius: 20,
-            border: `1px solid ${brand.dustyRoseSoft}`,
+            border: `1px solid ${isDark ? "rgba(245,194,180,0.14)" : brand.dustyRoseSoft}`,
             backdropFilter: "blur(12px)",
-            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.82))`,
+            backgroundImage: isDark
+              ? "linear-gradient(135deg, rgba(47,39,53,0.96), rgba(34,28,39,0.92))"
+              : "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.82))",
           },
         },
       },
       MuiAppBar: {
         styleOverrides: {
           root: {
-            background: brand.glass,
+            background: isDark ? "rgba(28, 23, 32, 0.88)" : brand.glass,
             backdropFilter: "blur(16px)",
-            borderBottom: `1px solid ${brand.dustyRoseSoft}`,
-            color: brand.charcoal,
-            boxShadow: `0 4px 24px ${brand.peachSoft}`,
+            borderBottom: `1px solid ${isDark ? "rgba(245,194,180,0.14)" : brand.dustyRoseSoft}`,
+            color: isDark ? "#F8F2F7" : brand.charcoal,
+            boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.28)" : `0 4px 24px ${brand.peachSoft}`,
           },
         },
       },
@@ -121,7 +127,7 @@ export function createAppTheme(direction = "rtl") {
           root: {
             "& .MuiOutlinedInput-root": {
               borderRadius: 12,
-              backgroundColor: "rgba(255,255,255,0.85)",
+              backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.85)",
               "&:hover .MuiOutlinedInput-notchedOutline": {
                 borderColor: brand.peach,
               },
@@ -136,7 +142,7 @@ export function createAppTheme(direction = "rtl") {
         styleOverrides: {
           root: {
             borderRadius: 20,
-            border: `1px solid ${brand.dustyRoseSoft}`,
+            border: `1px solid ${isDark ? "rgba(245,194,180,0.14)" : brand.dustyRoseSoft}`,
             transition: "transform 0.25s ease, box-shadow 0.25s ease",
             "&:hover": {
               transform: "translateY(-4px)",
@@ -149,4 +155,4 @@ export function createAppTheme(direction = "rtl") {
   });
 }
 
-export default createAppTheme("rtl");
+export default createAppTheme("rtl", "light");

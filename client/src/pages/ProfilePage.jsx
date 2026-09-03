@@ -8,12 +8,12 @@ import {
   Grid,
   Autocomplete,
   Chip,
-  Avatar,
   Alert,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { useAdminConfig } from "../context/AdminConfigContext";
 import MainLayout from "../components/layout/MainLayout";
+import UserAvatar from "../components/common/UserAvatar";
 
 export default function ProfilePage() {
   const { currentUser, updateProfile } = useAuth();
@@ -59,20 +59,16 @@ export default function ProfilePage() {
   };
 
   const avatarSrc = previewUrl || form.profilePicture || undefined;
-  const initials = `${form.firstName?.[0] || ""}${form.lastName?.[0] || ""}`;
-
   return (
     <MainLayout>
-      <Paper sx={{ p: 4 }}>
+      <Paper sx={{ p: { xs: 2, sm: 4 } }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-          <Avatar src={avatarSrc} sx={{ width: 72, height: 72 }}>
-            {initials}
-          </Avatar>
-          <Box>
+          <UserAvatar user={form} src={avatarSrc} size={72} />
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant="h5" fontWeight={600}>
               הפרופיל שלי
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
               {form.email} 
             </Typography>
           </Box>

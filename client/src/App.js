@@ -13,6 +13,7 @@ import { RoleModeProvider } from "./context/RoleModeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { SchedulingProvider } from "./context/SchedulingContext";
 import { AdminConfigProvider } from "./context/AdminConfigContext";
+import { ThemeModeProvider, useThemeMode } from "./context/ThemeModeContext";
 import FeedbackReminder from "./components/feedback/FeedbackReminder";
 
 const cacheRtl = createCache({ key: "muirtl", stylisPlugins: [prefixer, rtlPlugin] });
@@ -20,7 +21,11 @@ const cacheLtr = createCache({ key: "muiltr" });
 
 function ThemedApp() {
   const { isRtl } = useLanguage();
-  const theme = useMemo(() => createAppTheme(isRtl ? "rtl" : "ltr"), [isRtl]);
+  const { mode } = useThemeMode();
+  const theme = useMemo(
+    () => createAppTheme(isRtl ? "rtl" : "ltr", mode),
+    [isRtl, mode]
+  );
   const cache = isRtl ? cacheRtl : cacheLtr;
 
   return (
@@ -49,9 +54,11 @@ function ThemedApp() {
 function App() {
   return (
     <LanguageProvider>
-      <StyledEngineProvider injectFirst>
-        <ThemedApp />
-      </StyledEngineProvider>
+      <ThemeModeProvider>
+        <StyledEngineProvider injectFirst>
+          <ThemedApp />
+        </StyledEngineProvider>
+      </ThemeModeProvider>
     </LanguageProvider>
   );
 }

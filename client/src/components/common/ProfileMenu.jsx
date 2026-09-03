@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Avatar,
   Box,
   Button,
   Chip,
@@ -24,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useRoleMode } from "../../context/RoleModeContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { brand } from "../../theme/brand";
+import UserAvatar from "./UserAvatar";
 
 export default function ProfileMenu() {
   const { currentUser, logout, isAdmin, isMentor } = useAuth();
@@ -35,7 +35,6 @@ export default function ProfileMenu() {
 
   if (!currentUser) return null;
 
-  const initials = `${currentUser.firstName?.[0] || ""}${currentUser.lastName?.[0] || ""}`;
   const isMenteeOnly = !isAdmin && !isMentor;
   const activeModeLabel = isAdmin
     ? t("mode.adminOnly")
@@ -73,18 +72,13 @@ export default function ProfileMenu() {
           transition: "border-color 0.2s ease",
         }}
       >
-        <Avatar
-          src={currentUser.profilePicture || undefined}
+        <UserAvatar
+          user={currentUser}
+          size={36}
           sx={{
-            width: 36,
-            height: 36,
-            bgcolor: brand.dustyRose,
             fontSize: "0.85rem",
-            fontWeight: 700,
           }}
-        >
-          {initials || <PersonOutlineIcon fontSize="small" />}
-        </Avatar>
+        />
       </IconButton>
 
       <Menu

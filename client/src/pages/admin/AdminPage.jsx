@@ -10,6 +10,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableContainer,
   Chip,
   TextField,
   Button,
@@ -21,6 +22,7 @@ import StatusBadge from "../../components/common/StatusBadge";
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
 import { useAdminConfig } from "../../context/AdminConfigContext";
+import { UserIdentity } from "../../components/common/UserAvatar";
 
 function TabPanel({ children, value, index }) {
   return value === index ? <Box sx={{ pt: 3 }}>{children}</Box> : null;
@@ -83,7 +85,8 @@ export default function AdminPage() {
       </Tabs>
 
       <TabPanel value={tab} index={0}>
-        <Table>
+        <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+        <Table sx={{ minWidth: 680 }}>
           <TableHead>
             <TableRow>
               <TableCell>שם</TableCell>
@@ -97,7 +100,7 @@ export default function AdminPage() {
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  {u.firstName} {u.lastName}
+                  <UserIdentity user={u} avatarSize={34} />
                 </TableCell>
                 <TableCell>{u.email}</TableCell>
                 <TableCell>
@@ -111,10 +114,12 @@ export default function AdminPage() {
             ))}
           </TableBody>
         </Table>
+        </TableContainer>
       </TabPanel>
 
       <TabPanel value={tab} index={1}>
-        <Table>
+        <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+        <Table sx={{ minWidth: 720 }}>
           <TableHead>
             <TableRow>
               <TableCell>מנטורית</TableCell>
@@ -131,10 +136,10 @@ export default function AdminPage() {
               return (
                 <TableRow key={s.id}>
                   <TableCell>
-                    {mentor?.firstName} {mentor?.lastName}
+                    <UserIdentity user={mentor} avatarSize={32} />
                   </TableCell>
                   <TableCell>
-                    {mentee?.firstName} {mentee?.lastName}
+                    <UserIdentity user={mentee} avatarSize={32} />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={s.status} schedulingState={s.schedulingState} />
@@ -152,6 +157,7 @@ export default function AdminPage() {
             })}
           </TableBody>
         </Table>
+        </TableContainer>
       </TabPanel>
 
       <TabPanel value={tab} index={2}>

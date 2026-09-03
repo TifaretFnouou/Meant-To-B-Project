@@ -12,6 +12,10 @@ export const he = {
     register: "הרשמה",
     logout: "יציאה",
   },
+  theme: {
+    useDark: "מעבר למצב כהה",
+    useLight: "מעבר למצב בהיר",
+  },
   home: {
     title: "Meant To B",
     subtitle: "פלטפורמת מנטורינג לקהילת המפתחות",
@@ -241,6 +245,10 @@ export const en = {
     login: "Login",
     register: "Sign Up",
     logout: "Logout",
+  },
+  theme: {
+    useDark: "Switch to dark mode",
+    useLight: "Switch to light mode",
   },
   home: {
     title: "Meant To B",

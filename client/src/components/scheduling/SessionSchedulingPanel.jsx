@@ -16,6 +16,7 @@ import { useScheduling } from "../../context/SchedulingContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { formatDateTime, isSameSlot, startOfWeek } from "../../utils/calendar";
 import { toCalendarEvents } from "../../services/appointmentService";
+import UserAvatar from "../common/UserAvatar";
 
 export default function SessionSchedulingPanel({ session, mentor, mentee }) {
   const { currentUser } = useAuth();
@@ -54,6 +55,7 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
   const otherName = isMentor
     ? `${mentee?.firstName || ""} ${mentee?.lastName || ""}`.trim()
     : `${mentor?.firstName || ""} ${mentor?.lastName || ""}`.trim();
+  const otherUser = isMentor ? mentee : mentor;
 
   const calendarEvents = useMemo(
     () => toCalendarEvents([session]),
@@ -102,10 +104,13 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
 
   return (
     <Paper sx={{ p: 3, mb: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
-        <Typography variant="h6" fontWeight={700}>
-          {isMentor ? t("calendar.requestFrom", { name: otherName }) : t("calendar.sessionWith", { name: otherName })}
-        </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 1, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+          <UserAvatar user={otherUser} size={42} />
+          <Typography variant="h6" fontWeight={700}>
+            {isMentor ? t("calendar.requestFrom", { name: otherName }) : t("calendar.sessionWith", { name: otherName })}
+          </Typography>
+        </Box>
         <StatusBadge status={session.status} schedulingState={state} />
       </Box>
 
