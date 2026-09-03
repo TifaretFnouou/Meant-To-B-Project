@@ -68,7 +68,7 @@ export default function HomePage() {
 
         <Box
           component="img"
-          src="/logo.png"
+          src="/logoW.png"
           alt={t("home.title")}
           sx={{
             width: { xs: 88, md: 112 },

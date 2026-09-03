@@ -40,7 +40,7 @@ export default function MainLayout({ children }) {
             >
               <Box
                 component="img"
-                src="/logo.png"
+                src="/logoW.png"
                 alt={t("nav.brand")}
                 sx={{
                   width: 64,
