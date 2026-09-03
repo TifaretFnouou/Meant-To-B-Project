@@ -28,7 +28,7 @@ const nestedProfileFields = {
     "maxSessions",
     "sessionLengthMinutes",
   ],
-  menteeProfile: ["isActive", "MenteeGoals"],
+  menteeProfile: ["isActive", "menteeGoals"],
 };
 
 export async function updateUser(userId, updateData, actor = {}) {

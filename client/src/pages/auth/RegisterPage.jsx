@@ -43,7 +43,7 @@ export default function RegisterPage() {
     yearsOfExperience: 0,
     githubUrl: "",
     linkedinUrl: "",
-    MenteeGoals: "",
+    menteeGoals: "",
   });
 
   const update = (field) => (e) =>

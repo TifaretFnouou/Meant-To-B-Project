@@ -71,7 +71,7 @@ const userSchema = new Schema(
         type: Boolean,
         default: true,
       },
-      MenteeGoals: {
+      menteeGoals: {
         type: String,
         trim: true,
       },

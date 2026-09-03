@@ -114,7 +114,7 @@ export function AuthProvider({ children }) {
         profilePictureFile,
         techStack = [],
         roles,
-        MenteeGoals,
+        menteeGoals,
         yearsOfExperience,
         ...rest
       } = payload;
@@ -129,8 +129,8 @@ export function AuthProvider({ children }) {
       formData.append("yearsOfExperience", String(Number(yearsOfExperience) || 0));
       formData.append("techStack", JSON.stringify(techStack));
       formData.append("roles", JSON.stringify(roles || [ROLES.MENTEE]));
-      if (MenteeGoals) {
-        formData.append("MenteeGoals", MenteeGoals);
+      if (menteeGoals) {
+        formData.append("menteeGoals", menteeGoals);
       }
 
       if (profilePictureFile instanceof File) {

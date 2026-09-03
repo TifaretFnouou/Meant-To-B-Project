@@ -82,9 +82,9 @@ export async function registerUser(body, file) {
   }
 
   const menteeGoals =
-    body.MenteeGoals ||
     body.menteeGoals ||
-    body?.menteeProfile?.MenteeGoals ||
+    body.menteeGoals ||
+    body?.menteeProfile?.menteeGoals ||
     "";
 
   const newUser = new UserModel({
@@ -103,7 +103,7 @@ export async function registerUser(body, file) {
     roles,
     menteeProfile: {
       isActive: true,
-      MenteeGoals: menteeGoals,
+      menteeGoals: menteeGoals,
     },
   });
 

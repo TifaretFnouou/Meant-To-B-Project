@@ -176,7 +176,7 @@ export const he = {
     yearsOfExperience: "שנות ניסיון",
     uploadPhoto: "העלאת תמונה",
     photoUrl: "קישור לתמונה",
-    MenteeGoals: "מטרות למידה",
+    menteeGoals: "מטרות למידה",
     save: "שמירת שינויים",
   },
   admin: {
@@ -410,7 +410,7 @@ export const en = {
     yearsOfExperience: "Years of Experience",
     uploadPhoto: "Upload Photo",
     photoUrl: "Photo URL",
-    MenteeGoals: "Mentee Goals",
+    menteeGoals: "Mentee Goals",
     save: "Save Changes",
   },
   admin: {

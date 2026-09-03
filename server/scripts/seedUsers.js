@@ -158,7 +158,7 @@ const seedUsers = [
     yearsOfExperience: 1,
     menteeProfile: {
       isActive: true,
-      MenteeGoals: "להתכונן לראיונות עבודה ולשפר React",
+      menteeGoals: "להתכונן לראיונות עבודה ולשפר React",
     },
   },
   {
@@ -180,7 +180,7 @@ const seedUsers = [
     },
     menteeProfile: {
       isActive: true,
-      MenteeGoals: "ללמוד System Design ולהתקדם לתפקיד Senior",
+      menteeGoals: "ללמוד System Design ולהתקדם לתפקיד Senior",
     },
   },
 ];
