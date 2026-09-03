@@ -20,6 +20,17 @@ function parseList(value) {
   return [value].filter(Boolean);
 }
 
+const nestedProfileFields = {
+  mentorProfile: [
+    "isActive",
+    "bio",
+    "topics",
+    "maxSessions",
+    "sessionLengthMinutes",
+  ],
+  menteeProfile: ["isActive", "MenteeGoals"],
+};
+
 export async function updateUser(userId, updateData, actor = {}) {
   const allowedFields = [
     "firstName",
@@ -62,6 +73,19 @@ export async function updateUser(userId, updateData, actor = {}) {
         throw Object.assign(new Error("Invalid role value"), { status: 400 });
       }
       filteredData.roles = roles;
+      continue;
+    }
+
+    if (nestedProfileFields[field]) {
+      const profile = updateData[field];
+      if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
+        throw Object.assign(new Error(`Invalid ${field}`), { status: 400 });
+      }
+
+      for (const nestedField of nestedProfileFields[field]) {
+        if (profile[nestedField] === undefined) continue;
+        filteredData[`${field}.${nestedField}`] = profile[nestedField];
+      }
       continue;
     }
 

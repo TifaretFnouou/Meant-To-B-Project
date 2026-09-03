@@ -9,23 +9,59 @@ import {
   Autocomplete,
   Chip,
   Alert,
+  CircularProgress,
+  Divider,
+  MenuItem,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { useAdminConfig } from "../context/AdminConfigContext";
 import MainLayout from "../components/layout/MainLayout";
 import UserAvatar from "../components/common/UserAvatar";
+import { ROLES, SESSION_LENGTHS } from "../constants";
+
+function createForm(user) {
+  return {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    company: user?.company || "",
+    jobTitle: user?.jobTitle || "",
+    techStack: user?.techStack || [],
+    yearsOfExperience: user?.yearsOfExperience || 0,
+    githubUrl: user?.githubUrl || "",
+    linkedinUrl: user?.linkedinUrl || "",
+    profilePicture: user?.profilePicture || "",
+    mentorProfile: {
+      isActive: user?.mentorProfile?.isActive !== false,
+      bio: user?.mentorProfile?.bio || "",
+      topics: user?.mentorProfile?.topics || [],
+      maxSessions: user?.mentorProfile?.maxSessions || 2,
+      sessionLengthMinutes: user?.mentorProfile?.sessionLengthMinutes || 60,
+    },
+    menteeProfile: {
+      isActive: user?.menteeProfile?.isActive !== false,
+      MenteeGoals: user?.menteeProfile?.MenteeGoals || "",
+    },
+  };
+}
 
 export default function ProfilePage() {
   const { currentUser, updateProfile } = useAuth();
-  const { techStack } = useAdminConfig();
+  const { techStack, adviceTopics } = useAdminConfig();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [topicsError, setTopicsError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [profilePictureFile, setProfilePictureFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [form, setForm] = useState({ ...currentUser });
+  const [form, setForm] = useState(() => createForm(currentUser));
+  const roles = currentUser?.roles || [];
+  const isMentor = roles.includes(ROLES.MENTOR);
+  const isMentee = roles.includes(ROLES.MENTEE);
 
   useEffect(() => {
-    setForm({ ...currentUser });
+    setForm(createForm(currentUser));
     setProfilePictureFile(null);
     setPreviewUrl("");
   }, [currentUser]);
@@ -49,18 +85,54 @@ export default function ProfilePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSaved(false);
+
+    if (isMentor && form.mentorProfile.topics.length === 0) {
+      setTopicsError("Please select at least one area of expertise");
+      return;
+    }
+
+    setTopicsError("");
+    setLoading(true);
     try {
-      await updateProfile({
-        ...form,
+      const payload = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone,
+        company: form.company,
+        jobTitle: form.jobTitle,
+        techStack: form.techStack,
         yearsOfExperience: Number(form.yearsOfExperience) || 0,
+        githubUrl: form.githubUrl,
+        linkedinUrl: form.linkedinUrl,
         profilePictureFile,
-      });
+      };
+
+      if (isMentor) {
+        payload.mentorProfile = {
+          ...currentUser.mentorProfile,
+          ...form.mentorProfile,
+          maxSessions: Number(form.mentorProfile.maxSessions),
+          sessionLengthMinutes: Number(form.mentorProfile.sessionLengthMinutes),
+        };
+      }
+
+      if (isMentee) {
+        payload.menteeProfile = {
+          ...currentUser.menteeProfile,
+          ...form.menteeProfile,
+        };
+      }
+
+      await updateProfile(payload);
       setProfilePictureFile(null);
       setPreviewUrl("");
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,7 +154,7 @@ export default function ProfilePage() {
 
         {saved && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            הפרופיל עודכן בהצלחה
+            Profile updated successfully
           </Alert>
         )}
         {error && (
@@ -98,6 +170,12 @@ export default function ProfilePage() {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="שם משפחה" value={form.lastName || ""} onChange={update("lastName")} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth disabled label="Email" value={form.email} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="טלפון" value={form.phone} onChange={update("phone")} />
             </Grid>
             <Grid item xs={12}>
               <Autocomplete
@@ -148,29 +226,144 @@ export default function ProfilePage() {
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="LinkedIn" value={form.linkedinUrl || ""} onChange={update("linkedinUrl")} />
             </Grid>
-            {form.menteeProfile && (
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="מטרות למידה"
-                  value={form.menteeProfile.MenteeGoals || ""}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      menteeProfile: {
-                        ...prev.menteeProfile,
-                        MenteeGoals: e.target.value,
-                      },
-                    }))
-                  }
-                />
-              </Grid>
+
+            {isMentee && (
+              <>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="h6">פרטי חניכה</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="מטרות למידה"
+                    value={form.menteeProfile.MenteeGoals}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        menteeProfile: {
+                          ...prev.menteeProfile,
+                          MenteeGoals: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Grid>
+              </>
+            )}
+
+            {isMentor && (
+              <>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="h6">פרטי מנטורינג</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    required
+                    label="רקע מקצועי"
+                    value={form.mentorProfile.bio}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        mentorProfile: {
+                          ...prev.mentorProfile,
+                          bio: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    options={adviceTopics}
+                    value={form.mentorProfile.topics}
+                    onChange={(_, value) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        mentorProfile: {
+                          ...prev.mentorProfile,
+                          topics: value,
+                        },
+                      }));
+                      if (value.length > 0) setTopicsError("");
+                    }}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => (
+                        <Chip label={option} {...getTagProps({ index })} key={option} />
+                      ))
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="תחומי ייעוץ *"
+                        error={Boolean(topicsError)}
+                        helperText={topicsError}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    required
+                    type="number"
+                    label="מכסת פגישות"
+                    value={form.mentorProfile.maxSessions}
+                    inputProps={{ min: 1, max: 10 }}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        mentorProfile: {
+                          ...prev.mentorProfile,
+                          maxSessions: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    select
+                    required
+                    label="אורך פגישה (דקות)"
+                    value={form.mentorProfile.sessionLengthMinutes}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        mentorProfile: {
+                          ...prev.mentorProfile,
+                          sessionLengthMinutes: e.target.value,
+                        },
+                      }))
+                    }
+                  >
+                    {SESSION_LENGTHS.map((length) => (
+                      <MenuItem key={length} value={length}>
+                        {length} דקות
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </>
             )}
           </Grid>
-          <Button type="submit" variant="contained" sx={{ mt: 3 }}>
-            שמירת שינויים
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+            sx={{ mt: 3 }}
+          >
+            {loading ? "Saving..." : "שמירת שינויים"}
           </Button>
         </Box>
       </Paper>

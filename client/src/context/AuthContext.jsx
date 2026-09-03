@@ -172,12 +172,13 @@ export function AuthProvider({ children }) {
       }
 
       if (profilePictureFile instanceof File) {
-        updated = await updateProfilePictureRequest(
+        await updateProfilePictureRequest(
           currentUser.id,
           profilePictureFile
         );
       }
 
+      updated = await fetchMe();
       setCurrentUser(updated);
       persistUser(updated);
       setUsers((prev) => {

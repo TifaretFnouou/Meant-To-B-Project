@@ -10,6 +10,7 @@ import {
   Chip,
   MenuItem,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate, Navigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
@@ -26,6 +27,10 @@ export default function BecomeMentorPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const existing = currentUser?.mentorProfile;
+  const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [topicsError, setTopicsError] = useState("");
 
   const [form, setForm] = useState({
     bio: existing?.bio || "",
@@ -44,6 +49,16 @@ export default function BecomeMentorPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSaved(false);
+
+    if (form.topics.length === 0) {
+      setTopicsError("Please select at least one area of expertise");
+      return;
+    }
+
+    setTopicsError("");
+    setLoading(true);
     const isNewMentor = !currentUser.roles.includes(ROLES.MENTOR);
     const roles = isNewMentor
       ? [...currentUser.roles, ROLES.MENTOR]
@@ -53,6 +68,7 @@ export default function BecomeMentorPage() {
       await updateProfile({
         roles,
         mentorProfile: {
+          ...currentUser.mentorProfile,
           isActive: true,
           ...form,
           maxSessions: Number(form.maxSessions),
@@ -66,9 +82,12 @@ export default function BecomeMentorPage() {
         return;
       }
 
-      navigate(isMentorMode ? "/sessions" : "/mentors");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,6 +101,16 @@ export default function BecomeMentorPage() {
         <Alert severity="info" sx={{ mb: 3 }}>
           מלאי את פרטי המנטורינג שלך — הן יוצגו בקטלוג המנטוריות
         </Alert>
+        {saved && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Profile updated successfully
+          </Alert>
+        )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={2}>
@@ -102,14 +131,22 @@ export default function BecomeMentorPage() {
                 freeSolo
                 options={adviceTopics}
                 value={form.topics}
-                onChange={(_, v) => setForm((p) => ({ ...p, topics: v }))}
+                onChange={(_, v) => {
+                  setForm((p) => ({ ...p, topics: v }));
+                  if (v.length > 0) setTopicsError("");
+                }}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
                     <Chip label={option} {...getTagProps({ index })} key={option} />
                   ))
                 }
                 renderInput={(params) => (
-                  <TextField {...params} required label="תחומי ייעוץ" />
+                  <TextField
+                    {...params}
+                    label="תחומי ייעוץ *"
+                    error={Boolean(topicsError)}
+                    helperText={topicsError}
+                  />
                 )}
               />
             </Grid>
@@ -143,8 +180,14 @@ export default function BecomeMentorPage() {
               </TextField>
             </Grid>
           </Grid>
-          <Button type="submit" variant="contained" sx={{ mt: 3 }}>
-            שמירה
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+            sx={{ mt: 3 }}
+          >
+            {loading ? "Saving..." : "שמירה"}
           </Button>
         </Box>
       </Paper>
