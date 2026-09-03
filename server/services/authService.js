@@ -50,6 +50,7 @@ export function sanitizeUser(user) {
   }
   const obj = user.toObject ? user.toObject() : { ...user };
   delete obj.password;
+  
   obj.id = String(obj._id || obj.id);
   return obj;
 }
@@ -58,22 +59,14 @@ export async function registerUser(body, file) {
   const email = String(body.email || "")
     .trim()
     .toLowerCase();
-  const username = String(body.username || "")
-    .trim()
-    .toLowerCase();
 
-  if (!username) {
-    throw Object.assign(new Error("Username is required"), { status: 400 });
+  if (!email) {
+    throw Object.assign(new Error("Email is required"), { status: 400 });
   }
 
   const existingEmail = await UserModel.findOne({ email });
   if (existingEmail) {
     throw Object.assign(new Error("Email already registered"), { status: 400 });
-  }
-
-  const existingUsername = await UserModel.findOne({ username });
-  if (existingUsername) {
-    throw Object.assign(new Error("Username already taken"), { status: 400 });
   }
 
   let roles = parseList(body.roles);
@@ -103,7 +96,6 @@ export async function registerUser(body, file) {
   const newUser = new UserModel({
     firstName: body.firstName,
     lastName: body.lastName,
-    username,
     email,
     password: body.password,
     profilePicture,
@@ -131,19 +123,17 @@ export async function registerUser(body, file) {
 }
 
 export async function loginUser(body) {
-  const identifier = String(body.email || body.username || body.identifier || "")
+  const email = String(body.email || "")
     .trim()
     .toLowerCase();
 
-  if (!identifier) {
-    throw Object.assign(new Error("Email or username is required"), {
+  if (!email) {
+    throw Object.assign(new Error("Email is required"), {
       status: 400,
     });
   }
 
-  const user = await UserModel.findOne({
-    $or: [{ email: identifier }, { username: identifier }],
-  });
+  const user = await UserModel.findOne({ email });
 
   if (!user) {
     throw Object.assign(new Error("User not found"), { status: 400 });

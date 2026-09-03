@@ -8,7 +8,6 @@ const seedUsers = [
   {
     email: "admin@queenb.com",
     password: "Admin123!",
-    username: "admin",
     firstName: "שרה",
     lastName: "כהן",
     roles: ["admin"],
@@ -20,7 +19,6 @@ const seedUsers = [
   {
     email: "mentor@queenb.com",
     password: "Mentor123!",
-    username: "dana_mentor",
     firstName: "דנה",
     lastName: "לוי",
     roles: ["mentor"],
@@ -41,7 +39,6 @@ const seedUsers = [
   {
     email: "yael_backend@queenb.com",
     password: "Mentor123!",
-    username: "yael_backend",
     firstName: "יעל",
     lastName: "אברהם",
     roles: ["mentor"],
@@ -62,7 +59,6 @@ const seedUsers = [
   {
     email: "michal_devops@queenb.com",
     password: "Mentor123!",
-    username: "michal_devops",
     firstName: "מיכל",
     lastName: "פרץ",
     roles: ["mentor"],
@@ -82,7 +78,6 @@ const seedUsers = [
   {
     email: "shira_startup@queenb.com",
     password: "Mentor123!",
-    username: "shira_startup",
     firstName: "שירה",
     lastName: "גבע",
     roles: ["mentor"],
@@ -101,7 +96,6 @@ const seedUsers = [
   {
     email: "roni_mobile@queenb.com",
     password: "Mentor123!",
-    username: "roni_mobile",
     firstName: "רוני",
     lastName: "שמש",
     roles: ["mentor"],
@@ -120,7 +114,6 @@ const seedUsers = [
   {
     email: "liat_data@queenb.com",
     password: "Mentor123!",
-    username: "liat_data",
     firstName: "ליאת",
     lastName: "ברק",
     roles: ["mentor"],
@@ -139,7 +132,6 @@ const seedUsers = [
   {
     email: "inactive_mentor@queenb.com",
     password: "Mentor123!",
-    username: "inactive_mentor",
     firstName: "Inactive",
     lastName: "Mentor",
     roles: ["mentor"],
@@ -158,7 +150,6 @@ const seedUsers = [
   {
     email: "mentee@queenb.com",
     password: "Mentee123!",
-    username: "noa_dev",
     firstName: "נועה",
     lastName: "מזרחי",
     roles: ["mentee"],
@@ -173,7 +164,6 @@ const seedUsers = [
   {
     email: "dual@queenb.com",
     password: "Dual123!",
-    username: "tamar_dual",
     firstName: "תמר",
     lastName: "לוי",
     roles: ["mentee", "mentor"],

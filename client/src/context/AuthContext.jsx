@@ -94,9 +94,9 @@ export function AuthProvider({ children }) {
     };
   }, [refreshUsers]);
 
-  const login = async (identifier, password) => {
+  const login = async (email, password) => {
     try {
-      const { user, token } = await loginRequest(identifier, password);
+      const { user, token } = await loginRequest(email, password);
       setStoredToken(token);
       setCurrentUser(user);
       persistUser(user);
@@ -163,7 +163,6 @@ export function AuthProvider({ children }) {
         id,
         _id,
         email,
-        username,
         createdAt,
         updatedAt,
         __v,

@@ -10,7 +10,10 @@ import {
   Grid,
   Autocomplete,
   Chip,
+  InputAdornment,
 } from "@mui/material";
+import PasswordRequirementsInfo from "../../components/common/PasswordRequirementsInfo";
+import PasswordVisibilityToggle from "../../components/common/PasswordVisibilityToggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminConfig } from "../../context/AdminConfigContext";
@@ -27,10 +30,10 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [profilePictureFile, setProfilePictureFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
-    username: "",
     firstName: "",
     lastName: "",
     techStack: [],
@@ -108,15 +111,6 @@ export default function RegisterPage() {
                 <TextField
                   fullWidth
                   required
-                  label="שם משתמשת *"
-                  value={form.username}
-                  onChange={update("username")}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
                   label="שם פרטי *"
                   value={form.firstName}
                   onChange={update("firstName")}
@@ -136,9 +130,20 @@ export default function RegisterPage() {
                   fullWidth
                   required
                   label="סיסמה *"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={update("password")}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <PasswordVisibilityToggle
+                          visible={showPassword}
+                          onToggle={() => setShowPassword((prev) => !prev)}
+                        />
+                        <PasswordRequirementsInfo />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
                 <PasswordStrengthIndicator password={form.password} />
               </Grid>

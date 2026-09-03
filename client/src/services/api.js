@@ -48,9 +48,9 @@ export function getErrorMessage(error, fallback = "Something went wrong") {
   );
 }
 
-export async function loginRequest(identifier, password) {
+export async function loginRequest(email, password) {
   const { data } = await api.post("/auth/login", {
-    email: identifier,
+    email,
     password,
   });
   return {

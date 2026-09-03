@@ -73,7 +73,7 @@ export default function ProfilePage() {
               הפרופיל שלי
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {form.email} · @{form.username}
+              {form.email} 
             </Typography>
           </Box>
         </Box>

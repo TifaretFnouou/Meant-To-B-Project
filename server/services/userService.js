@@ -138,8 +138,11 @@ export async function getUser(userId) {
 
 export async function getAllUsers() {
   const users = await UserModel.find({}, { password: 0 }).lean();
-  return users.map((user) => ({
-    ...user,
-    id: String(user._id),
-  }));
+  return users.map((user) => {
+    const { password, ...rest } = user;
+    return {
+      ...rest,
+      id: String(user._id),
+    };
+  });
 }
