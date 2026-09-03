@@ -33,7 +33,7 @@ export default function HomePage() {
     <MainLayout>
       <Paper
         sx={{
-          p: { xs: 4, md: 7 },
+          p: { xs: 3, sm: 4, md: 7 },
           mb: 4,
           textAlign: "center",
           position: "relative",
@@ -68,7 +68,7 @@ export default function HomePage() {
 
         <Box
           component="img"
-          src="/logo.png"
+          src="/logoW.png"
           alt={t("home.title")}
           sx={{
             width: { xs: 88, md: 112 },
@@ -79,7 +79,13 @@ export default function HomePage() {
           }}
         />
 
-        <Typography variant="h3" component="h1" gutterBottom fontWeight={800} sx={{ color: brand.charcoal }}>
+        <Typography
+          variant="h3"
+          component="h1"
+          gutterBottom
+          fontWeight={800}
+          sx={{ color: brand.charcoal, fontSize: { xs: "2.15rem", sm: "3rem" } }}
+        >
           {t("home.title")}
         </Typography>
         <Typography variant="h6" sx={{ mb: 4, opacity: 0.85, maxWidth: 560, mx: "auto", color: brand.charcoal }}>
@@ -91,7 +97,7 @@ export default function HomePage() {
             <Typography variant="body1" sx={{ mb: 3, fontSize: "1.1rem" }}>
               {t("home.greeting", { name: currentUser.firstName })}
             </Typography>
-            <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
+            <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
               {isAdmin ? (
                 <Button
                   variant="contained"
@@ -134,7 +140,7 @@ export default function HomePage() {
             </Stack>
           </Box>
         ) : (
-          <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
+          <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
             <Button
               variant="contained"
               color="primary"

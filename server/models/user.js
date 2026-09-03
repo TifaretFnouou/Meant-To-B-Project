@@ -2,85 +2,98 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import validator from "validator";
 
-const userSchema = new Schema({
+const userSchema = new Schema(
+  {
     firstName: {
-        type: String,
-        required: [true, 'First name is mandatory'],
-        minlength: [2, 'First name must be at least 2 characters'],
-        maxlength: [20, 'First name must be less than 20 characters']
-      },
-      lastName: {
-        type: String,
-        required: [true, 'Last name is mandatory'],
-        minlength: [2, 'Last name must be at least 2 characters'],
-        maxlength: [20, 'Last name must be less than 20 characters']
-      },
+      type: String,
+      required: [true, "First name is mandatory"],
+      minlength: [2, "First name must be at least 2 characters"],
+      maxlength: [20, "First name must be less than 20 characters"],
+    },
+    lastName: {
+      type: String,
+      required: [true, "Last name is mandatory"],
+      minlength: [2, "Last name must be at least 2 characters"],
+      maxlength: [20, "Last name must be less than 20 characters"],
+    },
     email: {
       type: String,
-      required: [true, 'Email is mandatory'],
-      unique: true, 
+      required: [true, "Email is mandatory"],
+      unique: true,
       lowercase: true,
       trim: true,
-      validate: [validator.isEmail, 'Please provide a valid email']
+      validate: [validator.isEmail, "Please provide a valid email"],
     },
     password: {
       type: String,
-      required: [true, 'Password is mandatory'],
-      minlength: [8, 'Password must be at least 8 characters'],
+      required: [true, "Password is mandatory"],
+      minlength: [8, "Password must be at least 8 characters"],
     },
     profilePicture: {
       type: String,
-      default: ''
-    //   default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLEbvtpxDZxzv9A4IyPBJTg1OWcX0w7Sp1spex14xeXNOmLlt_vyUR7DU&s=10"
+      default: "",
     },
-    company: { type: String, default: '' }, // company name
-    jobTitle: { type: String, default: '' }, // job title
-    techStack: [{ type: String }], // tech stack
+    company: { type: String, default: "" },
+    jobTitle: { type: String, default: "" },
+    techStack: [{ type: String }],
     yearsOfExperience: {
+      type: Number,
+      default: 0,
+      min: [0, "Years of experience cannot be negative"],
+    },
+    githubUrl: { type: String, default: "" },
+    linkedinUrl: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    roles: [
+      {
+        type: String,
+        enum: ["admin", "mentor", "mentee"],
+      },
+    ],
+    mentorProfile: {
+      isActive: { type: Boolean, default: true },
+      bio: { type: String, trim: true },
+      topics: [String],
+      maxSessions: {
         type: Number,
         default: 0,
-        min: [0, 'Years of experience cannot be negative']
+        min: [0, "Max sessions cannot be negative"],
+        max: [10, "Max sessions cannot be more than 10"],
       },
-    githubUrl: { type: String, default: '' }, // github url
-    linkedinUrl: { type: String, default: '' }, // linkedin url
-    phone: { type: String, default: '' }, 
+      sessionLengthMinutes: {
+        type: Number,
+        default: 45,
+        enum: [45, 60, 90],
+      },
+    },
+    menteeProfile: {
+      isActive: {
+        type: Boolean,
+        default: true,
+      },
+      menteeGoals: {
+        type: String,
+        trim: true,
+      },
+    },
+  },
+  { timestamps: true }
+);
 
-        // User roles 
-        roles: [ { type: String, enum: ["admin", "mentor", "mentee"], }, ], 
-        // Mentor profile:
-         mentorProfile: { isActive: { type: Boolean, default: true, }, 
-         bio: { type: String, trim: true, }, 
-         topics: [String], 
-         maxSessions: { type: Number, default: 0, min: [0, "Max sessions cannot be negative"], max: [10, "Max sessions cannot be more than 10"], }, 
-         sessionLengthMinutes: { type: Number, default: 45, enum: [45, 60, 90], }, },
-         
-         menteeProfile: {
-            isActive: {
-              type: Boolean,
-              default: true,
-            },
-          
-            MenteeGoals: {
-              type: String,
-              trim: true,
-            },
-          },
-          
-          }, 
-          
-          { timestamps: true } 
-          );
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
+});
 
-  // Hash password before saving 
-  userSchema.pre("save", async function () {
-    if (!this.isModified("password")) return;
-    this.password = await bcrypt.hash(this.password, 10);
-  });
-   
-    // Compare password 
-    userSchema.methods.comparePassword = async function (candidatePassword) 
-    { return bcrypt.compare(candidatePassword, this.password); }; 
-    
-    export default mongoose.model("user", userSchema);
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
-  
+userSchema.methods.toSafeObject = function () {
+  const obj = this.toObject({ virtuals: false });
+  delete obj.password;
+  obj.id = String(obj._id);
+  return obj;
+};
+
+export default mongoose.model("user", userSchema);

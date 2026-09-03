@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Paper,
@@ -10,7 +10,10 @@ import {
   Grid,
   Autocomplete,
   Chip,
+  InputAdornment,
 } from "@mui/material";
+import PasswordRequirementsInfo from "../../components/common/PasswordRequirementsInfo";
+import PasswordVisibilityToggle from "../../components/common/PasswordVisibilityToggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminConfig } from "../../context/AdminConfigContext";
@@ -18,6 +21,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import MainLayout from "../../components/layout/MainLayout";
 import PasswordStrengthIndicator from "../../components/common/PasswordStrengthIndicator";
 import { isPasswordStrong } from "../../utils/passwordStrength";
+import UserAvatar from "../../components/common/UserAvatar";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -25,20 +29,21 @@ export default function RegisterPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
-    username: "",
     firstName: "",
     lastName: "",
     techStack: [],
     company: "",
     jobTitle: "",
     yearsOfExperience: 0,
-    profilePicture: "",
     githubUrl: "",
     linkedinUrl: "",
-    MenteeGoals: "",
+    menteeGoals: "",
   });
 
   const update = (field) => (e) =>
@@ -47,11 +52,15 @@ export default function RegisterPage() {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
-      setForm((prev) => ({ ...prev, profilePicture: reader.result }));
-    reader.readAsDataURL(file);
+    setProfilePictureFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,6 +75,7 @@ export default function RegisterPage() {
       await register({
         ...form,
         yearsOfExperience: Number(form.yearsOfExperience) || 0,
+        profilePictureFile,
       });
       navigate("/profile");
     } catch (err) {
@@ -107,15 +117,6 @@ export default function RegisterPage() {
                 <TextField
                   fullWidth
                   required
-                  label="שם משתמשת *"
-                  value={form.username}
-                  onChange={update("username")}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
                   label="שם פרטי *"
                   value={form.firstName}
                   onChange={update("firstName")}
@@ -135,9 +136,20 @@ export default function RegisterPage() {
                   fullWidth
                   required
                   label="סיסמה *"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={update("password")}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <PasswordVisibilityToggle
+                          visible={showPassword}
+                          onToggle={() => setShowPassword((prev) => !prev)}
+                        />
+                        <PasswordRequirementsInfo />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
                 <PasswordStrengthIndicator password={form.password} />
               </Grid>
@@ -187,20 +199,31 @@ export default function RegisterPage() {
                   inputProps={{ min: 0 }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <Button variant="outlined" component="label" fullWidth sx={{ height: 56 }}>
-                  העלאת תמונת פרופיל
-                  <input hidden accept="image/*" type="file" onChange={handleFileChange} />
-                </Button>
-              </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="קישור לתמונה (אופציונלי)"
-                  value={form.profilePicture.startsWith("data:") ? "" : form.profilePicture}
-                  onChange={update("profilePicture")}
-                  placeholder="https://..."
-                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 3,
+                  }}
+                >
+                  <UserAvatar user={form} src={previewUrl || undefined} size={80} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Button variant="outlined" component="label">
+                      העלאת תמונת פרופיל
+                      <input hidden accept="image/*" type="file" onChange={handleFileChange} />
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
+                      {profilePictureFile
+                        ? profilePictureFile.name
+                        : "לא נבחרה תמונה — יוצגו ראשי התיבות"}
+                    </Typography>
+                  </Box>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField

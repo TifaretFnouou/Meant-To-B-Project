@@ -8,7 +8,10 @@ import {
   Alert,
   Link,
   CircularProgress,
+  InputAdornment,
 } from "@mui/material";
+import PasswordRequirementsInfo from "../../components/common/PasswordRequirementsInfo";
+import PasswordVisibilityToggle from "../../components/common/PasswordVisibilityToggle";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -19,10 +22,11 @@ export default function LoginPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const from = location.state?.from?.pathname || "/";
 
@@ -31,7 +35,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const user = await login(identifier, password);
+      const user = await login(email, password);
       navigate(user.roles.includes("admin") ? "/admin" : from);
     } catch (err) {
       setError(err.message);
@@ -65,20 +69,32 @@ export default function LoginPage() {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label={t("auth.emailOrUsername")}
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              label={t("auth.email")}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               margin="normal"
               required
             />
             <TextField
               fullWidth
               label={t("auth.password")}
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               margin="normal"
               required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <PasswordVisibilityToggle
+                      visible={showPassword}
+                      onToggle={() => setShowPassword((prev) => !prev)}
+                    />
+                    <PasswordRequirementsInfo />
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               type="submit"

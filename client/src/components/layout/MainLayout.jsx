@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -6,7 +6,11 @@ import {
   Button,
   Box,
   Container,
+  IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -14,6 +18,7 @@ import NotificationBell from "../common/NotificationBell";
 import LanguageToggle from "../common/LanguageToggle";
 import ProfileMenu from "../common/ProfileMenu";
 import RoleModeSwitcher from "../common/RoleModeSwitcher";
+import ThemeToggle from "../common/ThemeToggle";
 import { useRoleMode } from "../../context/RoleModeContext";
 import { brand } from "../../theme/brand";
 
@@ -22,47 +27,75 @@ export default function MainLayout({ children }) {
   const { isMenteeMode, isMentorMode } = useRoleMode();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [mobileAnchor, setMobileAnchor] = useState(null);
+
+  const go = (path) => {
+    setMobileAnchor(null);
+    navigate(path);
+  };
+
+  const userNavigation = isAdmin
+    ? [{ label: t("nav.admin"), path: "/admin" }]
+    : [
+        { label: t("nav.mentors"), path: "/mentors" },
+        ...(isMenteeMode && !isMentor
+          ? [{ label: t("mentors.becomeMentor"), path: "/become-mentor" }]
+          : []),
+        {
+          label: isMentorMode ? t("nav.sessionsAsMentor") : t("nav.sessions"),
+          path: "/sessions",
+        },
+        { label: t("nav.calendar"), path: "/calendar" },
+      ];
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <AppBar position="sticky">
-        <Toolbar sx={{ gap: 1.5, flexWrap: "wrap", py: 1.5, minHeight: 80 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexShrink: 0 }}>
+        <Toolbar
+          sx={{
+            gap: { xs: 0.5, md: 1 },
+            flexWrap: "wrap",
+            py: { xs: 0.75, md: 1 },
+            px: { xs: 1.5, sm: 2.5 },
+            minHeight: { xs: 64, md: 72 },
+          }}
+        >
+          <Box
+            component="button"
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label={t("nav.brand")}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.75,
+              border: 0,
+              p: 0,
+              color: "inherit",
+              background: "transparent",
+              cursor: "pointer",
+              userSelect: "none",
+              flexShrink: 0,
+            }}
+          >
             <Box
-              onClick={() => navigate("/")}
+              component="img"
+              src="/logoW.png"
+              alt=""
+              sx={{ width: { xs: 46, md: 56 }, height: { xs: 46, md: 56 }, objectFit: "contain" }}
+            />
+            <Typography
+              variant="h6"
               sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                cursor: "pointer",
-                userSelect: "none",
+                display: { xs: "none", sm: "block" },
+                fontWeight: 800,
+                background: `linear-gradient(135deg, ${brand.peach}, ${brand.dustyRose})`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
               }}
             >
-              <Box
-                component="img"
-                src="/logo.png"
-                alt={t("nav.brand")}
-                sx={{
-                  width: 64,
-                  height: 64,
-                  objectFit: "contain",
-                  display: "block",
-                }}
-              />
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 800,
-                  background: `linear-gradient(135deg, ${brand.peach}, ${brand.dustyRose})`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  color: brand.charcoal,
-                }}
-              >
-                {t("nav.brand")}
-              </Typography>
-            </Box>
-            {currentUser && <ProfileMenu />}
+              {t("nav.brand")}
+            </Typography>
           </Box>
 
           {currentUser && !isAdmin && (
@@ -80,51 +113,63 @@ export default function MainLayout({ children }) {
             </Box>
           )}
 
-          {!(currentUser && !isAdmin) && <Box sx={{ flexGrow: 1 }} />}
+          {(!currentUser || isAdmin) && <Box sx={{ flexGrow: 1 }} />}
 
-          {currentUser ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap", ml: "auto" }}>
-              {isAdmin ? (
-                <>
-                  <RoleModeSwitcher />
-                  <Button color="inherit" onClick={() => navigate("/admin")}>
-                    {t("nav.admin")}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button color="inherit" onClick={() => navigate("/mentors")}>
-                    {t("nav.mentors")}
-                  </Button>
-                  {isMenteeMode && !isMentor && (
-                    <Button color="inherit" onClick={() => navigate("/become-mentor")}>
-                      {t("mentors.becomeMentor")}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <ThemeToggle />
+            {currentUser && <NotificationBell />}
+            {currentUser && <ProfileMenu />}
+
+            {currentUser ? (
+              <>
+                <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 0.25 }}>
+                  {isAdmin && <RoleModeSwitcher />}
+                  {userNavigation.map((item) => (
+                    <Button key={item.path} color="inherit" onClick={() => navigate(item.path)}>
+                      {item.label}
                     </Button>
-                  )}
-                  <Button color="inherit" onClick={() => navigate("/sessions")}>
-                    {isMentorMode ? t("nav.sessionsAsMentor") : t("nav.sessions")}
-                  </Button>
-                  <Button color="inherit" onClick={() => navigate("/calendar")}>
-                    {t("nav.calendar")}
-                  </Button>
-                </>
-              )}
-              <NotificationBell />
-            </Box>
-          ) : (
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", ml: "auto" }}>
-              <Button color="inherit" onClick={() => navigate("/login")}>
-                {t("nav.login")}
-              </Button>
-              <Button variant="contained" color="primary" onClick={() => navigate("/register")}>
-                {t("nav.register")}
-              </Button>
-            </Box>
-          )}
+                  ))}
+                </Box>
+                <IconButton
+                  color="inherit"
+                  onClick={(event) => setMobileAnchor(event.currentTarget)}
+                  aria-label="Open navigation"
+                  sx={{ display: { xs: "inline-flex", md: "none" } }}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Menu
+                  anchorEl={mobileAnchor}
+                  open={Boolean(mobileAnchor)}
+                  onClose={() => setMobileAnchor(null)}
+                >
+                  {userNavigation.map((item) => (
+                    <MenuItem key={item.path} onClick={() => go(item.path)}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </>
+            ) : (
+              <Box sx={{ display: "flex", gap: 0.5 }}>
+                <Button color="inherit" onClick={() => navigate("/login")} sx={{ px: { xs: 1, sm: 2 } }}>
+                  {t("nav.login")}
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => navigate("/register")}
+                  sx={{ px: { xs: 1.25, sm: 2.5 } }}
+                >
+                  {t("nav.register")}
+                </Button>
+              </Box>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4, pb: 10 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2.5, md: 4 }, pb: 10, px: { xs: 2, sm: 3 } }}>
         {children}
       </Container>
 

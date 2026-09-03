@@ -1,35 +1,21 @@
-
 import express from "express";
-
-const router = express.Router();
-
 import {
   deleteUserController,
   getUserController,
   getAllUsersController,
+  getUsersController,
   updateProfilePictureController,
   updateUserController,
 } from "../controllers/userController.js";
+import { parser } from "../config/cloudinary.js";
 
-import { cloudinary, parser } from "../config/cloudinary.js";
+const router = express.Router();
 
-// Update user profile
-router.put("/:id", updateUserController);
-
-// Update profile picture
-router.put(
-  "/:id/profile-picture",
-  parser.single("profilePicture"),
-  updateProfilePictureController
-);
-
-// Delete user
-router.delete("/:id", deleteUserController);
-
-// Admin: get all users
+router.get("/", getUsersController);
 router.get("/all", getAllUsersController);
-
-// Get user by ID
+router.put("/:id/profile-picture", parser.single("profilePicture"), updateProfilePictureController);
+router.put("/:id", updateUserController);
+router.delete("/:id", deleteUserController);
 router.get("/:id", getUserController);
 
 export default router;
