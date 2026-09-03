@@ -211,6 +211,16 @@ export const he = {
     additional_slots_proposed: "זמנים נוספים הוצעו",
     reschedule_requested: "תיאום מחדש",
   },
+  chat: {
+    title: "עוזרת חכמה",
+    subtitle: "Meant To B Assistant",
+    open: "פתיחת צ'אט",
+    close: "סגירת צ'אט",
+    placeholder: "כתבי כאן הודעה...",
+    send: "שליחה",
+    typing: "הבוט מקליד...",
+    fallback: "יש כרגע תקלה זמנית. אפשר לנסות שוב בעוד רגע.",
+  },
   common: {
     loading: "טוען...",
     error: "שגיאה",
@@ -435,6 +445,16 @@ export const en = {
     additional_slots_requested: "More Slots Requested",
     additional_slots_proposed: "Additional Slots Proposed",
     reschedule_requested: "Reschedule",
+  },
+  chat: {
+    title: "Smart Assistant",
+    subtitle: "Meant To B Assistant",
+    open: "Open chat",
+    close: "Close chat",
+    placeholder: "Type your message...",
+    send: "Send",
+    typing: "Assistant is typing...",
+    fallback: "Temporary issue right now. Please try again in a moment.",
   },
   common: {
     loading: "Loading...",
