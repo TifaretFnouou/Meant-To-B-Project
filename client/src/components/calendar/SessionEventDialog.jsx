@@ -13,6 +13,7 @@ import {
 import { formatDateTime } from "../../utils/calendar";
 import { useLanguage } from "../../context/LanguageContext";
 import StatusBadge from "../common/StatusBadge";
+import { UserIdentity } from "../common/UserAvatar";
 
 export default function SessionEventDialog({
   open,
@@ -46,14 +47,26 @@ export default function SessionEventDialog({
             </Typography>
           )}
 
-          <Typography>
-            <strong>{t("calendar.mentor")}:</strong>{" "}
-            {mentor ? `${mentor.firstName} ${mentor.lastName}` : event.mentorId}
-          </Typography>
-          <Typography>
-            <strong>{t("calendar.mentee")}:</strong>{" "}
-            {mentee ? `${mentee.firstName} ${mentee.lastName}` : event.menteeId}
-          </Typography>
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              {t("calendar.mentor")}
+            </Typography>
+            {mentor ? (
+              <UserIdentity user={mentor} avatarSize={34} />
+            ) : (
+              <Typography>{event.mentorId}</Typography>
+            )}
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              {t("calendar.mentee")}
+            </Typography>
+            {mentee ? (
+              <UserIdentity user={mentee} avatarSize={34} />
+            ) : (
+              <Typography>{event.menteeId}</Typography>
+            )}
+          </Box>
 
           {session?.durationMinutes && (
             <Typography>

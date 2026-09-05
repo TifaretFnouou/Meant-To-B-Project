@@ -121,10 +121,10 @@ export default function MentorsCatalogPage() {
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
-            label="חיפוש"
+            label="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="שם, חברה, משרה..."
+              placeholder="Name, Company, Job Title..."
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -133,7 +133,7 @@ export default function MentorsCatalogPage() {
             options={techStack}
             value={techFilter}
             onChange={(_, v) => setTechFilter(v)}
-            renderInput={(params) => <TextField {...params} label="טכנולוגיה" />}
+            renderInput={(params) => <TextField {...params} label="Technology" />}
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -142,12 +142,12 @@ export default function MentorsCatalogPage() {
             options={adviceTopics}
             value={topicFilter}
             onChange={(_, v) => setTopicFilter(v)}
-            renderInput={(params) => <TextField {...params} label="תחום ייעוץ" />}
+            renderInput={(params) => <TextField {...params} label="Advice Topic" />}
           />
         </Grid>
         <Grid item xs={12}>
           <Typography variant="body2" gutterBottom>
-            שנות ניסיון: {expRange[0]}–{expRange[1]}
+            Years of Experience: {expRange[0]}–{expRange[1]}
           </Typography>
           <Slider
             value={expRange}

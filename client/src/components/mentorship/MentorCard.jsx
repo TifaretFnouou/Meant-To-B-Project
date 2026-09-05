@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Card,
@@ -7,7 +8,6 @@ import {
   Chip,
   Button,
   Box,
-  Avatar,
   Stack,
 } from "@mui/material";
 import WorkIcon from "@mui/icons-material/Work";
@@ -15,6 +15,7 @@ import TimerIcon from "@mui/icons-material/Timer";
 import EventIcon from "@mui/icons-material/Event";
 import { useLanguage } from "../../context/LanguageContext";
 import { brand } from "../../theme/brand";
+import UserAvatar from "../common/UserAvatar";
 
 export default function MentorCard({
   mentor,
@@ -24,23 +25,17 @@ export default function MentorCard({
 }) {
   const { t } = useLanguage();
   const profile = mentor.mentorProfile;
-  const initials = `${mentor.firstName?.[0] || ""}${mentor.lastName?.[0] || ""}`;
-
   return (
     <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <CardContent sx={{ flexGrow: 1 }}>
+      {}
+      <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <Avatar
-            src={mentor.profilePicture || undefined}
-            sx={{ width: 48, height: 48, bgcolor: brand.dustyRose }}
-          >
-            {initials}
-          </Avatar>
-          <Box>
+          <UserAvatar user={mentor} size={52} />
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant="h6" fontWeight={700}>
               {mentor.firstName} {mentor.lastName}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
               {mentor.jobTitle} · {mentor.company}
             </Typography>
           </Box>
@@ -50,7 +45,8 @@ export default function MentorCard({
           {profile?.bio}
         </Typography>
 
-        <Stack direction="row" spacing={0.5} sx={{ mb: 1, flexWrap: "wrap", gap: 0.5 }}>
+        {}
+        <Stack direction="row" spacing={0.5} sx={{ mt: "auto", mb: 1, flexWrap: "wrap", gap: 0.5 }}>
           {profile?.topics?.map((topic) => (
             <Chip key={topic} label={topic} size="small" color="primary" variant="outlined" />
           ))}

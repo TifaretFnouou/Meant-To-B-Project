@@ -1,6 +1,6 @@
 export function evaluatePasswordStrength(password) {
   if (!password) {
-    return { score: 0, label: "הזיני סיסמה", color: "error", checks: {} };
+    return { score: 0, label: "Enter a password", color: "error", checks: {} };
   }
 
   const checks = {
@@ -14,11 +14,11 @@ export function evaluatePasswordStrength(password) {
   const score = Object.values(checks).filter(Boolean).length;
 
   const levels = [
-    { min: 0, label: "חלשה מאוד", color: "error" },
-    { min: 2, label: "חלשה", color: "warning" },
-    { min: 3, label: "בינונית", color: "info" },
-    { min: 4, label: "חזקה", color: "success" },
-    { min: 5, label: "חזקה מאוד", color: "success" },
+    { min: 0, label: "Very Weak", color: "error" },
+    { min: 2, label: "Weak", color: "warning" },
+    { min: 3, label: "Medium", color: "info" },
+    { min: 4, label: "Strong", color: "success" },
+    { min: 5, label: "Very Strong", color: "success" },
   ];
 
   const level = [...levels].reverse().find((l) => score >= l.min) || levels[0];

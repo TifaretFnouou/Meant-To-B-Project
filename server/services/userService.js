@@ -1,9 +1,37 @@
-
-
 import UserModel from "../models/user.js";
+import { sanitizeUser } from "./authService.js";
+import { uploadProfileImage } from "../config/cloudinary.js";
 
-// Update user info
-export const updateUser = async (userId, updateData) => {
+function parseList(value) {
+  if (value == null || value === "") return undefined;
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {
+      // fall through
+    }
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [value].filter(Boolean);
+}
+
+const nestedProfileFields = {
+  mentorProfile: [
+    "isActive",
+    "bio",
+    "topics",
+    "maxSessions",
+    "sessionLengthMinutes",
+  ],
+  menteeProfile: ["isActive", "menteeGoals"],
+};
+
+export async function updateUser(userId, updateData, actor = {}) {
   const allowedFields = [
     "firstName",
     "lastName",
@@ -16,17 +44,55 @@ export const updateUser = async (userId, updateData) => {
     "phone",
     "mentorProfile",
     "menteeProfile",
+    "roles",
   ];
 
   const filteredData = {};
 
   for (const field of allowedFields) {
-    if (updateData[field] !== undefined) {
-      filteredData[field] = updateData[field];
+    if (updateData[field] === undefined) continue;
+
+    if (field === "techStack") {
+      filteredData.techStack = parseList(updateData.techStack) || [];
+      continue;
     }
+
+    if (field === "yearsOfExperience") {
+      filteredData.yearsOfExperience = Number(updateData.yearsOfExperience) || 0;
+      continue;
+    }
+
+    if (field === "roles") {
+      const roles = parseList(updateData.roles) || [];
+      if (roles.includes("admin") && !actor.roles?.includes("admin")) {
+        throw Object.assign(new Error("Cannot self-assign admin role"), {
+          status: 403,
+        });
+      }
+      if (roles.some((role) => !["admin", "mentor", "mentee"].includes(role))) {
+        throw Object.assign(new Error("Invalid role value"), { status: 400 });
+      }
+      filteredData.roles = roles;
+      continue;
+    }
+
+    if (nestedProfileFields[field]) {
+      const profile = updateData[field];
+      if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
+        throw Object.assign(new Error(`Invalid ${field}`), { status: 400 });
+      }
+
+      for (const nestedField of nestedProfileFields[field]) {
+        if (profile[nestedField] === undefined) continue;
+        filteredData[`${field}.${nestedField}`] = profile[nestedField];
+      }
+      continue;
+    }
+
+    filteredData[field] = updateData[field];
   }
 
-  return await UserModel.findByIdAndUpdate(
+  const user = await UserModel.findByIdAndUpdate(
     userId,
     { $set: filteredData },
     {
@@ -34,32 +100,57 @@ export const updateUser = async (userId, updateData) => {
       runValidators: true,
     }
   );
-};
 
-// Update profile picture
-export const updateProfilePicture = async (userId, newProfilePicture) => {
-  return await UserModel.findByIdAndUpdate(
+  if (!user) {
+    throw Object.assign(new Error("User not found"), { status: 404 });
+  }
+
+  return sanitizeUser(user);
+}
+
+export async function updateProfilePicture(userId, file) {
+  if (!file) {
+    throw Object.assign(new Error("Profile picture file is required"), {
+      status: 400,
+    });
+  }
+
+  const secureUrl = await uploadProfileImage(file);
+
+  const user = await UserModel.findByIdAndUpdate(
     userId,
-    { $set: { profilePicture: newProfilePicture } },
+    { $set: { profilePicture: secureUrl } },
     {
       new: true,
       runValidators: true,
     }
   );
-};
 
-// Delete user
-export const deleteUser = async (userId) => {
-  await UserModel.findByIdAndDelete(userId);
-};
+  if (!user) {
+    throw Object.assign(new Error("User not found"), { status: 404 });
+  }
 
-// Get user by ID
-export const getUser = async (userId) => {
-  return await UserModel.findById(userId);
-};
+  return sanitizeUser(user);
+}
 
-// Get all users - Admin use
-export const getAllUsers = async () => {
+export async function deleteUser(userId) {
+  const user = await UserModel.findByIdAndDelete(userId);
+  if (!user) {
+    throw Object.assign(new Error("User not found"), { status: 404 });
+  }
+}
+
+export async function getUser(userId) {
+  return UserModel.findById(userId);
+}
+
+export async function getAllUsers() {
   const users = await UserModel.find({}, { password: 0 }).lean();
-  return users;
-};
+  return users.map((user) => {
+    const { password, ...rest } = user;
+    return {
+      ...rest,
+      id: String(user._id),
+    };
+  });
+}

@@ -46,8 +46,16 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ code: "PAYLOAD_TOO_LARGE", error: "Request body is too large" });
   }
 
-  console.error(err.stack);
-  res.status(500).json({ code: "SERVER_ERROR", error: "Something went wrong!" });
+  // שגיאות מכוונות (4xx) מעבירות הודעה שימושית ללקוח, אך תקלות שרת לא חושפות פרטים פנימיים
+  const status = err.status || 500;
+  if (status >= 500) {
+    console.error(err.stack);
+  }
+
+  res.status(status).json({
+    code: status >= 500 ? "SERVER_ERROR" : "REQUEST_ERROR",
+    error: status >= 500 ? "Something went wrong!" : err.message,
+  });
 });
 
 app.use("*", (req, res) => {

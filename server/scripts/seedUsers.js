@@ -1,36 +1,31 @@
-import { ROLES } from "../constants";
-export { mockAppointments, mockSessions } from "./mockAppointments";
+import "dotenv/config";
+import mongoose from "mongoose";
+import UserModel from "../models/user.js";
 
-export const mockUsers = [
+const mongoUri = process.env.MONGO_URI;
+
+const seedUsers = [
   {
-    id: "admin-1",
     email: "admin@queenb.com",
     password: "Admin123!",
     firstName: "שרה",
     lastName: "כהן",
-    roles: [ROLES.ADMIN],
+    roles: ["admin"],
     techStack: ["React", "Node.js"],
     company: "QueenB",
     jobTitle: "Community Admin",
     yearsOfExperience: 8,
-    profilePicture: "",
-    githubUrl: "",
-    linkedinUrl: "",
-    mentorProfile: null,
-    menteeProfile: null,
   },
   {
-    id: "mentor-1",
     email: "mentor@queenb.com",
     password: "Mentor123!",
     firstName: "דנה",
     lastName: "לוי",
-    roles: [ROLES.MENTOR],
+    roles: ["mentor"],
     techStack: ["React", "TypeScript", "Node.js"],
     company: "Wix",
     jobTitle: "Senior Frontend Engineer",
     yearsOfExperience: 7,
-    profilePicture: "",
     githubUrl: "https://github.com/dana",
     linkedinUrl: "https://linkedin.com/in/dana",
     mentorProfile: {
@@ -40,20 +35,17 @@ export const mockUsers = [
       maxSessions: 3,
       sessionLengthMinutes: 60,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentor-2",
     email: "yael_backend@queenb.com",
     password: "Mentor123!",
     firstName: "יעל",
     lastName: "אברהם",
-    roles: [ROLES.MENTOR],
+    roles: ["mentor"],
     techStack: ["Python", "Java", "SQL", "MongoDB"],
     company: "Check Point",
     jobTitle: "Backend Team Lead",
     yearsOfExperience: 12,
-    profilePicture: "",
     githubUrl: "https://github.com/yael-backend",
     linkedinUrl: "https://linkedin.com/in/yael-a",
     mentorProfile: {
@@ -63,21 +55,17 @@ export const mockUsers = [
       maxSessions: 2,
       sessionLengthMinutes: 90,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentor-3",
     email: "michal_devops@queenb.com",
     password: "Mentor123!",
     firstName: "מיכל",
     lastName: "פרץ",
-    roles: [ROLES.MENTOR],
+    roles: ["mentor"],
     techStack: ["AWS", "Docker", "Go", "Python"],
     company: "Monday.com",
     jobTitle: "DevOps Engineer",
     yearsOfExperience: 8,
-    profilePicture: "",
-    githubUrl: "",
     linkedinUrl: "https://linkedin.com/in/michal-devops",
     mentorProfile: {
       isActive: true,
@@ -86,91 +74,71 @@ export const mockUsers = [
       maxSessions: 4,
       sessionLengthMinutes: 60,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentor-4",
     email: "shira_startup@queenb.com",
     password: "Mentor123!",
     firstName: "שירה",
-    lastName: "גולן",
-    roles: [ROLES.MENTOR],
-    techStack: ["JavaScript", "React", "Node.js", "MongoDB"],
-    company: "Stealth Startup",
-    jobTitle: "Co-Founder & CTO",
-    yearsOfExperience: 5,
-    profilePicture: "",
-    githubUrl: "https://github.com/shira-g",
-    linkedinUrl: "",
+    lastName: "גבע",
+    roles: ["mentor"],
+    techStack: ["React", "Node.js", "PostgreSQL"],
+    company: "Fiverr",
+    jobTitle: "Full Stack Developer",
+    yearsOfExperience: 6,
     mentorProfile: {
       isActive: true,
-      bio: "יזמית טכנווגיה — בונה MVP, גיוס, וליווי junior שרוצים להיכנס ל-startup",
-      topics: ["Startup", "Full Stack", "Frontend"],
+      bio: "מפתחת בסטארטאפ — מנטורינג לכניסה לתעשייה ולבניית מוצר",
+      topics: ["Startup", "Full Stack", "קורות חיים"],
       maxSessions: 5,
       sessionLengthMinutes: 45,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentor-5",
-    email: "ruth_career@queenb.com",
+    email: "roni_mobile@queenb.com",
     password: "Mentor123!",
-    firstName: "רות",
-    lastName: "בן דוד",
-    roles: [ROLES.MENTOR],
-    techStack: ["Java", "C#", "SQL"],
-    company: "Microsoft",
-    jobTitle: "Principal Engineer",
-    yearsOfExperience: 15,
-    profilePicture: "",
-    githubUrl: "",
-    linkedinUrl: "https://linkedin.com/in/ruth-bd",
+    firstName: "רוני",
+    lastName: "שמש",
+    roles: ["mentor"],
+    techStack: ["Swift", "Kotlin", "React Native"],
+    company: "Apple",
+    jobTitle: "Mobile Engineer",
+    yearsOfExperience: 9,
     mentorProfile: {
       isActive: true,
-      bio: "15 שנות ניסיון — ייעוץ קריירה, קורות חיים, ומעבר לתפקידי leadership",
-      topics: ["Leadership", "ראיונות עבודה", "קורות חיים", "מעבר קריירה"],
+      bio: "פיתוח מובייל וקריירה בחו״ל",
+      topics: ["Mobile", "ראיונות עבודה"],
       maxSessions: 2,
       sessionLengthMinutes: 60,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentor-6",
-    email: "tamar_junior@queenb.com",
+    email: "liat_data@queenb.com",
     password: "Mentor123!",
-    firstName: "תמר",
-    lastName: "וייס",
-    roles: [ROLES.MENTOR],
-    techStack: ["TypeScript", "React"],
-    company: "Fiverr",
-    jobTitle: "Frontend Developer",
-    yearsOfExperience: 3,
-    profilePicture: "",
-    githubUrl: "https://github.com/tamar-w",
-    linkedinUrl: "",
+    firstName: "ליאת",
+    lastName: "ברק",
+    roles: ["mentor"],
+    techStack: ["Python", "SQL", "Spark"],
+    company: "Intel",
+    jobTitle: "Data Engineer",
+    yearsOfExperience: 7,
     mentorProfile: {
       isActive: true,
-      bio: "Junior+ frontend — מתאימה למנטees בתחילת הדרך ב-React ו-TypeScript",
-      topics: ["Frontend", "React", "ראיונות עבודה"],
+      bio: "Data engineering ומעבר מפיתוח ל-data",
+      topics: ["Data", "Backend", "מעבר קריירה"],
       maxSessions: 6,
       sessionLengthMinutes: 45,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentor-7",
-    email: "inactive@queenb.com",
+    email: "inactive_mentor@queenb.com",
     password: "Mentor123!",
     firstName: "Inactive",
     lastName: "Mentor",
-    roles: [ROLES.MENTOR],
+    roles: ["mentor"],
     techStack: ["Python", "AWS"],
     company: "Old Corp",
     jobTitle: "Architect",
     yearsOfExperience: 10,
-    profilePicture: "",
-    githubUrl: "",
-    linkedinUrl: "",
     mentorProfile: {
       isActive: false,
       bio: "מנטורית לא פעילה — לא אמורה להופיע בקטלוג",
@@ -178,42 +146,31 @@ export const mockUsers = [
       maxSessions: 0,
       sessionLengthMinutes: 60,
     },
-    menteeProfile: null,
   },
   {
-    id: "mentee-1",
     email: "mentee@queenb.com",
     password: "Mentee123!",
     firstName: "נועה",
     lastName: "מזרחי",
-    roles: [ROLES.MENTEE],
+    roles: ["mentee"],
     techStack: ["JavaScript", "React"],
-    company: "",
     jobTitle: "Junior Developer",
     yearsOfExperience: 1,
-    profilePicture: "",
-    githubUrl: "",
-    linkedinUrl: "",
-    mentorProfile: null,
     menteeProfile: {
       isActive: true,
-      learningGoals: "להתכונן לראיונות עבודה ולשפר React",
+      menteeGoals: "להתכונן לראיונות עבודה ולשפר React",
     },
   },
   {
-    id: "dual-1",
     email: "dual@queenb.com",
     password: "Dual123!",
     firstName: "תמר",
     lastName: "לוי",
-    roles: [ROLES.MENTEE, ROLES.MENTOR],
+    roles: ["mentee", "mentor"],
     techStack: ["TypeScript", "React", "Node.js"],
     company: "TechFlow",
     jobTitle: "Full Stack Developer",
     yearsOfExperience: 5,
-    profilePicture: "",
-    githubUrl: "",
-    linkedinUrl: "",
     mentorProfile: {
       isActive: true,
       bio: "מפתחת Full Stack עם ניסיון בהנחיית junior developers",
@@ -223,28 +180,40 @@ export const mockUsers = [
     },
     menteeProfile: {
       isActive: true,
-      learningGoals: "ללמוד System Design ולהתקדם לתפקיד Senior",
+      menteeGoals: "ללמוד System Design ולהתקדם לתפקיד Senior",
     },
   },
 ];
 
-export const mockNotifications = [
-  {
-    id: "notif-1",
-    userId: "mentor-1",
-    messageKey: "notif.mentorshipRequest",
-    messageParams: { name: "נועה מזרחי" },
-    read: false,
-    createdAt: "2026-09-01T08:00:00",
-    sessionId: "session-1",
-  },
-  {
-    id: "notif-2",
-    userId: "mentee-1",
-    messageKey: "notif.slotsProposed",
-    messageParams: { name: "דנה לוי" },
-    read: false,
-    createdAt: "2026-09-01T09:00:00",
-    sessionId: "session-1",
-  },
-];
+async function seed() {
+  if (!mongoUri) {
+    throw new Error("MONGO_URI is missing in server/.env");
+  }
+
+  await mongoose.connect(mongoUri);
+  console.log("Connected to MongoDB");
+
+  for (const user of seedUsers) {
+    const existing = await UserModel.findOne({ email: user.email });
+    if (existing) {
+      console.log(`Skip existing: ${user.email}`);
+      continue;
+    }
+
+    await UserModel.create(user);
+    console.log(`Created: ${user.email}`);
+  }
+
+  console.log("Seed complete");
+  await mongoose.disconnect();
+}
+
+seed().catch(async (error) => {
+  console.error("Seed failed:", error);
+  try {
+    await mongoose.disconnect();
+  } catch {
+    // ignore
+  }
+  process.exit(1);
+});

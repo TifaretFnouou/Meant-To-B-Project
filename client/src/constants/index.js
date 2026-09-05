@@ -89,30 +89,154 @@ export const SCHEDULING_LABELS = {
 };
 
 export const DEFAULT_TECH_STACK = [
+  // Programming
   "JavaScript",
   "TypeScript",
-  "React",
-  "Node.js",
   "Python",
   "Java",
   "C#",
+  "C++",
   "Go",
+  "Rust",
+
+  // Frontend
+  "React",
+  "Next.js",
+  "Vue.js",
+  "Angular",
+  "HTML",
+  "CSS",
+  "Tailwind CSS",
+
+  // Backend
+  "Node.js",
+  "Express.js",
+  "NestJS",
+  "Django",
+  "FastAPI",
+  "Spring Boot",
+  ".NET",
+
+  // APIs & Architecture
+  "REST API",
+  "GraphQL",
+  "Microservices",
+  "System Design",
+  "WebSockets",
+
+  // Databases
   "SQL",
+  "PostgreSQL",
+  "MySQL",
   "MongoDB",
+  "Redis",
+  "Elasticsearch",
+
+  // Data
+  "Data Engineering",
+  "Apache Kafka",
+  "Apache Spark",
+  "Airflow",
+  "Snowflake",
+  "Databricks",
+
+  // AI & Machine Learning
+  "Artificial Intelligence",
+  "Machine Learning",
+  "Generative AI",
+  "LLMs",
+  "AI Agents",
+  "RAG",
+  "PyTorch",
+  "TensorFlow",
+  "Hugging Face",
+
+  // Cloud
   "AWS",
+  "Microsoft Azure",
+  "Google Cloud",
+
+  // DevOps
   "Docker",
+  "Kubernetes",
+  "Terraform",
+  "CI/CD",
+  "Linux",
+
+  // Testing
+  "Testing",
+  "Playwright",
+  "Cypress",
+  "Jest",
+
+  // Security
+  "Cybersecurity",
+  "Application Security",
+  "DevSecOps",
+
+  // Version Control & Tools
+  "Git",
+  "GitHub",
+  "GitLab",
+  "Postman",
+  "VS Code"
 ];
 
 export const DEFAULT_ADVICE_TOPICS = [
-  "ראיונות עבודה",
-  "קורות חיים",
-  "מעבר קריירה",
-  "Full Stack",
-  "Backend",
-  "Frontend",
+  // Career
+  "Career Advice",
+  "Career Change",
+  "Career Growth",
+  "Job Search",
+  "Job Interviews",
+  "Salary Negotiation",
+  "Resume & CV",
+  "LinkedIn & Networking",
+
+  // Software Development
+  "Software Engineering",
+  "Frontend Development",
+  "Backend Development",
+  "Full Stack Development",
+  "Mobile Development",
+  "Software Architecture",
+  "System Design",
+  "Testing & QA",
+
+  // AI & Data
+  "Artificial Intelligence",
+  "Generative AI",
+  "Machine Learning",
+  "Data Science",
+  "Data Analytics",
+  "Data Engineering",
+  "Business Intelligence",
+
+  // Cloud & Infrastructure
+  "Cloud Computing",
   "DevOps",
+  "Cybersecurity",
+
+  // Product & Business
+  "Product Management",
+  "Startups",
+  "SaaS",
+  "FinTech",
+  "Gaming",
+
+  // Leadership & Work
   "Leadership",
-  "Startup",
+  "Engineering Management",
+  "Team Management",
+  "Mentoring",
+  "Productivity",
+  "Work-Life Balance",
+
+  // Emerging Tech
+  "Blockchain & Web3",
+  "IoT",
+  "Robotics",
+  "Open Source"
 ];
 
 export const SESSION_LENGTHS = [45, 60, 90];
