@@ -32,8 +32,8 @@ const seedUsers = [
       isActive: true,
       bio: "מפתחת Frontend עם ניסיון בהנחיית junior developers",
       topics: ["Frontend", "ראיונות עבודה", "React"],
-      maxSessions: 3,
-      sessionLengthMinutes: 60,
+      maxMeetings: 3,
+      meetingLengthMinutes: 60,
     },
   },
   {
@@ -50,10 +50,10 @@ const seedUsers = [
     linkedinUrl: "https://linkedin.com/in/yael-a",
     mentorProfile: {
       isActive: true,
-      bio: "מובילת צוות Backend — מומחית ב-architecture, microservices וראיונות senior",
+      bio: "מובילת צוות Backend - מומחית ב-architecture, microservices וראיונות senior",
       topics: ["Backend", "Full Stack", "Leadership"],
-      maxSessions: 2,
-      sessionLengthMinutes: 90,
+      maxMeetings: 2,
+      meetingLengthMinutes: 90,
     },
   },
   {
@@ -69,10 +69,10 @@ const seedUsers = [
     linkedinUrl: "https://linkedin.com/in/michal-devops",
     mentorProfile: {
       isActive: true,
-      bio: "DevOps ו-cloud — CI/CD, Kubernetes, וליווי מעבר לתפקידי תשתיות",
+      bio: "DevOps ו-cloud - CI/CD, Kubernetes, וליווי מעבר לתפקידי תשתיות",
       topics: ["DevOps", "Backend", "מעבר קריירה"],
-      maxSessions: 4,
-      sessionLengthMinutes: 60,
+      maxMeetings: 4,
+      meetingLengthMinutes: 60,
     },
   },
   {
@@ -87,10 +87,10 @@ const seedUsers = [
     yearsOfExperience: 6,
     mentorProfile: {
       isActive: true,
-      bio: "מפתחת בסטארטאפ — מנטורינג לכניסה לתעשייה ולבניית מוצר",
+      bio: "מפתחת בסטארטאפ - מנטורינג לכניסה לתעשייה ולבניית מוצר",
       topics: ["Startup", "Full Stack", "קורות חיים"],
-      maxSessions: 5,
-      sessionLengthMinutes: 45,
+      maxMeetings: 5,
+      meetingLengthMinutes: 45,
     },
   },
   {
@@ -107,8 +107,8 @@ const seedUsers = [
       isActive: true,
       bio: "פיתוח מובייל וקריירה בחו״ל",
       topics: ["Mobile", "ראיונות עבודה"],
-      maxSessions: 2,
-      sessionLengthMinutes: 60,
+      maxMeetings: 2,
+      meetingLengthMinutes: 60,
     },
   },
   {
@@ -125,8 +125,8 @@ const seedUsers = [
       isActive: true,
       bio: "Data engineering ומעבר מפיתוח ל-data",
       topics: ["Data", "Backend", "מעבר קריירה"],
-      maxSessions: 6,
-      sessionLengthMinutes: 45,
+      maxMeetings: 6,
+      meetingLengthMinutes: 45,
     },
   },
   {
@@ -143,8 +143,8 @@ const seedUsers = [
       isActive: false,
       bio: "מנטורית לא פעילה — לא אמורה להופיע בקטלוג",
       topics: ["Backend"],
-      maxSessions: 0,
-      sessionLengthMinutes: 60,
+      maxMeetings: 0,
+      meetingLengthMinutes: 60,
     },
   },
   {
@@ -175,8 +175,8 @@ const seedUsers = [
       isActive: true,
       bio: "מפתחת Full Stack עם ניסיון בהנחיית junior developers",
       topics: ["Full Stack", "ראיונות עבודה"],
-      maxSessions: 2,
-      sessionLengthMinutes: 60,
+      maxMeetings: 2,
+      meetingLengthMinutes: 60,
     },
     menteeProfile: {
       isActive: true,

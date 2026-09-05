@@ -164,8 +164,8 @@ export async function registerUser(body, file) {
       isActive: true, 
       bio: parsedMentorProfile.bio || "",
       topics: parseList(parsedMentorProfile.topics) || [],
-      maxSessions: Number(parsedMentorProfile.maxSessions) || 0,
-      sessionLengthMinutes: Number(parsedMentorProfile.sessionLengthMinutes) || 45,
+      maxMeetings: Number(parsedMentorProfile.maxMeetings) || 0,
+      meetingLengthMinutes: Number(parsedMentorProfile.meetingLengthMinutes) || 45,
     };
   }
 

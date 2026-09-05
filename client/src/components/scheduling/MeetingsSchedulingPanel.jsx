@@ -9,7 +9,7 @@ import {
   Chip,
 } from "@mui/material";
 import StatusBadge from "../common/StatusBadge";
-import WeekCalendar from "../calendar/WeekCalendar";
+import WeekCalendar from "../calendar/WeekCalendar"; 
 import { SCHEDULING_STATE } from "../../constants";
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
@@ -18,39 +18,40 @@ import { formatDateTime, isSameSlot, startOfWeek } from "../../utils/calendar";
 import { toCalendarEvents } from "../../services/appointmentService";
 import UserAvatar from "../common/UserAvatar";
 
-export default function SessionSchedulingPanel({ session, mentor, mentee }) {
+export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
   const { currentUser } = useAuth();
   const {
-    approveRequest,
     rejectRequest,
     proposeSlots,
     selectSlot,
     requestMoreSlots,
-    cancelSession,
+    cancelMeeting,
     markUnavailable,
   } = useScheduling();
   const { language, t } = useLanguage();
   const locale = language === "he" ? "he-IL" : "en-US";
 
-  const [localSlots, setLocalSlots] = useState(session.proposedSlots || []);
+  const [localSlots, setLocalSlots] = useState(meeting.proposedSlots || []);
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(
-      session.proposedSlots?.[0]
-        ? new Date(session.proposedSlots[0])
-        : session.matchedSlot
-          ? new Date(session.matchedSlot)
+      meeting.proposedSlots?.[0]
+        ? new Date(meeting.proposedSlots[0])
+        : meeting.matchedSlot
+          ? new Date(meeting.matchedSlot)
           : new Date()
     )
   );
 
   useEffect(() => {
-    setLocalSlots(session.proposedSlots || []);
-  }, [session.id, session.proposedSlots]);
+    setLocalSlots(meeting.proposedSlots || []);
+  }, [meeting.id, meeting.proposedSlots]);
 
-  const isMentor = currentUser.id === session.mentorId;
-  const isMentee = currentUser.id === session.menteeId;
+      // identify the current user
+  const isMentor = String(currentUser.id) === String(meeting.mentorId);
+  const isMentee = String(currentUser.id) === String(meeting.menteeId);
+  
   const actorName = `${currentUser.firstName} ${currentUser.lastName}`;
-  const state = session.schedulingState;
+  const state = meeting.schedulingState;
 
   const otherName = isMentor
     ? `${mentee?.firstName || ""} ${mentee?.lastName || ""}`.trim()
@@ -58,31 +59,29 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
   const otherUser = isMentor ? mentee : mentor;
 
   const calendarEvents = useMemo(
-    () => toCalendarEvents([session]),
-    [session]
+    () => toCalendarEvents([meeting]),
+    [meeting]
   );
 
-  // Mentor proposes when: approved with empty slots, additional requested, or reschedule
+  // --- logic for the new server ---
+  
+  // mentor proposes times when the request is just created, or when they requested more slots/rescheduled
   const showMentorSlotPicker =
     isMentor &&
-    ((state === SCHEDULING_STATE.SLOTS_PROPOSED && (!session.proposedSlots || session.proposedSlots.length === 0)) ||
+    (state === SCHEDULING_STATE.PENDING_REQUEST ||
       state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED ||
       state === SCHEDULING_STATE.RESCHEDULE_REQUESTED);
 
+  // mentor is waiting for the mentee to select a time
   const showMentorWaiting =
-    isMentor &&
-    (state === SCHEDULING_STATE.SLOTS_PROPOSED ||
-      state === SCHEDULING_STATE.ADDITIONAL_SLOTS_PROPOSED) &&
-    session.proposedSlots?.length > 0;
+    isMentor && state === SCHEDULING_STATE.SLOTS_PROPOSED;
 
+  // mentor can see the times and select one
   const showMenteePicker =
-    isMentee &&
-    (state === SCHEDULING_STATE.SLOTS_PROPOSED ||
-      state === SCHEDULING_STATE.ADDITIONAL_SLOTS_PROPOSED) &&
-    session.proposedSlots?.length > 0;
+    isMentee && state === SCHEDULING_STATE.SLOTS_PROPOSED && meeting.proposedSlots?.length > 0;
 
-  const handleApprove = () => approveRequest(session.id, actorName);
-  const handleReject = () => rejectRequest(session.id, actorName);
+
+  const handleReject = () => rejectRequest(meeting.id, actorName);
 
   const handleToggleSlot = (iso) => {
     setLocalSlots((prev) =>
@@ -94,13 +93,13 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
 
   const handlePropose = () => {
     if (localSlots.length === 0) return;
-    proposeSlots(session.id, localSlots, actorName);
+    proposeSlots(meeting.id, localSlots, actorName);
   };
 
-  const handleSelect = (slot) => selectSlot(session.id, slot, actorName);
-  const handleRequestMore = () => requestMoreSlots(session.id, actorName);
-  const handleCancel = () => cancelSession(session.id, actorName);
-  const handleUnavailable = () => markUnavailable(session.id, isMentor ? "mentor" : "mentee");
+  const handleSelect = (slot) => selectSlot(meeting.id, slot, actorName);
+  const handleRequestMore = () => requestMoreSlots(meeting.id, actorName);
+  const handleCancel = () => cancelMeeting(meeting.id, actorName);
+  const handleUnavailable = () => markUnavailable(meeting.id, isMentor ? "mentor" : "mentee");
 
   return (
     <Paper sx={{ p: 3, mb: 2 }}>
@@ -108,28 +107,13 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
           <UserAvatar user={otherUser} size={42} />
           <Typography variant="h6" fontWeight={700}>
-            {isMentor ? t("calendar.requestFrom", { name: otherName }) : t("calendar.sessionWith", { name: otherName })}
+            {isMentor ? t("calendar.requestFrom", { name: otherName }) : t("calendar.meetingWith", { name: otherName })}
           </Typography>
         </Box>
-        <StatusBadge status={session.status} schedulingState={state} />
+        <StatusBadge status={meeting.status} schedulingState={state} />
       </Box>
 
-      {state === SCHEDULING_STATE.PENDING_REQUEST && isMentor && (
-        <Box>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            {t("calendar.pendingMentorHint")}
-          </Alert>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            <Button variant="contained" onClick={handleApprove}>
-              {t("calendar.approveOpenCalendar")}
-            </Button>
-            <Button variant="outlined" color="error" onClick={handleReject}>
-              {t("calendar.rejectRequest")}
-            </Button>
-          </Stack>
-        </Box>
-      )}
-
+      {/* message to the mentor that she is waiting for the mentor to propose times */}
       {state === SCHEDULING_STATE.PENDING_REQUEST && isMentee && (
         <Alert severity="warning">{t("calendar.pendingMenteeHint")}</Alert>
       )}
@@ -141,6 +125,7 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
         </Alert>
       )}
 
+      {/* --- time proposal log (for the mentor) --- */}
       {showMentorSlotPicker && (
         <Box>
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -173,16 +158,16 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
             >
               {t("calendar.sendSlots")}
             </Button>
-            {(state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED ||
-              state === SCHEDULING_STATE.RESCHEDULE_REQUESTED) && (
-              <Button color="error" onClick={handleCancel}>
-                {t("calendar.cancelSession")}
-              </Button>
-            )}
+            
+            {/* reject/cancel button that appears for the mentor */}
+            <Button color="error" variant="outlined" onClick={state === SCHEDULING_STATE.PENDING_REQUEST ? handleReject : handleCancel}>
+              {state === SCHEDULING_STATE.PENDING_REQUEST ? t("calendar.rejectRequest") : t("calendar.cancelMeeting")}
+            </Button>
           </Stack>
         </Box>
       )}
 
+      {/* message to the mentor that she is waiting for the mentee to select a time */}
       {showMentorWaiting && !showMentorSlotPicker && (
         <Box>
           <Alert severity="success" sx={{ mb: 2 }}>
@@ -197,6 +182,7 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
         </Box>
       )}
 
+      {/* --- time selection log (for the mentee) --- */}
       {showMenteePicker && (
         <Box>
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -206,19 +192,20 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
             weekStart={weekStart}
             onWeekChange={setWeekStart}
             mode="select-one"
-            selectableSlots={session.proposedSlots}
+            selectableSlots={meeting.proposedSlots}
             selectedSlots={[]}
-            onSelectSlot={handleSelect}
+            onSelectSlot={handleSelect} 
             events={calendarEvents}
           />
           <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
-            {!session.additionalSlotsUsed && (
+            {!meeting.rescheduleUsed && (
               <Button variant="outlined" onClick={handleRequestMore}>
                 {t("calendar.requestMoreSlots")}
               </Button>
             )}
-            <Button color="error" onClick={handleCancel}>
-              {t("calendar.cancelSession")}
+            
+            <Button color="error" variant="contained" onClick={handleCancel}>
+              {t("calendar.cancelMeeting")}
             </Button>
           </Stack>
         </Box>
@@ -228,11 +215,12 @@ export default function SessionSchedulingPanel({ session, mentor, mentee }) {
         <Alert severity="info">{t("calendar.moreSlotsRequested")}</Alert>
       )}
 
+      {/* meeting has been scheduled */}
       {state === SCHEDULING_STATE.MATCHED && (
         <Box>
           <Alert severity="success" sx={{ mb: 2 }}>
             {t("calendar.matchedAt", {
-              date: formatDateTime(session.matchedSlot, locale),
+              date: formatDateTime(meeting.matchedSlot, locale),
             })}
           </Alert>
           <WeekCalendar

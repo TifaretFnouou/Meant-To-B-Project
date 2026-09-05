@@ -25,8 +25,8 @@ const nestedProfileFields = {
     "isActive",
     "bio",
     "topics",
-    "maxSessions",
-    "sessionLengthMinutes",
+    "maxMeetings",
+    "meetingLengthMinutes",
   ],
   menteeProfile: ["isActive", "menteeGoals"],
 };

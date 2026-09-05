@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { mockNotifications } from "../data/mockData";
+// import { mockNotifications } from "../data/mockData";
 import { useLanguage } from "./LanguageContext";
 
 const NotificationContext = createContext(null);
 
 export function NotificationProvider({ children }) {
   const { t } = useLanguage();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  // const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState([]);
 
   const resolveMessage = (n) => {
     if (n.messageKey) return t(n.messageKey, n.messageParams || {});
     return n.message || "";
   };
 
-  const addNotification = (userId, messageKey, messageParams = {}, sessionId = null) => {
+  const addNotification = (userId, messageKey, messageParams = {}, meetingId = null) => {
     const item = {
       id: `notif-${Date.now()}`,
       userId,
@@ -21,7 +22,7 @@ export function NotificationProvider({ children }) {
       messageParams,
       read: false,
       createdAt: new Date().toISOString(),
-      sessionId,
+      meetingId,
     };
     setNotifications((prev) => [item, ...prev]);
     return item;

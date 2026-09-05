@@ -55,13 +55,13 @@ const userSchema = new Schema(
       isActive: { type: Boolean, default: false },
       bio: { type: String, trim: true },
       topics: [String],
-      maxSessions: {
+      maxMeetings: {
         type: Number,
         default: 0,
-        min: [0, "Max sessions cannot be negative"],
-        max: [10, "Max sessions cannot be more than 10"],
+        min: [0, "Max Meetings cannot be negative"],
+        max: [10, "Max Meetings cannot be more than 10"],
       },
-      sessionLengthMinutes: {
+      meetingLengthMinutes: {
         type: Number,
         default: 45,
         enum: [45, 60, 90],

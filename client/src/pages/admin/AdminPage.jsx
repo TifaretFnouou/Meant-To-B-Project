@@ -30,25 +30,25 @@ function TabPanel({ children, value, index }) {
 
 export default function AdminPage() {
   const { users } = useAuth();
-  const { sessions } = useScheduling();
+  const { Meetings } = useScheduling();
   const { techStack, adviceTopics, addTech, removeTech, addTopic, removeTopic } =
     useAdminConfig();
   const [tab, setTab] = useState(0);
   const [newTech, setNewTech] = useState("");
   const [newTopic, setNewTopic] = useState("");
 
-  const activeSessions = sessions.filter(
+  const activeMeetings = Meetings.filter(
     (s) => !["cancelled", "completed"].includes(s.status)
   );
-  const cancelled = sessions.filter((s) => s.status === "cancelled");
-  const withFeedback = sessions.filter(
+  const cancelled = Meetings.filter((s) => s.status === "cancelled");
+  const withFeedback = Meetings.filter(
     (s) => s.feedback?.mentor || s.feedback?.mentee
   );
 
   return (
     <MainLayout>
       <Typography variant="h5" fontWeight={600} gutterBottom>
-        לוח בקרה — מנהלת קהילה
+        לוח בקרה - מנהלת קהילה
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -60,7 +60,7 @@ export default function AdminPage() {
         </Grid>
         <Grid item xs={6} md={3}>
           <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="h4">{activeSessions.length}</Typography>
+            <Typography variant="h4">{activeMeetings.length}</Typography>
             <Typography variant="body2">פגישות פעילות</Typography>
           </Paper>
         </Grid>
@@ -108,7 +108,7 @@ export default function AdminPage() {
                     <Chip key={r} label={r} size="small" sx={{ mr: 0.5 }} />
                   ))}
                 </TableCell>
-                <TableCell>{u.company || "—"}</TableCell>
+                <TableCell>{u.company || "-"}</TableCell>
                 <TableCell>{u.yearsOfExperience ?? 0}</TableCell>
               </TableRow>
             ))}
@@ -130,7 +130,7 @@ export default function AdminPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sessions.map((s) => {
+            {Meetings.map((s) => {
               const mentor = users.find((u) => u.id === s.mentorId);
               const mentee = users.find((u) => u.id === s.menteeId);
               return (
@@ -147,10 +147,10 @@ export default function AdminPage() {
                   <TableCell>
                     {s.matchedSlot
                       ? new Date(s.matchedSlot).toLocaleString("he-IL")
-                      : "—"}
+                      : "-"}
                   </TableCell>
                   <TableCell>
-                    {s.feedback?.mentor || s.feedback?.mentee ? "✓" : "—"}
+                    {s.feedback?.mentor || s.feedback?.mentee ? "✓" : "-"}
                   </TableCell>
                 </TableRow>
               );

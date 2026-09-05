@@ -14,19 +14,19 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
 
-export default function FeedbackDialog({ open, session, onClose }) {
+export default function FeedbackDialog({ open, meeting, onClose }) {
   const { currentUser } = useAuth();
   const { submitFeedback } = useScheduling();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  if (!session) return null;
+  if (!meeting) return null;
 
-  const role = currentUser.id === session.mentorId ? "mentor" : "mentee";
+  const role = currentUser.id === meeting.mentorId ? "mentor" : "mentee";
 
   const handleSubmit = () => {
-    submitFeedback(session.id, role, { rating, comment, submittedAt: new Date().toISOString() });
+    submitFeedback(meeting.id, role, { rating, comment, submittedAt: new Date().toISOString() });
     setSubmitted(true);
   };
 
@@ -48,7 +48,7 @@ export default function FeedbackDialog({ open, session, onClose }) {
             </Typography>
             {role === "mentor" && (
               <Typography variant="body2" color="text.secondary">
-                תודה על תרומתך לקהילה — המנטורינג שלך משנה חיים 💜
+                תודה על תרומתך לקהילה - המנטורינג שלך משנה חיים 💜
               </Typography>
             )}
           </Box>

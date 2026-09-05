@@ -7,6 +7,7 @@ import morgan from "morgan";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import meetingRoutes from "./routes/meetingRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/meetings", meetingRoutes);
 
 app.get("/api/v1/health", (req, res) => {
   res.json({

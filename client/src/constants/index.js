@@ -9,7 +9,7 @@ export const USER_MODES = {
   MENTOR: "mentor",
 };
 
-export const SESSION_STATUS = {
+export const MEETING_STATUS = {
   PENDING: "pending",
   SLOTS_PROPOSED: "slots_proposed",
   MATCHED: "matched",
@@ -67,12 +67,12 @@ export const SCHEDULING_TRANSITIONS = {
 };
 
 export const STATUS_LABELS = {
-  [SESSION_STATUS.PENDING]: "ממתין לאישור",
-  [SESSION_STATUS.SLOTS_PROPOSED]: "זמנים הוצעו",
-  [SESSION_STATUS.MATCHED]: "נקבע",
-  [SESSION_STATUS.CANCELLED]: "בוטל",
-  [SESSION_STATUS.COMPLETED]: "הושלם",
-  [SESSION_STATUS.RESCHEDULE]: "תיאום מחדש",
+  [MEETING_STATUS.PENDING]: "ממתין לאישור",
+  [MEETING_STATUS.SLOTS_PROPOSED]: "זמנים הוצעו",
+  [MEETING_STATUS.MATCHED]: "נקבע",
+  [MEETING_STATUS.CANCELLED]: "בוטל",
+  [MEETING_STATUS.COMPLETED]: "הושלם",
+  [MEETING_STATUS.RESCHEDULE]: "תיאום מחדש",
 };
 
 export const SCHEDULING_LABELS = {
@@ -239,4 +239,4 @@ export const DEFAULT_ADVICE_TOPICS = [
   "Open Source"
 ];
 
-export const SESSION_LENGTHS = [45, 60, 90];
+export const MEETING_LENGTHS = [45, 60, 90];

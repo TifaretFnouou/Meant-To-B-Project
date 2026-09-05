@@ -42,8 +42,8 @@ export default function MainLayout({ children }) {
           ? [{ label: t("mentors.becomeMentor"), path: "/become-mentor" }]
           : []),
         {
-          label: isMentorMode ? t("nav.sessionsAsMentor") : t("nav.sessions"),
-          path: "/sessions",
+          label: isMentorMode ? t("nav.MeetingsAsMentor") : t("nav.Meetings"),
+          path: "/Meetings",
         },
         { label: t("nav.calendar"), path: "/calendar" },
       ];

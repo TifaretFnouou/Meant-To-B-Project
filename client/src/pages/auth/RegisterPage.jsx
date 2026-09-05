@@ -54,8 +54,8 @@ export default function RegisterPage() {
     isMentor: false,
     mentorBio: "",
     mentorTopics: "",
-    maxSessions: 1,
-    sessionLength: 45,
+    maxMeetings: 1,
+    meetingLength: 45,
   });
 
   const update = (field) => (e) => {
@@ -88,8 +88,8 @@ export default function RegisterPage() {
     const mentorProfileData = form.isMentor ? {
       bio: form.mentorBio,
       topics: form.mentorTopics.split(",").map(topic => topic.trim()).filter(Boolean),
-      maxSessions: Number(form.maxSessions) || 0,
-      sessionLengthMinutes: Number(form.sessionLength) || 45
+      maxMeetings: Number(form.maxMeetings) || 0,
+      meetingLengthMinutes: Number(form.meetingLength) || 45
     } : undefined;
 
     try {
@@ -327,9 +327,9 @@ export default function RegisterPage() {
                         <TextField
                           fullWidth
                           type="number"
-                          label="Max Sessions (per month)"
-                          value={form.maxSessions}
-                          onChange={update("maxSessions")}
+                          label="Max Meetings (per month)"
+                          value={form.maxMeetings}
+                          onChange={update("maxMeetings")}
                           inputProps={{ min: 1, max: 10 }}
                         />
                       </Grid>
@@ -337,9 +337,9 @@ export default function RegisterPage() {
                         <TextField
                           fullWidth
                           select
-                          label="Session Length"
-                          value={form.sessionLength}
-                          onChange={update("sessionLength")}
+                          label="Meeting Length"
+                          value={form.meetingLength}
+                          onChange={update("meetingLength")}
                         >
                           <MenuItem value={45}>45 Minutes</MenuItem>
                           <MenuItem value={60}>60 Minutes</MenuItem>
@@ -373,7 +373,7 @@ export default function RegisterPage() {
                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
                       {profilePictureFile
                         ? profilePictureFile.name
-                        : "No profile picture selected — initials will be displayed"}
+                        : "No profile picture selected - initials will be displayed"}
                     </Typography>
                   </Box>
                 </Box>

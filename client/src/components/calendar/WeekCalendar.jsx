@@ -19,9 +19,9 @@ import { brand } from "../../theme/brand";
 /**
  * Interactive week calendar.
  * mode:
- *  - "view"         — show events only
- *  - "select-multi" — mentor picks availability slots
- *  - "select-one"   — mentee picks one proposed slot
+ *  - "view"         - show events only
+ *  - "select-multi" - mentor picks availability slots
+ *  - "select-one"   - mentee picks one proposed slot
  */
 export default function WeekCalendar({
   weekStart,

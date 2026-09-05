@@ -8,16 +8,16 @@ import FeedbackDialog from "./FeedbackDialog";
 
 export default function FeedbackReminder() {
   const { currentUser } = useAuth();
-  const { getSessionsForUser } = useScheduling();
+  const { getMeetingsForUser } = useScheduling();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [session, setSession] = useState(null);
+  const [meeting, setMeeting] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    const pending = getSessionsForUser(currentUser.id).find((s) => {
+    const pending = getMeetingsForUser(currentUser.id).find((s) => {
       const role = currentUser.id === s.mentorId ? "mentor" : "mentee";
       return (
         s.schedulingState === SCHEDULING_STATE.COMPLETED && !s.feedback?.[role]
@@ -25,10 +25,10 @@ export default function FeedbackReminder() {
     });
 
     if (pending) {
-      setSession(pending);
+      setMeeting(pending);
       setOpen(true);
     }
-  }, [currentUser, getSessionsForUser]);
+  }, [currentUser, getMeetingsForUser]);
 
   if (!currentUser) return null;
 
@@ -49,7 +49,7 @@ export default function FeedbackReminder() {
                 setDialogOpen(true);
               }}
             >
-              {t("sessions.fillFeedback")}
+              {t("Meetings.fillFeedback")}
             </Button>
           }
         >
@@ -58,7 +58,7 @@ export default function FeedbackReminder() {
       </Snackbar>
       <FeedbackDialog
         open={dialogOpen}
-        session={session}
+        meeting={meeting}
         onClose={() => setDialogOpen(false)}
       />
     </>

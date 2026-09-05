@@ -1,54 +1,211 @@
+// import React, { useState } from "react";
+// import {
+//   Box,
+//   Button,
+//   Chip,
+//   Divider,
+//   IconButton,
+//   ListItemIcon,
+//   ListItemText,
+//   Menu,
+//   MenuItem,
+//   Typography,
+// } from "@mui/material";
+// import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+// import LogoutIcon from "@mui/icons-material/Logout";
+// import SchoolIcon from "@mui/icons-material/School";
+// import StarIcon from "@mui/icons-material/Star";
+// import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+// import EditIcon from "@mui/icons-material/Edit";
+// import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+// import { useNavigate } from "react-router-dom";
+// import { useAuth } from "../../context/AuthContext";
+// import { useRoleMode } from "../../context/RoleModeContext";
+// import { useLanguage } from "../../context/LanguageContext";
+// import { brand } from "../../theme/brand";
+// import UserAvatar from "./UserAvatar";
+
+// export default function ProfileMenu() {
+//   const { currentUser, logout, isAdmin, isMentor } = useAuth();
+//   const { isMentorMode } = useRoleMode();
+//   const { t } = useLanguage();
+//   const navigate = useNavigate();
+//   const [anchorEl, setAnchorEl] = useState(null);
+//   const open = Boolean(anchorEl);
+
+//   if (!currentUser) return null;
+
+//   const isMenteeOnly = !isAdmin && !isMentor;
+//   const activeModeLabel = isAdmin
+//     ? t("mode.adminOnly")
+//     : isMentorMode
+//       ? t("mode.activeMentor")
+//       : t("mode.activeMentee");
+
+//   const handleOpen = (event) => setAnchorEl(event.currentTarget);
+//   const handleClose = () => setAnchorEl(null);
+
+//   const go = (path) => {
+//     handleClose();
+//     navigate(path);
+//   };
+
+//   const handleLogout = () => {
+//     handleClose();
+//     logout();
+//     navigate("/login");
+//   };
+
+//   return (
+//     <Box>
+//       <IconButton
+//         onClick={handleOpen}
+//         size="small"
+//         aria-label={t("nav.profile")}
+//         aria-controls={open ? "profile-menu" : undefined}
+//         aria-haspopup="true"
+//         aria-expanded={open ? "true" : undefined}
+//         sx={{
+//           p: 0.35,
+//           border: "2px solid",
+//           borderColor: open ? brand.dustyRose : brand.peach,
+//           transition: "border-color 0.2s ease",
+//         }}
+//       >
+//         <UserAvatar
+//           user={currentUser}
+//           size={36}
+//           sx={{
+//             fontSize: "0.85rem",
+//           }}
+//         />
+//       </IconButton>
+
+//       <Menu
+//         id="profile-menu"
+//         anchorEl={anchorEl}
+//         open={open}
+//         onClose={handleClose}
+//         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+//         transformOrigin={{ vertical: "top", horizontal: "left" }}
+//         PaperProps={{
+//           sx: {
+//             mt: 1.2,
+//             minWidth: 300,
+//             borderRadius: 3,
+//             border: `1px solid ${brand.dustyRoseSoft}`,
+//             overflow: "hidden",
+//           },
+//         }}
+//         MenuListProps={{ sx: { py: 0 } }}
+//       >
+//         <Box
+//           sx={{
+//             px: 2,
+//             py: 1.5,
+//             background: `linear-gradient(135deg, ${brand.peachSoft}, ${brand.lavenderSoft})`,
+//           }}
+//         >
+//           <Typography variant="subtitle1" fontWeight={700}>
+//             {currentUser.firstName} {currentUser.lastName}
+//           </Typography>
+//           <Typography variant="caption" color="text.secondary" display="block">
+//             {currentUser.email}
+//           </Typography>
+//           <Chip
+//             size="small"
+//             icon={
+//               isAdmin ? (
+//                 <AdminPanelSettingsIcon />
+//               ) : isMentorMode ? (
+//                 <StarIcon />
+//               ) : (
+//                 <SchoolIcon />
+//               )
+//             }
+//             label={t("mode.activeMode", { mode: activeModeLabel })}
+//             sx={{
+//               mt: 1.25,
+//               fontWeight: 700,
+//               bgcolor: isMentorMode ? brand.dustyRoseSoft : brand.lavenderSoft,
+//               color: isMentorMode ? brand.dustyRose : brand.charcoal,
+//             }}
+//           />
+//         </Box>
+
+//         {isMenteeOnly && (
+//           <>
+//             <Box sx={{ px: 2, py: 1.75 }}>
+//               <Button
+//                 fullWidth
+//                 variant="contained"
+//                 color="secondary"
+//                 startIcon={<WorkspacePremiumIcon />}
+//                 onClick={() => go("/become-mentor")}
+//                 sx={{ fontWeight: 800, borderRadius: 2, py: 1.1 }}
+//               >
+//                 {t("mentors.becomeMentor")}
+//               </Button>
+//             </Box>
+//             <Divider />
+//           </>
+//         )}
+
+//         <MenuItem onClick={() => go("/profile")}>
+//           <ListItemIcon>
+//             <PersonOutlineIcon fontSize="small" />
+//           </ListItemIcon>
+//           <ListItemText primary={t("nav.profile")} />
+//         </MenuItem>
+
+//         {isMentor && !isAdmin && (
+//           <MenuItem onClick={() => go("/become-mentor")}>
+//             <ListItemIcon>
+//               <EditIcon fontSize="small" />
+//             </ListItemIcon>
+//             <ListItemText primary={t("nav.mentorProfile")} />
+//           </MenuItem>
+//         )}
+
+//         {isAdmin && (
+//           <MenuItem onClick={() => go("/admin")}>
+//             <ListItemIcon>
+//               <AdminPanelSettingsIcon fontSize="small" />
+//             </ListItemIcon>
+//             <ListItemText primary={t("nav.admin")} />
+//           </MenuItem>
+//         )}
+
+//         <Divider />
+
+//         <MenuItem onClick={handleLogout} sx={{ color: brand.dustyRose, py: 1.2 }}>
+//           <ListItemIcon sx={{ color: "inherit" }}>
+//             <LogoutIcon fontSize="small" />
+//           </ListItemIcon>
+//           <ListItemText primary={t("nav.logout")} />
+//         </MenuItem>
+//       </Menu>
+//     </Box>
+//   );
+// }
+
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Chip,
-  Divider,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-} from "@mui/material";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import LogoutIcon from "@mui/icons-material/Logout";
-import SchoolIcon from "@mui/icons-material/School";
-import StarIcon from "@mui/icons-material/Star";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import EditIcon from "@mui/icons-material/Edit";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import { useNavigate } from "react-router-dom";
+import { Menu, MenuItem, IconButton, Typography, Box } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import { useRoleMode } from "../../context/RoleModeContext";
-import { useLanguage } from "../../context/LanguageContext";
-import { brand } from "../../theme/brand";
+import { useNavigate } from "react-router-dom";
 import UserAvatar from "./UserAvatar";
 
 export default function ProfileMenu() {
-  const { currentUser, logout, isAdmin, isMentor } = useAuth();
-  const { isMentorMode } = useRoleMode();
-  const { t } = useLanguage();
+  const { currentUser, logout, isMentor } = useAuth();
+  const { isMentorMode, setMode } = useRoleMode();
   const navigate = useNavigate();
+
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  if (!currentUser) return null;
-
-  const isMenteeOnly = !isAdmin && !isMentor;
-  const activeModeLabel = isAdmin
-    ? t("mode.adminOnly")
-    : isMentorMode
-      ? t("mode.activeMentor")
-      : t("mode.activeMentee");
-
-  const handleOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
-
-  const go = (path) => {
-    handleClose();
-    navigate(path);
-  };
 
   const handleLogout = () => {
     handleClose();
@@ -56,134 +213,46 @@ export default function ProfileMenu() {
     navigate("/login");
   };
 
+  if (!currentUser) return null;
+
   return (
     <Box>
-      <IconButton
-        onClick={handleOpen}
-        size="small"
-        aria-label={t("nav.profile")}
-        aria-controls={open ? "profile-menu" : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? "true" : undefined}
-        sx={{
-          p: 0.35,
-          border: "2px solid",
-          borderColor: open ? brand.dustyRose : brand.peach,
-          transition: "border-color 0.2s ease",
-        }}
-      >
-        <UserAvatar
-          user={currentUser}
-          size={36}
-          sx={{
-            fontSize: "0.85rem",
-          }}
-        />
+      <IconButton onClick={handleClick} size="small" sx={{ ml: 2 }}>
+        <UserAvatar user={currentUser} size={36} />
       </IconButton>
-
       <Menu
-        id="profile-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            mt: 1.2,
-            minWidth: 300,
-            borderRadius: 3,
-            border: `1px solid ${brand.dustyRoseSoft}`,
-            overflow: "hidden",
-          },
-        }}
-        MenuListProps={{ sx: { py: 0 } }}
+        onClick={handleClose}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
-        <Box
-          sx={{
-            px: 2,
-            py: 1.5,
-            background: `linear-gradient(135deg, ${brand.peachSoft}, ${brand.lavenderSoft})`,
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight={700}>
+        <Box sx={{ px: 2, py: 1 }}>
+          <Typography variant="subtitle2" fontWeight={700}>
             {currentUser.firstName} {currentUser.lastName}
           </Typography>
-          <Typography variant="caption" color="text.secondary" display="block">
+          <Typography variant="caption" color="text.secondary">
             {currentUser.email}
           </Typography>
-          <Chip
-            size="small"
-            icon={
-              isAdmin ? (
-                <AdminPanelSettingsIcon />
-              ) : isMentorMode ? (
-                <StarIcon />
-              ) : (
-                <SchoolIcon />
-              )
-            }
-            label={t("mode.activeMode", { mode: activeModeLabel })}
-            sx={{
-              mt: 1.25,
-              fontWeight: 700,
-              bgcolor: isMentorMode ? brand.dustyRoseSoft : brand.lavenderSoft,
-              color: isMentorMode ? brand.dustyRose : brand.charcoal,
-            }}
-          />
         </Box>
-
-        {isMenteeOnly && (
-          <>
-            <Box sx={{ px: 2, py: 1.75 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                color="secondary"
-                startIcon={<WorkspacePremiumIcon />}
-                onClick={() => go("/become-mentor")}
-                sx={{ fontWeight: 800, borderRadius: 2, py: 1.1 }}
-              >
-                {t("mentors.becomeMentor")}
-              </Button>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        <MenuItem onClick={() => go("/profile")}>
-          <ListItemIcon>
-            <PersonOutlineIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary={t("nav.profile")} />
-        </MenuItem>
-
-        {isMentor && !isAdmin && (
-          <MenuItem onClick={() => go("/become-mentor")}>
-            <ListItemIcon>
-              <EditIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary={t("nav.mentorProfile")} />
+        
+        {[
+          <MenuItem key="profile" onClick={() => navigate("/profile")}>
+            Personal Profile
+          </MenuItem>,
+          isMentor && (
+            <MenuItem 
+              key="mode-switch" 
+              onClick={() => setMode(isMentorMode ? "mentee" : "mentor")}
+            >
+              {isMentorMode ? "Switch to Mentee Mode" : "Switch to Mentor Mode"}
+            </MenuItem>
+          ),
+          <MenuItem key="logout" onClick={handleLogout} sx={{ color: "error.main" }}>
+            Logout
           </MenuItem>
-        )}
-
-        {isAdmin && (
-          <MenuItem onClick={() => go("/admin")}>
-            <ListItemIcon>
-              <AdminPanelSettingsIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary={t("nav.admin")} />
-          </MenuItem>
-        )}
-
-        <Divider />
-
-        <MenuItem onClick={handleLogout} sx={{ color: brand.dustyRose, py: 1.2 }}>
-          <ListItemIcon sx={{ color: "inherit" }}>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary={t("nav.logout")} />
-        </MenuItem>
+        ].filter(Boolean)}
       </Menu>
     </Box>
   );
