@@ -14,7 +14,6 @@ import NotificationBell from "../common/NotificationBell";
 import LanguageToggle from "../common/LanguageToggle";
 import ProfileMenu from "../common/ProfileMenu";
 import RoleModeSwitcher from "../common/RoleModeSwitcher";
-import ChatWidget from "../chat/ChatWidget";
 import { useRoleMode } from "../../context/RoleModeContext";
 import { brand } from "../../theme/brand";
 
@@ -130,7 +129,6 @@ export default function MainLayout({ children }) {
       </Container>
 
       <LanguageToggle floating />
-      <ChatWidget />
     </Box>
   );
 }

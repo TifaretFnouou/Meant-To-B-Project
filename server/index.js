@@ -1,6 +1,8 @@
+// חייב להיטען לפני שאר ה-imports כדי שמודולים שקוראים ל-process.env בזמן טעינה יקבלו ערכים
+import "dotenv/config";
+
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -9,16 +11,15 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import chatRoutes from "./routes/chat.routes.js";
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(helmet());
 app.use(cors());
 app.use(morgan("combined"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// תואם ל-20 הודעות × 2,000 תווים, כולל UTF-8 בעברית, ועדיין מגביל payload חריג
+app.use(express.json({ limit: "128kb" }));
+app.use(express.urlencoded({ extended: true, limit: "128kb" }));
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to QueenB API" });
@@ -34,11 +35,19 @@ app.get("/api/v1/health", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/api/v1/chat", chatRoutes);
 
 app.use((err, req, res, next) => {
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ code: "INVALID_JSON", error: "Invalid JSON body" });
+  }
+
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({ code: "PAYLOAD_TOO_LARGE", error: "Request body is too large" });
+  }
+
   console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
+  res.status(500).json({ code: "SERVER_ERROR", error: "Something went wrong!" });
 });
 
 app.use("*", (req, res) => {
@@ -63,7 +72,7 @@ async function start() {
   const server = app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`📱 Health check: http://localhost:${PORT}/api/v1/health`);
-    console.log(`💬 Chat ask: http://localhost:${PORT}/api/chat`);
+    console.log(`💬 Chat endpoint: http://localhost:${PORT}/api/v1/chat`);
   });
 
   server.on("error", (err) => {
