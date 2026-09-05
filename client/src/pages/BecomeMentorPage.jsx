@@ -99,7 +99,7 @@ export default function BecomeMentorPage() {
         </Typography>
 
         <Alert severity="info" sx={{ mb: 3 }}>
-          מלאי את פרטי המנטורינג שלך — הן יוצגו בקטלוג המנטוריות
+            Fill out your mentoring details — they will be displayed in the mentor catalog
         </Alert>
         {saved && (
           <Alert severity="success" sx={{ mb: 2 }}>
@@ -120,7 +120,7 @@ export default function BecomeMentorPage() {
                 multiline
                 rows={4}
                 required
-                label="רקע מקצועי"
+                label="Professional Background"
                 value={form.bio}
                 onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
               />
@@ -143,7 +143,7 @@ export default function BecomeMentorPage() {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="תחומי ייעוץ *"
+                    label="Advice Topics *"
                     error={Boolean(topicsError)}
                     helperText={topicsError}
                   />
@@ -155,7 +155,7 @@ export default function BecomeMentorPage() {
                 fullWidth
                 type="number"
                 required
-                label="מכסת פגישות"
+                label="Max Sessions"
                 value={form.maxSessions}
                 onChange={(e) => setForm((p) => ({ ...p, maxSessions: e.target.value }))}
                 inputProps={{ min: 1, max: 10 }}
@@ -166,7 +166,7 @@ export default function BecomeMentorPage() {
                 fullWidth
                 select
                 required
-                label="אורך פגישה (דקות)"
+                label="Session Length (minutes)"
                 value={form.sessionLengthMinutes}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, sessionLengthMinutes: e.target.value }))
@@ -174,7 +174,7 @@ export default function BecomeMentorPage() {
               >
                 {SESSION_LENGTHS.map((len) => (
                   <MenuItem key={len} value={len}>
-                    {len} דקות
+                    {len} minutes
                   </MenuItem>
                 ))}
               </TextField>
@@ -187,7 +187,7 @@ export default function BecomeMentorPage() {
             startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
             sx={{ mt: 3 }}
           >
-            {loading ? "Saving..." : "שמירה"}
+            {loading ? "Saving..." : "Save"}
           </Button>
         </Box>
       </Paper>
