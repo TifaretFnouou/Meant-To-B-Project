@@ -48,10 +48,11 @@ const userSchema = new Schema(
       {
         type: String,
         enum: ["admin", "mentor", "mentee"],
+        default: "mentee",
       },
     ],
     mentorProfile: {
-      isActive: { type: Boolean, default: true },
+      isActive: { type: Boolean, default: false },
       bio: { type: String, trim: true },
       topics: [String],
       maxSessions: {

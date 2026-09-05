@@ -31,6 +31,83 @@ const nestedProfileFields = {
   menteeProfile: ["isActive", "menteeGoals"],
 };
 
+// export async function updateUser(userId, updateData, actor = {}) {
+//   const allowedFields = [
+//     "firstName",
+//     "lastName",
+//     "company",
+//     "jobTitle",
+//     "techStack",
+//     "yearsOfExperience",
+//     "githubUrl",
+//     "linkedinUrl",
+//     "phone",
+//     "mentorProfile",
+//     "menteeProfile",
+//     "roles",
+//   ];
+
+//   const filteredData = {};
+
+//   for (const field of allowedFields) {
+//     if (updateData[field] === undefined) continue;
+
+//     if (field === "techStack") {
+//       filteredData.techStack = parseList(updateData.techStack) || [];
+//       continue;
+//     }
+
+//     if (field === "yearsOfExperience") {
+//       filteredData.yearsOfExperience = Number(updateData.yearsOfExperience) || 0;
+//       continue;
+//     }
+
+//     if (field === "roles") {
+//       const roles = parseList(updateData.roles) || [];
+//       if (roles.includes("admin") && !actor.roles?.includes("admin")) {
+//         throw Object.assign(new Error("Cannot self-assign admin role"), {
+//           status: 403,
+//         });
+//       }
+//       if (roles.some((role) => !["admin", "mentor", "mentee"].includes(role))) {
+//         throw Object.assign(new Error("Invalid role value"), { status: 400 });
+//       }
+//       filteredData.roles = roles;
+//       continue;
+//     }
+
+//     if (nestedProfileFields[field]) {
+//       const profile = updateData[field];
+//       if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
+//         throw Object.assign(new Error(`Invalid ${field}`), { status: 400 });
+//       }
+
+//       for (const nestedField of nestedProfileFields[field]) {
+//         if (profile[nestedField] === undefined) continue;
+//         filteredData[`${field}.${nestedField}`] = profile[nestedField];
+//       }
+//       continue;
+//     }
+
+//     filteredData[field] = updateData[field];
+//   }
+
+//   const user = await UserModel.findByIdAndUpdate(
+//     userId,
+//     { $set: filteredData },
+//     {
+//       new: true,
+//       runValidators: true,
+//     }
+//   );
+
+//   if (!user) {
+//     throw Object.assign(new Error("User not found"), { status: 404 });
+//   }
+
+//   return sanitizeUser(user);
+// }
+
 export async function updateUser(userId, updateData, actor = {}) {
   const allowedFields = [
     "firstName",
@@ -77,7 +154,11 @@ export async function updateUser(userId, updateData, actor = {}) {
     }
 
     if (nestedProfileFields[field]) {
-      const profile = updateData[field];
+        let profile = updateData[field];
+      if (typeof profile === 'string') {
+        try { profile = JSON.parse(profile); } catch(e) { profile = {}; }
+      }
+
       if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
         throw Object.assign(new Error(`Invalid ${field}`), { status: 400 });
       }
@@ -92,9 +173,24 @@ export async function updateUser(userId, updateData, actor = {}) {
     filteredData[field] = updateData[field];
   }
 
+  // update mentor profile automatically
+  const updateQuery = { $set: filteredData };
+
+  // if mentor profile data is sent, update it automatically and add the mentor role
+  if (updateData.mentorProfile) {
+    filteredData["mentorProfile.isActive"] = true; // ensure it is displayed in the mentor catalog
+    
+    // prevent duplicate roles
+    if (!filteredData.roles) {
+      updateQuery.$addToSet = { roles: "mentor" }; // add to array only if not already exists
+    } else if (!filteredData.roles.includes("mentor")) {
+      filteredData.roles.push("mentor");
+    }
+  }
+
   const user = await UserModel.findByIdAndUpdate(
     userId,
-    { $set: filteredData },
+    updateQuery,
     {
       new: true,
       runValidators: true,
