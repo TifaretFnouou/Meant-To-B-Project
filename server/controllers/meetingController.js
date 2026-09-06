@@ -11,6 +11,8 @@ import {
   requestMoreSlots,
   markUnavailable,
   submitFeedback,
+  getMessages,
+  addMessage,
 } from "../services/meetingService.js";
 
 function statusFromError(error, fallback = 400) {
@@ -90,8 +92,8 @@ export const approveMeetingController = async (req, res) => {
 
 export const proposeTimesController = async (req, res) => {
   try {
-    const actor = verifyToken(req); // the logged in user (the mentor who proposes the times)
-    const { proposedTimes } = req.body; // expect an array of objects { startTime, endTime }
+    const actor = verifyToken(req);
+    const { proposedTimes } = req.body;
 
     if (!proposedTimes || !Array.isArray(proposedTimes) || proposedTimes.length === 0) {
       return res.status(400).json({ message: "Please provide at least one proposed time" });
@@ -110,7 +112,7 @@ export const proposeTimesController = async (req, res) => {
 
 export const selectTimeController = async (req, res) => {
   try {
-    const actor = verifyToken(req); // the logged in user (the mentee who selects the time)
+    const actor = verifyToken(req);
     const selectedTime = req.body?.selectedTime;
 
     if (!selectedTime || !selectedTime.startTime || !selectedTime.endTime) {
@@ -196,6 +198,25 @@ export const markUnavailableController = async (req, res) => {
       meeting,
       cancelled,
     });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const getMeetingMessagesController = async (req, res) => {
+  try {
+    const messages = await getMessages(req.params.meetingId);
+    res.status(200).json({ messages });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const sendMeetingMessageController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const message = await addMessage(req.params.meetingId, actor.id, req.body.text);
+    res.status(201).json({ message });
   } catch (err) {
     res.status(statusFromError(err)).json({ error: err.message });
   }

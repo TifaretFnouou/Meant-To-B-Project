@@ -48,40 +48,40 @@ export default function AdminPage() {
   return (
     <MainLayout>
       <Typography variant="h5" fontWeight={600} gutterBottom>
-        לוח בקרה - מנהלת קהילה
+        Control Panel - Community Manager
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} md={3}>
           <Paper sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="h4">{users.length}</Typography>
-            <Typography variant="body2">משתמשות</Typography>
+            <Typography variant="body2">Users</Typography>
           </Paper>
         </Grid>
         <Grid item xs={6} md={3}>
           <Paper sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="h4">{activeMeetings.length}</Typography>
-            <Typography variant="body2">פגישות פעילות</Typography>
+            <Typography variant="body2">Active Meetings</Typography>
           </Paper>
         </Grid>
         <Grid item xs={6} md={3}>
           <Paper sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="h4">{cancelled.length}</Typography>
-            <Typography variant="body2">פגישות שבוטלו</Typography>
+            <Typography variant="body2">Cancelled Meetings</Typography>
           </Paper>
         </Grid>
         <Grid item xs={6} md={3}>
           <Paper sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="h4">{withFeedback.length}</Typography>
-            <Typography variant="body2">משובים</Typography>
+            <Typography variant="body2">Feedback</Typography>
           </Paper>
         </Grid>
       </Grid>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-        <Tab label="משתמשות" />
-        <Tab label="פגישות" />
-        <Tab label="קטגוריות ותגיות" />
+        <Tab label="Users" />
+        <Tab label="Meetings" />
+        <Tab label="Categories and Tags" />
       </Tabs>
 
       <TabPanel value={tab} index={0}>
@@ -89,11 +89,11 @@ export default function AdminPage() {
         <Table sx={{ minWidth: 680 }}>
           <TableHead>
             <TableRow>
-              <TableCell>שם</TableCell>
-              <TableCell>אימייל</TableCell>
-              <TableCell>תפקידים</TableCell>
-              <TableCell>חברה</TableCell>
-              <TableCell>ניסיון</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Roles</TableCell>
+              <TableCell>Company</TableCell>
+              <TableCell>Experience</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -122,11 +122,11 @@ export default function AdminPage() {
         <Table sx={{ minWidth: 720 }}>
           <TableHead>
             <TableRow>
-              <TableCell>מנטורית</TableCell>
-              <TableCell>מנטית</TableCell>
-              <TableCell>סטטוס</TableCell>
-              <TableCell>מועד</TableCell>
-              <TableCell>משוב</TableCell>
+              <TableCell>Mentor</TableCell>  
+              <TableCell>Mentee</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Feedback</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -154,12 +154,12 @@ export default function AdminPage() {
                       <Box>
                         {s.feedback?.mentee && (
                           <Typography variant="caption" display="block">
-                            מנטית: {s.feedback.mentee.rating}/5 — {s.feedback.mentee.comment || "—"}
+                            Mentee: {s.feedback.mentee.rating}/5 — {s.feedback.mentee.comment || "—"}
                           </Typography>
                         )}
                         {s.feedback?.mentor && (
                           <Typography variant="caption" display="block">
-                            מנטורית: {s.feedback.mentor.rating}/5 — {s.feedback.mentor.comment || "—"}
+                            Mentor: {s.feedback.mentor.rating}/5 — {s.feedback.mentor.comment || "—"}
                           </Typography>
                         )}
                       </Box>
@@ -180,14 +180,14 @@ export default function AdminPage() {
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle1" gutterBottom>
-                שפות פיתוח / טכנולוגיות
+                Programming Languages / Technologies
               </Typography>
               <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 <TextField
                   size="small"
                   value={newTech}
                   onChange={(e) => setNewTech(e.target.value)}
-                  placeholder="הוספת טכנולוגיה"
+                  placeholder="Add Technology"
                 />
                 <Button
                   variant="contained"
@@ -198,7 +198,7 @@ export default function AdminPage() {
                     }
                   }}
                 >
-                  הוספה
+                  Add
                 </Button>
               </Box>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -216,14 +216,14 @@ export default function AdminPage() {
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle1" gutterBottom>
-                תחומי ייעוץ
+                Consultation Topics
               </Typography>
               <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 <TextField
                   size="small"
                   value={newTopic}
                   onChange={(e) => setNewTopic(e.target.value)}
-                  placeholder="הוספת תחום"
+                  placeholder="Add Topic"
                 />
                 <Button
                   variant="contained"
@@ -234,7 +234,7 @@ export default function AdminPage() {
                     }
                   }}
                 >
-                  הוספה
+                  Add
                 </Button>
               </Box>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>

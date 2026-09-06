@@ -12,9 +12,11 @@ import {
 } from "@mui/material";
 import VideoCallIcon from "@mui/icons-material/VideoCall";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ChatIcon from "@mui/icons-material/Chat";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../common/StatusBadge";
 import WeekCalendar from "../calendar/WeekCalendar";
+import MeetingChatModal from "./MeetingChatModal";
 import { SCHEDULING_STATE } from "../../constants";
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
@@ -67,6 +69,7 @@ export default function MeetingsSchedulingPanel({
   const [loadingOpen, setLoadingOpen] = useState(false);
   const [approving, setApproving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [isMeetingChatOpen, setIsMeetingChatOpen] = useState(false);
 
   useEffect(() => {
     setLocalSlots(meeting.proposedSlots || []);
@@ -596,7 +599,17 @@ export default function MeetingsSchedulingPanel({
               events={calendarEvents}
             />
           )}
+
           <Stack direction="row" spacing={1} sx={{ mt: compact ? 0 : 2 }} flexWrap="wrap" useFlexGap>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<ChatIcon />}
+              onClick={() => setIsMeetingChatOpen(true)}
+            >
+              Meeting Chat
+            </Button>
+
             {!meeting.rescheduleUsed && (
               <Button variant="outlined" color="warning" onClick={handleUnavailable}>
                 {t("calendar.markUnavailable")}
@@ -616,6 +629,13 @@ export default function MeetingsSchedulingPanel({
       {state === SCHEDULING_STATE.COMPLETED && (
         <Alert severity="success">{t("calendar.completed")}</Alert>
       )}
+
+        <MeetingChatModal
+        open={isMeetingChatOpen}
+        onClose={() => setIsMeetingChatOpen(false)}
+        meeting={meeting}
+        otherUser={otherUser}
+      />
     </Box>
   );
 }
