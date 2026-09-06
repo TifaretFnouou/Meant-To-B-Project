@@ -84,8 +84,7 @@ export default function MentorCard({
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <TimerIcon fontSize="small" sx={{ color: brand.dustyRose }} />
             <Typography variant="caption">
-              {t("mentors.meetingLength", { min: profile?.meetingLengthMinutes })}
-            </Typography>
+            {profile?.sessionLengthMinutes || profile?.sessionLength || mentor.sessionLengthMinutes || 45} {t("minutes", { min: "minutes" })}            </Typography>
           </Box>
         </Stack>
 
