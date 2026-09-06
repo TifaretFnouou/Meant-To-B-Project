@@ -633,6 +633,24 @@ function mapMeetingToFrontend(meeting) {
     durationMinutes,
     moreSlotsUsed: (meeting.moreSlotsCount || 0) > 0,
     rescheduleUsed: (meeting.rescheduleCount || 0) > 0,
+    feedback: {
+      mentee: meeting.menteeFeedback?.isFilled
+        ? {
+            isFilled: true,
+            rating: meeting.menteeFeedback.rating,
+            comment: meeting.menteeFeedback.comments || "",
+            comments: meeting.menteeFeedback.comments || "",
+          }
+        : null,
+      mentor: meeting.mentorFeedback?.isFilled
+        ? {
+            isFilled: true,
+            rating: meeting.mentorFeedback.rating,
+            comment: meeting.mentorFeedback.comments || "",
+            comments: meeting.mentorFeedback.comments || "",
+          }
+        : null,
+    },
     createdAt: meeting.createdAt,
   };
 }
@@ -732,6 +750,25 @@ export const appointmentService = {
     return mapMeetingToFrontend(response.data.meeting);
   },
 
+  /** Preferred flow: book a free slot from mentor availability */
+  async bookFromAvailability({ mentorId, startTime, endTime }) {
+    const selectedTime = {
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
+    };
+    const response = await api.post("/meetings/book", { mentorId, selectedTime });
+    return mapMeetingToFrontend(response.data.meeting);
+  },
+
+  async rebookFromAvailability(meetingId, startTime, endTime) {
+    const selectedTime = {
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
+    };
+    const response = await api.put(`/meetings/${meetingId}/rebook`, { selectedTime });
+    return mapMeetingToFrontend(response.data.meeting);
+  },
+
   async rejectRequest(meetingId) {
     const response = await api.put(`/meetings/${meetingId}/reject`);
     return mapMeetingToFrontend(response.data.meeting);
@@ -790,8 +827,14 @@ export const appointmentService = {
   },
 
   async submitFeedback(meetingId, role, feedback) {
-    console.warn("Backend route for feedback is missing!");
-    return null;
+    const rating = feedback?.rating;
+    const comments = feedback?.comments ?? feedback?.comment ?? "";
+    const response = await api.put(`/meetings/${meetingId}/feedback`, {
+      rating,
+      comments,
+      role,
+    });
+    return mapMeetingToFrontend(response.data.meeting);
   },
 
   async markUnavailable(meetingId) {

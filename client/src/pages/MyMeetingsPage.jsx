@@ -285,9 +285,18 @@ export default function MyMeetingsPage() {
     const role = String(currentUser.id) === String(meeting.mentorId) ? "mentor" : "mentee";
     if (role === "mentor" && !isMentorMode) return false;
     if (role === "mentee" && !isMenteeMode) return false;
+    if (meeting.feedback?.[role]?.isFilled) return false;
+
+    const start = meeting.matchedSlot ? new Date(meeting.matchedSlot).getTime() : NaN;
+    if (Number.isNaN(start)) return false;
+    const ended = Date.now() >= start + (meeting.durationMinutes || 60) * 60000;
+    if (!ended) return false;
+
     return (
-      (meeting.status === MEETING_STATUS.COMPLETED || meeting.schedulingState === SCHEDULING_STATE.COMPLETED) &&
-      !meeting.feedback?.[role]
+      meeting.status === MEETING_STATUS.MATCHED ||
+      meeting.status === MEETING_STATUS.COMPLETED ||
+      meeting.schedulingState === SCHEDULING_STATE.MATCHED ||
+      meeting.schedulingState === SCHEDULING_STATE.COMPLETED
     );
   };
 

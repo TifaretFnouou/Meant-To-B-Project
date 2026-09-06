@@ -150,7 +150,22 @@ export default function AdminPage() {
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    {s.feedback?.mentor || s.feedback?.mentee ? "✓" : "-"}
+                    {s.feedback?.mentor || s.feedback?.mentee ? (
+                      <Box>
+                        {s.feedback?.mentee && (
+                          <Typography variant="caption" display="block">
+                            מנטית: {s.feedback.mentee.rating}/5 — {s.feedback.mentee.comment || "—"}
+                          </Typography>
+                        )}
+                        {s.feedback?.mentor && (
+                          <Typography variant="caption" display="block">
+                            מנטורית: {s.feedback.mentor.rating}/5 — {s.feedback.mentor.comment || "—"}
+                          </Typography>
+                        )}
+                      </Box>
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                 </TableRow>
               );

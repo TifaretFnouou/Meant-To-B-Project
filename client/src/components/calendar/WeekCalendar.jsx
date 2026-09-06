@@ -35,6 +35,7 @@ export default function WeekCalendar({
   onEventClick,
   startHour = 8,
   endHour = 20,
+  disablePast = false,
 }) {
   const { language, t } = useLanguage();
   const locale = language === "he" ? "he-IL" : "en-US";
@@ -47,6 +48,7 @@ export default function WeekCalendar({
 
   const isSelectableCell = (iso) => {
     if (mode === "view") return false;
+    if (disablePast && new Date(iso).getTime() <= Date.now()) return false;
     if (mode === "select-one") {
       return selectableSlots?.some((s) => isSameSlot(s, iso));
     }
@@ -141,6 +143,7 @@ export default function WeekCalendar({
                   return eh === hour;
                 });
                 const selectable = isSelectableCell(iso);
+                const isPast = new Date(iso).getTime() <= Date.now();
                 const proposedHighlight =
                   mode === "select-one" && selectableSlots?.some((s) => isSameSlot(s, iso));
 
@@ -155,10 +158,11 @@ export default function WeekCalendar({
                       borderColor: "divider",
                       p: 0.4,
                       cursor: selectable ? "pointer" : "default",
+                      opacity: disablePast && isPast ? 0.35 : 1,
                       bgcolor: selected
                         ? EVENT_COLORS.selected.bg
                         : proposedHighlight
-                          ? EVENT_COLORS.proposed.bg
+                          ? EVENT_COLORS.available.bg
                           : "transparent",
                       outline: selected ? `2px solid ${EVENT_COLORS.selected.border}` : "none",
                       outlineOffset: -2,

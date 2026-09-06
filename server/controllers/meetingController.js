@@ -1,12 +1,15 @@
 import { verifyToken } from "../services/authService.js";
 import {
   createMeeting,
+  bookFromAvailability,
+  rebookFromAvailability,
   proposeTimes,
   selectTime,
   rejectMeeting,
   getUserMeetings,
   requestMoreSlots,
   markUnavailable,
+  submitFeedback,
 } from "../services/meetingService.js";
 
 function statusFromError(error, fallback = 400) {
@@ -15,7 +18,7 @@ function statusFromError(error, fallback = 400) {
 
 export const createMeetingController = async (req, res) => {
   try {
-    const actor = verifyToken(req); // the logged in user (the mentor who requests the meeting)
+    const actor = verifyToken(req);
     const { mentorId } = req.body;
 
     if (!mentorId) {
@@ -27,7 +30,48 @@ export const createMeetingController = async (req, res) => {
   } catch (err) {
     res.status(statusFromError(err)).json({ error: err.message });
   }
+};
 
+export const bookFromAvailabilityController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const { mentorId, selectedTime } = req.body || {};
+
+    if (!mentorId) {
+      return res.status(400).json({ message: "Mentor ID is required" });
+    }
+    if (!selectedTime?.startTime || !selectedTime?.endTime) {
+      return res.status(400).json({ message: "Selected time is required" });
+    }
+
+    const meeting = await bookFromAvailability(actor.id, mentorId, selectedTime);
+    const populated = await getUserMeetings(actor.id).then((list) =>
+      list.find((m) => String(m._id) === String(meeting._id))
+    );
+
+    res.status(201).json({
+      message: "Meeting booked successfully",
+      meeting: populated || meeting,
+    });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const rebookFromAvailabilityController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const selectedTime = req.body?.selectedTime;
+
+    if (!selectedTime?.startTime || !selectedTime?.endTime) {
+      return res.status(400).json({ message: "Selected time is required" });
+    }
+
+    const meeting = await rebookFromAvailability(req.params.id, actor.id, selectedTime);
+    res.status(200).json({ message: "Meeting rebooked successfully", meeting });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
 };
 
 export const proposeTimesController = async (req, res) => {
@@ -84,8 +128,27 @@ export const rejectMeetingController = async (req, res) => {
 export const getMyMeetingsController = async (req, res) => {
   try {
     const actor = verifyToken(req);
-    const meetings = await getUserMeetings(actor.id);
+    const isAdmin = Array.isArray(actor.roles) && actor.roles.includes("admin");
+    const meetings = await getUserMeetings(actor.id, { isAdmin });
     res.status(200).json({ data: meetings });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const submitFeedbackController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const rating = req.body?.rating ?? req.body?.feedback?.rating;
+    const comments =
+      req.body?.comments ??
+      req.body?.comment ??
+      req.body?.feedback?.comments ??
+      req.body?.feedback?.comment ??
+      "";
+
+    const meeting = await submitFeedback(req.params.id, actor.id, { rating, comments });
+    res.status(200).json({ message: "Feedback submitted successfully", meeting });
   } catch (err) {
     res.status(statusFromError(err)).json({ error: err.message });
   }

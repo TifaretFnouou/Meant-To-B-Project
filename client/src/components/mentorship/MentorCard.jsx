@@ -1,102 +1,3 @@
-
-// import React from "react";
-// import {
-//   Card,
-//   CardContent,
-//   CardActions,
-//   Typography,
-//   Chip,
-//   Button,
-//   Box,
-//   Stack,
-// } from "@mui/material";
-// import WorkIcon from "@mui/icons-material/Work";
-// import TimerIcon from "@mui/icons-material/Timer";
-// import EventIcon from "@mui/icons-material/Event";
-// import { useLanguage } from "../../context/LanguageContext";
-// import { brand } from "../../theme/brand";
-// import UserAvatar from "../common/UserAvatar";
-
-// export default function MentorCard({
-//   mentor,
-//   onExpressInterest,
-//   hasPendingRequest,
-//   canExpressInterest = true,
-// }) {
-//   const { t } = useLanguage();
-//   const profile = mentor.mentorProfile;
-//   return (
-//     <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-//       {}
-//       <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-//         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-//           <UserAvatar user={mentor} size={52} />
-//           <Box sx={{ minWidth: 0 }}>
-//             <Typography variant="h6" fontWeight={700}>
-//               {mentor.firstName} {mentor.lastName}
-//             </Typography>
-//             <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
-//               {mentor.jobTitle} · {mentor.company}
-//             </Typography>
-//           </Box>
-//         </Box>
-
-//         <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
-//           {profile?.bio}
-//         </Typography>
-
-//         {}
-//         <Stack direction="row" spacing={0.5} sx={{ mt: "auto", mb: 1, flexWrap: "wrap", gap: 0.5 }}>
-//           {profile?.topics?.map((topic) => (
-//             <Chip key={topic} label={topic} size="small" color="primary" variant="outlined" />
-//           ))}
-//         </Stack>
-
-//         <Stack direction="row" spacing={2} sx={{ mt: 1, flexWrap: "wrap", gap: 1 }}>
-//           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-//             <WorkIcon fontSize="small" sx={{ color: brand.dustyRose }} />
-//             <Typography variant="caption">{mentor.yearsOfExperience} {t("mentors.yearsExp")}</Typography>
-//           </Box>
-//           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-//             <EventIcon fontSize="small" sx={{ color: brand.dustyRose }} />
-//             <Typography variant="caption">{t("mentors.maxMeetings", { count: profile?.maxMeetings })}</Typography>
-//           </Box>
-//           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-//             <TimerIcon fontSize="small" sx={{ color: brand.dustyRose }} />
-//             <Typography variant="caption">{t("mentors.meetingLength", { min: profile?.meetingLengthMinutes })}</Typography>
-//           </Box>
-//         </Stack>
-
-//         <Stack direction="row" spacing={0.5} sx={{ mt: 1.5, flexWrap: "wrap", gap: 0.5 }}>
-//           {mentor.techStack?.map((tech) => (
-//             <Chip key={tech} label={tech} size="small" />
-//           ))}
-//         </Stack>
-//       </CardContent>
-//       <CardActions sx={{ p: 2, pt: 0 }}>
-//         {canExpressInterest ? (
-//           <Button
-//             fullWidth
-//             variant="contained"
-//             onClick={() => onExpressInterest(mentor)}
-//             disabled={hasPendingRequest}
-//           >
-//             {hasPendingRequest ? t("mentors.requestPending") : t("mentors.expressInterest")}
-//           </Button>
-//         ) : (
-//           <Button fullWidth variant="outlined" disabled>
-//             {t("mentors.browseOnly")}
-//           </Button>
-//         )}
-//       </CardActions>
-//     </Card>
-//   );
-// }
-
-
-
-
-
 import React, { useState } from "react";
 import {
   Card,
@@ -107,9 +8,8 @@ import {
   Button,
   Box,
   Stack,
-  CircularProgress,
   Snackbar,
-  Alert
+  Alert,
 } from "@mui/material";
 import WorkIcon from "@mui/icons-material/Work";
 import TimerIcon from "@mui/icons-material/Timer";
@@ -117,12 +17,7 @@ import EventIcon from "@mui/icons-material/Event";
 import { useLanguage } from "../../context/LanguageContext";
 import { brand } from "../../theme/brand";
 import UserAvatar from "../common/UserAvatar";
-// --- import our appointment service ---
-import { appointmentService } from "../../services/appointmentService";
-import { getStoredToken } from "../../services/api";
-import { useNotifications } from "../../context/NotificationContext";
-import { useAuth } from "../../context/AuthContext";
-import { useScheduling } from "../../context/SchedulingContext";
+import BookMentorDialog from "../scheduling/BookMentorDialog";
 
 export default function MentorCard({
   mentor,
@@ -132,100 +27,20 @@ export default function MentorCard({
 }) {
   const { t } = useLanguage();
   const profile = mentor.mentorProfile;
-  const { addNotification } = useNotifications();
-  const { currentUser } = useAuth();
-  const { createRequest, refreshMeetings } = useScheduling(); 
-
-  // --- manage the state for loading and messages to the user ---
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
   const [feedback, setFeedback] = useState({ open: false, message: "", severity: "success" });
 
-  const handleCloseFeedback = () => setFeedback(prev => ({ ...prev, open: false }));
+  const handleCloseFeedback = () => setFeedback((prev) => ({ ...prev, open: false }));
 
-  // --- the function that calls the server when the user clicks "book meeting" ---
-  // const handleBookMeeting = async () => {
-  //   setIsSubmitting(true);
-  //   try {
-  //     // 1. call the real server using the mentor's id
-  //     await appointmentService.createMentorshipRequest({ mentorId: mentor.id });
-      
-  //     // 2. success message
-  //     setFeedback({
-  //       open: true,
-  //       message: "הבקשה נשלחה בהצלחה! אפשר לעקוב אחריה באזור הפגישות.",
-  //       severity: "success"
-  //     });
-
-  //     // 3. update the catalog page (to prevent multiple submissions in the same meeting)
-  //     if (onExpressInterest) {
-  //       onExpressInterest(mentor); 
-  //     }
-  //   } catch (error) {
-  //     // error message (e.g. if there is an active meeting)
-  //     setFeedback({
-  //       open: true,
-  //       message: error.response?.data?.error || error.message || "An error occurred while sending the request.",
-  //       severity: "error"
-  //     });
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-  const handleBookMeeting = async () => {
-    setIsSubmitting(true);
-    try {
-      if (!getStoredToken()) {
-        setFeedback({
-          open: true,
-          message: "פג תוקף ההתחברות. יש להתחבר מחדש ואז לשלוח בקשה.",
-          severity: "error",
-        });
-        return;
-      }
-
-      const menteeName =
-        `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim() || "Mentee";
-
-      // Prefer SchedulingContext so lists refresh + mentor gets a notification
-      if (typeof createRequest === "function") {
-        await createRequest(mentor.id, currentUser.id, menteeName);
-      } else {
-        const response = await appointmentService.createMentorshipRequest({
-          mentorId: mentor.id,
-        });
-        addNotification(
-          String(mentor.id),
-          "notif.mentorshipRequest",
-          { name: menteeName },
-          response?.id || null
-        );
-        await refreshMeetings?.();
-      }
-
-      setFeedback({
-        open: true,
-        message: "הבקשה נשלחה בהצלחה! אפשר לעקוב אחריה באזור הפגישות.",
-        severity: "success",
-      });
-
-      if (onExpressInterest) {
-        onExpressInterest(mentor);
-      }
-    } catch (error) {
-      const status = error.response?.status;
-      const serverMsg = error.response?.data?.error || error.response?.data?.message;
-      setFeedback({
-        open: true,
-        message:
-          status === 401
-            ? "פג תוקף ההתחברות. יש להתחבר מחדש ואז לשלוח בקשה."
-            : serverMsg || error.message || "אירעה שגיאה בשליחת הבקשה.",
-        severity: "error",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleBooked = () => {
+    setFeedback({
+      open: true,
+      message: t("mentors.bookingSuccess", {
+        name: `${mentor.firstName} ${mentor.lastName}`,
+      }),
+      severity: "success",
+    });
+    onExpressInterest?.(mentor);
   };
 
   return (
@@ -256,15 +71,21 @@ export default function MentorCard({
         <Stack direction="row" spacing={2} sx={{ mt: 1, flexWrap: "wrap", gap: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <WorkIcon fontSize="small" sx={{ color: brand.dustyRose }} />
-            <Typography variant="caption">{mentor.yearsOfExperience} {t("mentors.yearsExp")}</Typography>
+            <Typography variant="caption">
+              {mentor.yearsOfExperience} {t("mentors.yearsExp")}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <EventIcon fontSize="small" sx={{ color: brand.dustyRose }} />
-            <Typography variant="caption">{t("mentors.maxMeetings", { count: profile?.maxMeetings })}</Typography>
+            <Typography variant="caption">
+              {t("mentors.maxMeetings", { count: profile?.maxMeetings })}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <TimerIcon fontSize="small" sx={{ color: brand.dustyRose }} />
-            <Typography variant="caption">{t("mentors.meetingLength", { min: profile?.meetingLengthMinutes })}</Typography>
+            <Typography variant="caption">
+              {t("mentors.meetingLength", { min: profile?.meetingLengthMinutes })}
+            </Typography>
           </Box>
         </Stack>
 
@@ -280,18 +101,10 @@ export default function MentorCard({
           <Button
             fullWidth
             variant="contained"
-            onClick={handleBookMeeting}
-            // the button is disabled if we are waiting for a response from the server or if there is an active request
-            disabled={hasPendingRequest || isSubmitting}
+            onClick={() => setBookOpen(true)}
+            disabled={hasPendingRequest}
           >
-            {/* if we are waiting for the server to respond, show a loading animation */}
-            {isSubmitting ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : hasPendingRequest ? (
-              t("mentors.requestPending")
-            ) : (
-              t("mentors.expressInterest")
-            )}
+            {hasPendingRequest ? t("mentors.requestPending") : t("mentors.bookMeeting")}
           </Button>
         ) : (
           <Button fullWidth variant="outlined" disabled>
@@ -300,7 +113,13 @@ export default function MentorCard({
         )}
       </CardActions>
 
-        {/* --- element to display the success/error message --- */}
+      <BookMentorDialog
+        open={bookOpen}
+        mentor={mentor}
+        onClose={() => setBookOpen(false)}
+        onBooked={handleBooked}
+      />
+
       <Snackbar
         open={feedback.open}
         autoHideDuration={5000}
