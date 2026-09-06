@@ -15,7 +15,7 @@ import { SchedulingProvider } from "./context/SchedulingContext";
 import { AdminConfigProvider } from "./context/AdminConfigContext";
 import { ThemeModeProvider, useThemeMode } from "./context/ThemeModeContext";
 import FeedbackReminder from "./components/feedback/FeedbackReminder";
-
+import ChatWidget from "./components/chat/ChatWidget";
 const cacheRtl = createCache({ key: "muirtl", stylisPlugins: [prefixer, rtlPlugin] });
 const cacheLtr = createCache({ key: "muiltr" });
 
@@ -40,6 +40,7 @@ function ThemedApp() {
                   <Router>
                     <AppRoutes />
                     <FeedbackReminder />
+                    <ChatWidget />
                   </Router>
                 </SchedulingProvider>
               </NotificationProvider>
