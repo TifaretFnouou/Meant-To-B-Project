@@ -13,7 +13,7 @@ export async function sendChatMessage(messages, language = "he", { signal } = {}
   }
 
   try {
-    // לא שולחים חזרה לשרת id-ים וכרטיסי מנטוריות מה-UI; רק את תוכן השיחה הנחוץ למודל
+    // Just if we don't send back mentor ids and meeting tokens from the UI; just the chat content needed for the model
     const conversation = (Array.isArray(messages) ? messages : [])
       .slice(-20)
       .filter(

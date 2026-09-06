@@ -492,7 +492,7 @@ export const en = {
     empty: "No calendar events to show",
     pendingList: "Pending requests",
     pendingItem: "Request with {{name}}",
-    eventBooked: "Booked meeting",
+    eventBooked: "Booked Meeting",
     eventPendingApproval: "Awaiting mentor approval",
     eventProposed: "Proposed slot",
     eventPending: "Pending request",

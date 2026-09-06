@@ -619,3 +619,55 @@ export async function submitFeedback(meetingId, userId, { rating, comments }) {
   await meeting.save();
   return meeting;
 }
+
+export async function getMessages(meetingId) {
+  const meeting = await MeetingModel.findById(meetingId);
+  if (!meeting) {
+    const error = new Error("Meeting not found");
+    error.status = 404;
+    throw error;
+  }
+  return meeting.messages || [];
+}
+
+export async function addMessage(meetingId, userId, text) {
+  if (!text || !text.trim()) {
+    const error = new Error("Message text is required");
+    error.status = 400;
+    throw error;
+  }
+
+  const meeting = await MeetingModel.findById(meetingId);
+  if (!meeting) {
+    const error = new Error("Meeting not found");
+    error.status = 404;
+    throw error;
+  }
+
+  const newMessage = {
+    sender: userId,
+    text: text.trim(),
+    createdAt: new Date(),
+  };
+
+  meeting.messages.push(newMessage);
+  await meeting.save();
+
+  // זיהוי מי הצד השני שצריך לקבל את ההתראה
+  const isSenderMentor = String(meeting.mentorId) === String(userId);
+  const recipientId = isSenderMentor ? meeting.menteeId : meeting.mentorId;
+  const senderUser = await UserModel.findById(userId).select("firstName lastName");
+  const senderName = senderUser ? `${senderUser.firstName || ""} ${senderUser.lastName || ""}`.trim() : "User";
+
+  // שליחת נוטיפיקציה לצד השני
+  if (recipientId) {
+    await createNotification({
+      userId: recipientId,
+      messageKey: `You have a new message from ${senderName}`,
+      messageParams: { name: senderName },
+      meetingId: meeting._id,
+    }).catch((err) => console.error("Failed to send message notification", err));
+  }
+
+  return meeting.messages[meeting.messages.length - 1];
+}

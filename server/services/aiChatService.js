@@ -2,14 +2,14 @@ import OpenAI from "openai";
 import mongoose from "mongoose";
 import { findMentorsByCriteria } from "./mentorSearchService.js";
 
-// Gemini חושף API תואם-OpenAI, כך שאותו SDK ואותו tool-calling עובדים מול שני הספקים
+// Gemini exposes the OpenAI-compatible API, so the same SDK and tool-calling work with both providers
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
 const AI_TIMEOUT_MS = 25_000;
 const MAX_TOOL_CALLS = 3;
 
 let provider = null;
 
-// יצירה עצלה: המפתח נקרא רק בבקשה הראשונה, אחרי ש-dotenv כבר נטען
+// Lazy initialization: the key is called only on the first request, after dotenv is already loaded
 function getProvider() {
   if (provider) return provider;
 
@@ -31,7 +31,7 @@ function getProvider() {
         timeout: AI_TIMEOUT_MS,
         maxRetries: 0,
       }),
-      // דגמי ה-flash הרגילים מוגבלים ל-20 בקשות ביום ב-free tier ומשיבים בעשרות שניות
+      // Regular flash models are limited to 20 requests per day in the free tier and return in seconds
       model: process.env.CHAT_MODEL || "gemini-3.5-flash-lite",
       extraParams: { reasoning_effort: "low" },
     };
@@ -145,7 +145,7 @@ async function runTool(toolCall) {
   }
 }
 
-// מודלים עם "חשיבה" מחזירים מדי פעם הודעה ריקה לגמרי, ואז עדיף ניסוח מוכן על פני בועה ריקה
+// Models with "reasoning" often return a completely empty message, and then it's better to use a ready-made fallback
 const EMPTY_REPLY_FALLBACK = {
   he: "לא הצלחתי לנסח תשובה כרגע. אפשר לנסח את השאלה מחדש?",
   en: "I couldn't compose a reply just now. Could you rephrase your question?",
@@ -202,10 +202,10 @@ export async function processChatWithAI(messages, language = "he") {
     return { reply: responseMessage.content || fallback, mentors: [] };
   }
 
-  // לא מחזירים פרטי פרופילים למודל: זה חוסך קריאה נוספת ומונע ממנו להמציא ספירה או פרטים.
+      // We don't send profile details to the model: this saves an extra call and prevents it from inventing a list or details.
   const toolResults = await Promise.all(toolCalls.map(runTool));
 
-  // הכרטיסים מוצגים מנתונים מובנים ולא מהטקסט של המודל, כדי שהעיצוב והקישורים יהיו אמינים
+  // The cards are shown from built-in data, not from the model's text, so the design and links are reliable
   const mentors = [];
   const seenIds = new Set();
   toolResults.forEach((result) => {

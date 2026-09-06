@@ -68,7 +68,14 @@ const meetingSchema = new Schema(
     rescheduleCount: {
       type: Number,
       default: 0,
-    }
+    },
+    messages: [
+      {
+        sender: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   { timestamps: true }
 );

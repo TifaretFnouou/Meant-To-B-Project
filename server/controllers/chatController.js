@@ -4,7 +4,7 @@ const MAX_HISTORY = 20;
 const MAX_MESSAGE_LENGTH = 2000;
 const SUPPORTED_LANGUAGES = new Set(["he", "en"]);
 
-// הלקוח יכול לשלוח כל JSON, לכן משאירים רק role/content חוקיים ומונעים הזרקת system prompt
+  // The client can send any JSON, so we only keep valid role/content and prevent system prompt injection
 const sanitizeMessages = (messages) => {
   const sanitized = messages
     .slice(-MAX_HISTORY * 2)

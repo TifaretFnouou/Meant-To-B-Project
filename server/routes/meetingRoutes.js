@@ -11,6 +11,8 @@ import {
   requestMoreSlotsController,
   markUnavailableController,
   submitFeedbackController,
+  getMeetingMessagesController,
+  sendMeetingMessageController,
 } from "../controllers/meetingController.js";
 const router = express.Router();
 
@@ -25,6 +27,8 @@ router.put("/:id/reject", rejectMeetingController);
 router.put("/:id/request-more-slots", requestMoreSlotsController);
 router.put("/:id/mark-unavailable", markUnavailableController);
 router.put("/:id/feedback", submitFeedbackController);
+router.get("/:meetingId/messages", getMeetingMessagesController);
+router.post("/:meetingId/messages", sendMeetingMessageController);
 
 export default router;
 

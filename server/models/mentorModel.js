@@ -47,7 +47,7 @@ const mentorSchema = new mongoose.Schema(
   }
 );
 
-// אינדקסים לשיפור מהירות החיפוש לפי טכנולוגיות, תחומי ייעוץ ושנות ניסיון
+/* Indexes for faster search by skills, consultation topics and experience years */
 mentorSchema.index({ skills: 1 });
 mentorSchema.index({ adviceTopics: 1 });
 mentorSchema.index({ experienceYears: 1 });
