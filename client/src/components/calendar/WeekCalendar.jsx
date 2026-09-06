@@ -19,9 +19,9 @@ import { brand } from "../../theme/brand";
 /**
  * Interactive week calendar.
  * mode:
- *  - "view"         — show events only
- *  - "select-multi" — mentor picks availability slots
- *  - "select-one"   — mentee picks one proposed slot
+ *  - "view"         - show events only
+ *  - "select-multi" - mentor picks availability slots
+ *  - "select-one"   - mentee picks one proposed slot
  */
 export default function WeekCalendar({
   weekStart,
@@ -35,6 +35,7 @@ export default function WeekCalendar({
   onEventClick,
   startHour = 8,
   endHour = 20,
+  disablePast = false,
 }) {
   const { language, t } = useLanguage();
   const locale = language === "he" ? "he-IL" : "en-US";
@@ -47,13 +48,21 @@ export default function WeekCalendar({
 
   const isSelectableCell = (iso) => {
     if (mode === "view") return false;
+    if (disablePast && new Date(iso).getTime() <= Date.now()) return false;
     if (mode === "select-one") {
       return selectableSlots?.some((s) => isSameSlot(s, iso));
     }
     return true;
   };
 
-  const handleCellClick = (iso) => {
+  const handleCellClick = (iso, dayEvents = []) => {
+    const meetingEvents = dayEvents.filter(
+      (e) => e?.meetingId && e.type !== "available"
+    );
+    if (meetingEvents.length > 0 && onEventClick) {
+      onEventClick(meetingEvents[0]);
+      return;
+    }
     if (!isSelectableCell(iso)) return;
     if (mode === "select-multi") onToggleSlot?.(iso);
     if (mode === "select-one") onSelectSlot?.(iso);
@@ -140,54 +149,64 @@ export default function WeekCalendar({
                   const eh = new Date(e.start).getHours();
                   return eh === hour;
                 });
+                const meetingEvents = dayEvents.filter(
+                  (e) => e?.meetingId && e.type !== "available"
+                );
                 const selectable = isSelectableCell(iso);
+                const isPast = new Date(iso).getTime() <= Date.now();
                 const proposedHighlight =
                   mode === "select-one" && selectableSlots?.some((s) => isSameSlot(s, iso));
+                const canOpenMeeting = Boolean(onEventClick) && meetingEvents.length > 0;
 
                 return (
                   <Box
                     key={`${day.toISOString()}-${hour}`}
-                    onClick={() => handleCellClick(iso)}
+                    onClick={() => handleCellClick(iso, dayEvents)}
                     sx={{
                       minHeight: 52,
                       borderBottom: "1px solid",
                       borderLeft: "1px solid",
                       borderColor: "divider",
                       p: 0.4,
-                      cursor: selectable ? "pointer" : "default",
+                      cursor: selectable || canOpenMeeting ? "pointer" : "default",
+                      opacity: disablePast && isPast ? 0.35 : 1,
                       bgcolor: selected
                         ? EVENT_COLORS.selected.bg
                         : proposedHighlight
-                          ? EVENT_COLORS.proposed.bg
+                          ? EVENT_COLORS.available.bg
                           : "transparent",
                       outline: selected ? `2px solid ${EVENT_COLORS.selected.border}` : "none",
                       outlineOffset: -2,
                       transition: "background 0.15s ease",
-                      "&:hover": selectable
-                        ? { bgcolor: selected ? EVENT_COLORS.selected.bg : brand.peachSoft }
-                        : undefined,
+                      "&:hover":
+                        selectable || canOpenMeeting
+                          ? { bgcolor: selected ? EVENT_COLORS.selected.bg : brand.peachSoft }
+                          : undefined,
                     }}
                   >
                     {dayEvents.map((event) => {
                       const colors = EVENT_COLORS[event.type] || EVENT_COLORS.pending;
+                      const isMeeting = Boolean(event.meetingId) && event.type !== "available";
                       return (
                         <Chip
                           key={event.id}
                           size="small"
+                          clickable={Boolean(onEventClick) && isMeeting}
                           label={formatTime(event.start, locale)}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEventClick?.(event);
+                            if (isMeeting) onEventClick?.(event);
                           }}
                           sx={{
                             mb: 0.3,
                             width: "100%",
-                            height: 22,
-                            fontSize: "0.65rem",
+                            height: 24,
+                            fontSize: "0.7rem",
                             bgcolor: colors.bg,
                             color: colors.text,
                             border: `1px solid ${colors.border}`,
                             fontWeight: 700,
+                            cursor: onEventClick && isMeeting ? "pointer" : "default",
                           }}
                         />
                       );

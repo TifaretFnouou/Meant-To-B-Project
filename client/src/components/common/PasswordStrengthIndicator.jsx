@@ -13,11 +13,11 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import { evaluatePasswordStrength } from "../../utils/passwordStrength";
 
 const checkLabels = {
-  length: "לפחות 8 תווים",
-  uppercase: "אות גדולה באנגלית",
-  lowercase: "אות קטנה באנגלית",
-  number: "ספרה",
-  special: "תו מיוחד",
+  length: "at least 8 characters",
+  uppercase: "uppercase letter",
+  lowercase: "lowercase letter",
+  number: "number",
+  special: "special character",
 };
 
 export default function PasswordStrengthIndicator({ password }) {
@@ -26,7 +26,7 @@ export default function PasswordStrengthIndicator({ password }) {
   return (
     <Box sx={{ mt: 1 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography variant="caption">חוזק סיסמה</Typography>
+        <Typography variant="caption">Password Strength</Typography>
         <Typography variant="caption" color={`${color}.main`}>
           {label}
         </Typography>

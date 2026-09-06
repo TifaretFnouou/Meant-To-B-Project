@@ -5,8 +5,8 @@ import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import ProfilePage from "../pages/ProfilePage";
 import MentorsCatalogPage from "../pages/MentorsCatalogPage";
-// import BecomeMentorPage from "../pages/BecomeMentorPage";
-import MySessionsPage from "../pages/MySessionsPage";
+import BecomeMentorPage from "../pages/BecomeMentorPage";
+import MyMeetingsPage from "../pages/MyMeetingsPage";
 import CalendarPage from "../pages/CalendarPage";
 import AdminPage from "../pages/admin/AdminPage";
 import ProtectedRoute from "./ProtectedRoute";
@@ -35,22 +35,23 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* <Route
+      <Route
         path="/become-mentor"
         element={
           <ProtectedRoute>
             <BecomeMentorPage />
           </ProtectedRoute>
         }
-      /> */}
+      />
       <Route
-        path="/sessions"
+        path="/Meetings"
         element={
           <ProtectedRoute>
-            <MySessionsPage />
+            <MyMeetingsPage />
           </ProtectedRoute>
         }
       />
+      <Route path="/meetings" element={<Navigate to="/Meetings" replace />} />
       <Route
         path="/calendar"
         element={

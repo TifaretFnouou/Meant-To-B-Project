@@ -59,7 +59,7 @@ export default function RoleModeSwitcher() {
   const selectMode = (mode) => {
     if (mode === activeMode) return;
     setMode(mode);
-    navigate(mode === USER_MODES.MENTEE ? "/mentors" : "/sessions");
+    navigate(mode === USER_MODES.MENTEE ? "/mentors" : "/Meetings");
   };
 
   return (

@@ -120,10 +120,10 @@ export default function HomePage() {
                   <Button
                     variant={isMenteeMode ? "outlined" : "contained"}
                     color="primary"
-                    onClick={() => navigate("/sessions")}
+                    onClick={() => navigate("/Meetings")}
                     size="large"
                   >
-                    {isMentorMode ? t("nav.sessionsAsMentor") : t("home.mySessions")}
+                    {isMentorMode ? t("nav.MeetingsAsMentor") : t("home.myMeetings")}
                   </Button>
                   {isMenteeMode && (
                     <Button

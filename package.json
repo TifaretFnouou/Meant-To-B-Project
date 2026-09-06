@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "A full-stack Node.js and React application",
-  "main": "server/server.js",
+  "main": "server/index.js",
   "scripts": {
     "predev": "node scripts/ensure-install.cjs",
     "dev": "concurrently -n server,client -c blue,magenta \"npm run server\" \"npm run client\"",

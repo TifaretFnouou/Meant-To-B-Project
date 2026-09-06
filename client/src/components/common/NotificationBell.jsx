@@ -10,6 +10,7 @@ import {
   Button,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -18,12 +19,28 @@ export default function NotificationBell() {
   const { currentUser } = useAuth();
   const { getForUser, markAsRead, markAllAsRead, resolveMessage } = useNotifications();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
 
   if (!currentUser) return null;
 
   const items = getForUser(currentUser.id);
   const unread = items.filter((n) => !n.read).length;
+
+  const handleClickItem = (n) => {
+    markAsRead(n.id);
+    setAnchorEl(null);
+    if (
+      n.messageKey === "notif.setWeeklyAvailability" ||
+      n.messageKey === "notif.availabilityRequested"
+    ) {
+      navigate("/calendar");
+      return;
+    }
+    if (n.meetingId) {
+      navigate("/Meetings");
+    }
+  };
 
   return (
     <>
@@ -55,7 +72,7 @@ export default function NotificationBell() {
         {items.map((n) => (
           <MenuItem
             key={n.id}
-            onClick={() => markAsRead(n.id)}
+            onClick={() => handleClickItem(n)}
             sx={{ whiteSpace: "normal", bgcolor: n.read ? "inherit" : "action.hover" }}
           >
             <Box>

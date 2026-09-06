@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const TOKEN_KEY = "queenb_token";
+export const SESSION_EXPIRED_EVENT = "queenb:session-expired";
 
 const api = axios.create({
   baseURL: "/api/v1",
@@ -9,10 +10,36 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    // Axios 1.x may use AxiosHeaders — set() is the reliable API
+    if (typeof config.headers?.set === "function") {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    } else {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url = String(error.config?.url || "");
+    const isAuthForm =
+      url.includes("/auth/login") || url.includes("/auth/register");
+
+    // Session gone / invalid — clear token so UI cannot keep acting as logged-in
+    if (status === 401 && !isAuthForm) {
+      localStorage.removeItem(TOKEN_KEY);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY);

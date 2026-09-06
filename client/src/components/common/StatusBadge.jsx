@@ -4,6 +4,8 @@ import { useLanguage } from "../../context/LanguageContext";
 
 const colorMap = {
   pending: "warning",
+  pending_approval: "warning",
+  pending_mentor_approval: "warning",
   slots_proposed: "info",
   matched: "success",
   cancelled: "error",

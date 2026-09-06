@@ -51,6 +51,72 @@ export function sanitizeUser(user) {
   return obj;
 }
 
+// export async function registerUser(body, file) {
+//   const email = String(body.email || "")
+//     .trim()
+//     .toLowerCase();
+
+//   if (!email) {
+//     throw Object.assign(new Error("Email is required"), { status: 400 });
+//   }
+
+//   const existingEmail = await UserModel.findOne({ email });
+//   if (existingEmail) {
+//     throw Object.assign(new Error("Email already registered"), { status: 400 });
+//   }
+
+//   let roles = parseList(body.roles);
+//   if (roles.length === 0) {
+//     roles = ["mentee"];
+//   }
+//   if (roles.some((role) => !["mentor", "mentee"].includes(role))) {
+//     throw Object.assign(
+//       new Error("Roles must be mentor, mentee, or both"),
+//       { status: 400 }
+//     );
+//   }
+
+//   let profilePicture = "";
+//   if (file) {
+//     profilePicture = await uploadProfileImage(file);
+//   }
+
+//   const menteeGoals =
+//     body.menteeGoals ||
+//     body.menteeGoals ||
+//     body?.menteeProfile?.menteeGoals ||
+//     "";
+
+//   const newUser = new UserModel({
+//     firstName: body.firstName,
+//     lastName: body.lastName,
+//     email,
+//     password: body.password,
+//     profilePicture,
+//     company: body.company || "",
+//     jobTitle: body.jobTitle || "",
+//     techStack: parseList(body.techStack),
+//     yearsOfExperience: Number(body.yearsOfExperience) || 0,
+//     githubUrl: body.githubUrl || "",
+//     linkedinUrl: body.linkedinUrl || "",
+//     phone: body.phone || "",
+//     roles,
+//     menteeProfile: {
+//       isActive: true,
+//       menteeGoals: menteeGoals,
+//     },
+//   });
+
+//   await newUser.save();
+//   const token = signToken(newUser);
+
+//   return {
+//     user: sanitizeUser(newUser),
+//     token,
+//   };
+// }
+
+
 export async function registerUser(body, file) {
   const email = String(body.email || "")
     .trim()
@@ -65,15 +131,11 @@ export async function registerUser(body, file) {
     throw Object.assign(new Error("Email already registered"), { status: 400 });
   }
 
-  let roles = parseList(body.roles);
-  if (roles.length === 0) {
-    roles = ["mentee"];
-  }
-  if (roles.some((role) => !["mentor", "mentee"].includes(role))) {
-    throw Object.assign(
-      new Error("Roles must be mentor, mentee, or both"),
-      { status: 400 }
-    );
+  const isMentor = body.isMentor === 'true' || body.isMentor === true;
+  
+  let roles = ["mentee"];
+  if (isMentor) {
+    roles.push("mentor");
   }
 
   let profilePicture = "";
@@ -83,9 +145,29 @@ export async function registerUser(body, file) {
 
   const menteeGoals =
     body.menteeGoals ||
-    body.menteeGoals ||
     body?.menteeProfile?.menteeGoals ||
     "";
+
+// mentor profile data
+    let mentorProfileData = undefined;
+  if (isMentor) {
+    let parsedMentorProfile = body.mentorProfile || {};
+    if (typeof parsedMentorProfile === 'string') {
+      try {
+        parsedMentorProfile = JSON.parse(parsedMentorProfile);
+      } catch (e) {
+        parsedMentorProfile = {};
+      }
+    }
+    
+    mentorProfileData = {
+      isActive: true, 
+      bio: parsedMentorProfile.bio || "",
+      topics: parseList(parsedMentorProfile.topics) || [],
+      maxMeetings: Number(parsedMentorProfile.maxMeetings) || 0,
+      meetingLengthMinutes: Number(parsedMentorProfile.meetingLengthMinutes) || 45,
+    };
+  }
 
   const newUser = new UserModel({
     firstName: body.firstName,
@@ -105,6 +187,8 @@ export async function registerUser(body, file) {
       isActive: true,
       menteeGoals: menteeGoals,
     },
+    // mentor profile data
+    mentorProfile: mentorProfileData,
   });
 
   await newUser.save();

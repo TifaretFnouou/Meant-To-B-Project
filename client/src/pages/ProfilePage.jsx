@@ -17,7 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { useAdminConfig } from "../context/AdminConfigContext";
 import MainLayout from "../components/layout/MainLayout";
 import UserAvatar from "../components/common/UserAvatar";
-import { ROLES, SESSION_LENGTHS } from "../constants";
+import { ROLES, MEETING_LENGTHS } from "../constants";
 
 function createForm(user) {
   return {
@@ -40,8 +40,8 @@ function createForm(user) {
       isActive: user?.mentorProfile?.isActive !== false,
       bio: user?.mentorProfile?.bio || "",
       topics: user?.mentorProfile?.topics || [],
-      maxSessions: user?.mentorProfile?.maxSessions || 2,
-      sessionLengthMinutes: user?.mentorProfile?.sessionLengthMinutes || 60,
+      maxMeetings: user?.mentorProfile?.maxMeetings || 2,
+      meetingLengthMinutes: user?.mentorProfile?.meetingLengthMinutes || 60,
     },
   };
 }
@@ -158,8 +158,8 @@ export default function ProfilePage() {
         payload.mentorProfile = {
           ...currentUser?.mentorProfile,
           ...form.mentorProfile,
-          maxSessions: Number(form.mentorProfile.maxSessions) || 2,
-          sessionLengthMinutes: Number(form.mentorProfile.sessionLengthMinutes) || 60,
+          maxMeetings: Number(form.mentorProfile.maxMeetings) || 2,
+          meetingLengthMinutes: Number(form.mentorProfile.meetingLengthMinutes) || 60,
         };
       }
 
@@ -445,13 +445,13 @@ export default function ProfilePage() {
                     fullWidth
                     required
                     type="number"
-                    label="Maximum Sessions"
-                    value={form.mentorProfile.maxSessions}
+                    label="Maximum Meetings"
+                    value={form.mentorProfile.maxMeetings}
                     inputProps={{
                       min: 1,
                       max: 10,
                     }}
-                    onChange={updateMentorField("maxSessions")}
+                    onChange={updateMentorField("maxMeetings")}
                     disabled={loading}
                   />
                 </Grid>
@@ -460,12 +460,12 @@ export default function ProfilePage() {
                     fullWidth
                     select
                     required
-                    label="Session Length"
-                    value={form.mentorProfile.sessionLengthMinutes}
-                    onChange={updateMentorField("sessionLengthMinutes")}
+                    label="Meeting Length"
+                    value={form.mentorProfile.meetingLengthMinutes}
+                    onChange={updateMentorField("meetingLengthMinutes")}
                     disabled={loading}
                   >
-                    {SESSION_LENGTHS.map((length) => (
+                    {MEETING_LENGTHS.map((length) => (
                       <MenuItem key={length} value={length}>
                         {length} minutes
                       </MenuItem>

@@ -10,16 +10,16 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
 
-export default function AttendanceDialog({ open, session, onClose }) {
+export default function AttendanceDialog({ open, meeting, onClose }) {
   const { currentUser } = useAuth();
   const { submitAttendance } = useScheduling();
 
-  if (!session) return null;
+  if (!meeting) return null;
 
-  const role = currentUser.id === session.mentorId ? "mentor" : "mentee";
+  const role = currentUser.id === meeting.mentorId ? "mentor" : "mentee";
 
   const handleAnswer = (attended) => {
-    submitAttendance(session.id, role, attended);
+    submitAttendance(meeting.id, role, attended);
     onClose();
   };
 
@@ -29,9 +29,9 @@ export default function AttendanceDialog({ open, session, onClose }) {
       <DialogContent>
         <Typography variant="body1">
           האם הפגישה שהייתה מתוכננת ל-
-          {session.matchedSlot
-            ? new Date(session.matchedSlot).toLocaleString("he-IL")
-            : "—"}{" "}
+          {meeting.matchedSlot
+            ? new Date(meeting.matchedSlot).toLocaleString("he-IL")
+            : "-"}{" "}
           התקיימה?
         </Typography>
       </DialogContent>

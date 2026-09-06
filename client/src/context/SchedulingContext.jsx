@@ -1,132 +1,197 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import appointmentService from "../services/appointmentService";
+import availabilityService from "../services/availabilityService";
+import { getStoredToken } from "../services/api";
+import { useAuth } from "./AuthContext";
 import { useNotifications } from "./NotificationContext";
 
 const SchedulingContext = createContext(null);
 
-export function SchedulingProvider({ children }) {
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { addNotification } = useNotifications();
+const fallbackMapStatus = (state) => state;
 
-  const refresh = useCallback(async () => {
-    const data = await appointmentService.getAppointments();
-    setSessions(data);
-    setLoading(false);
+export function SchedulingProvider({ children }) {
+  const [Meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { refreshNotifications } = useNotifications();
+  const { currentUser, authReady } = useAuth();
+
+  const refreshMeetings = useCallback(async () => {
+    if (!getStoredToken()) {
+      setMeetings([]);
+      setLoading(false);
+      return [];
+    }
+
+    try {
+      const data = await appointmentService.getAppointmentsForUser();
+      setMeetings(data || []);
+      return data || [];
+    } catch (error) {
+      console.error("Failed to fetch Meetings from server:", error);
+      setMeetings([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    if (!authReady) return;
 
-  const createRequest = async (mentorId, menteeId, menteeName, durationMinutes = 60) => {
-    const session = await appointmentService.createMentorshipRequest({
-      mentorId,
-      menteeId,
-      durationMinutes,
-    });
-    await refresh();
-    addNotification(mentorId, "notif.mentorshipRequest", { name: menteeName }, session.id);
-    return session;
-  };
-
-  const approveRequest = async (sessionId, mentorName) => {
-    const session = await appointmentService.approveRequest(sessionId);
-    await refresh();
-    addNotification(session.menteeId, "notif.requestApproved", { name: mentorName }, sessionId);
-    return session;
-  };
-
-  const rejectRequest = async (sessionId, mentorName) => {
-    const session = await appointmentService.rejectRequest(sessionId);
-    await refresh();
-    addNotification(session.menteeId, "notif.requestRejected", { name: mentorName }, sessionId);
-    return session;
-  };
-
-  const proposeSlots = async (sessionId, slots, mentorName) => {
-    const session = await appointmentService.proposeSlots(sessionId, slots);
-    await refresh();
-    addNotification(session.menteeId, "notif.slotsProposed", { name: mentorName }, sessionId);
-    return session;
-  };
-
-  const selectSlot = async (sessionId, slot, menteeName) => {
-    const session = await appointmentService.bookSlot(sessionId, slot);
-    await refresh();
-    addNotification(session.mentorId, "notif.slotSelected", { name: menteeName }, sessionId);
-    return session;
-  };
-
-  const requestMoreSlots = async (sessionId, menteeName) => {
-    const { session, cancelled } = await appointmentService.requestMoreSlots(sessionId);
-    await refresh();
-    if (cancelled) {
-      addNotification(session.mentorId, "notif.requestCancelled", { name: menteeName }, sessionId);
-    } else {
-      addNotification(session.mentorId, "notif.moreSlotsRequested", { name: menteeName }, sessionId);
+    if (!currentUser) {
+      setMeetings([]);
+      setLoading(false);
+      return;
     }
-    return session;
+
+    refreshMeetings();
+  }, [authReady, currentUser?.id, refreshMeetings]);
+
+  const afterMutation = async () => {
+    await refreshMeetings();
+    // Server persists notifications for the other party; refresh own bell too.
+    await refreshNotifications();
   };
 
-  const cancelSession = async (sessionId, actorName) => {
-    const session = await appointmentService.cancelAppointment(sessionId);
-    await refresh();
-    addNotification(session.mentorId, "notif.sessionCancelled", { name: actorName }, sessionId);
-    addNotification(session.menteeId, "notif.sessionCancelled", { name: actorName }, sessionId);
-    return session;
+  const createRequest = async (mentorId) => {
+    const meeting = await appointmentService.createMentorshipRequest({ mentorId });
+    await afterMutation();
+    return meeting;
   };
 
-  const markUnavailable = async (sessionId, role) => {
-    const session = await appointmentService.markUnavailable(sessionId);
-    await refresh();
-    const target = role === "mentor" ? session.menteeId : session.mentorId;
-    addNotification(target, "notif.rescheduleNeeded", {}, sessionId);
-    return session;
+  const bookFromAvailability = async ({ mentorId, startTime, endTime }) => {
+    const meeting = await appointmentService.bookFromAvailability({
+      mentorId,
+      startTime,
+      endTime,
+    });
+    await afterMutation();
+    return meeting;
   };
 
-  const submitAttendance = async (sessionId, role, attended) => {
-    const session = await appointmentService.submitAttendance(sessionId, role, attended);
-    await refresh();
-    return session;
+  const rebookFromAvailability = async (meetingId, startTime, endTime) => {
+    const meeting = await appointmentService.rebookFromAvailability(
+      meetingId,
+      startTime,
+      endTime
+    );
+    await afterMutation();
+    return meeting;
   };
 
-  const submitFeedback = async (sessionId, role, feedback) => {
-    const session = await appointmentService.submitFeedback(sessionId, role, feedback);
-    await refresh();
-    return session;
+  const saveWeekAvailability = useCallback(async ({ weekStart, weekEnd, slots }) => {
+    return availabilityService.setWeekAvailability({ weekStart, weekEnd, slots });
+  }, []);
+
+  const getMyAvailability = useCallback(async () => availabilityService.getMyAvailability(), []);
+
+  const approveRequest = async (meetingId) => {
+    const meeting = await appointmentService.approveMeeting(meetingId);
+    await afterMutation();
+    return meeting;
   };
 
-  const getSessionsForUser = (userId) =>
-    sessions.filter((s) => s.mentorId === userId || s.menteeId === userId);
+  const rejectRequest = async (meetingId) => {
+    const meeting = await appointmentService.rejectRequest(meetingId);
+    await afterMutation();
+    return meeting;
+  };
+
+  const proposeSlots = async (meetingId, slots) => {
+    if (!Array.isArray(slots) || slots.length === 0) {
+      throw new Error("Please select at least one time slot");
+    }
+    if (slots.length > 3) {
+      throw new Error("You can propose up to 3 time options");
+    }
+    const meeting = await appointmentService.proposeSlots(meetingId, slots);
+    await afterMutation();
+    return meeting;
+  };
+
+  const selectSlot = async (meetingId, slot) => {
+    const existing = Meetings.find((m) => String(m.id) === String(meetingId));
+    const proposed = existing?.proposedTimes?.find(
+      (pt) => new Date(pt.startTime).getTime() === new Date(slot).getTime()
+    );
+    const durationMinutes = proposed
+      ? Math.max(
+          15,
+          Math.round((new Date(proposed.endTime) - new Date(proposed.startTime)) / 60000)
+        )
+      : existing?.durationMinutes || 60;
+
+    const meeting = await appointmentService.bookSlot(meetingId, slot, durationMinutes);
+    await afterMutation();
+    return meeting;
+  };
+
+  const requestMoreSlots = async (meetingId) => {
+    const { meeting } = await appointmentService.requestMoreSlots(meetingId);
+    await afterMutation();
+    return meeting;
+  };
+
+  const cancelMeeting = async (meetingId) => {
+    const meeting = await appointmentService.cancelAppointment(meetingId);
+    await afterMutation();
+    return meeting;
+  };
+
+  const markUnavailable = async (meetingId) => {
+    const { meeting } = await appointmentService.markUnavailable(meetingId);
+    await afterMutation();
+    return meeting;
+  };
+
+  const submitAttendance = async (meetingId, role, attended) => {
+    const meeting = await appointmentService.submitAttendance(meetingId, role, attended);
+    await refreshMeetings();
+    return meeting;
+  };
+
+  const submitFeedback = async (meetingId, role, feedback) => {
+    const meeting = await appointmentService.submitFeedback(meetingId, role, feedback);
+    await afterMutation();
+    return meeting;
+  };
+
+  const getMeetingsForUser = () => Meetings;
 
   const getCalendarEvents = async (userId, role) =>
     appointmentService.getCalendarEvents(userId, role);
 
-  const getMentorAvailability = async (mentorId) =>
-    appointmentService.getMentorAvailability(mentorId);
+  const getMentorAvailability = useCallback(async (mentorId) => {
+    return availabilityService.getMentorOpenSlots(mentorId);
+  }, []);
 
   const value = useMemo(
     () => ({
-      sessions,
+      Meetings,
       loading,
-      refresh,
+      refresh: refreshMeetings,
+      refreshMeetings,
       createRequest,
+      bookFromAvailability,
+      rebookFromAvailability,
+      saveWeekAvailability,
+      getMyAvailability,
       approveRequest,
       rejectRequest,
       proposeSlots,
       selectSlot,
       requestMoreSlots,
-      cancelSession,
+      cancelMeeting,
       markUnavailable,
       submitAttendance,
       submitFeedback,
-      getSessionsForUser,
+      getMeetingsForUser,
       getCalendarEvents,
       getMentorAvailability,
-      mapSchedulingToSessionStatus: appointmentService.mapSchedulingToSessionStatus,
+      mapSchedulingToMeetingstatus:
+        appointmentService.mapSchedulingToMeetingstatus || fallbackMapStatus,
     }),
-    [sessions, loading, refresh]
+    [Meetings, loading, refreshMeetings, getMentorAvailability, getMyAvailability, saveWeekAvailability]
   );
 
   return (

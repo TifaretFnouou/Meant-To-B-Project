@@ -10,6 +10,9 @@ import morgan from "morgan";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import meetingRoutes from "./routes/meetingRoutes.js";
+import availabilityRoutes from "./routes/availabilityRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -20,6 +23,11 @@ app.use(morgan("combined"));
 // תואם ל-20 הודעות × 2,000 תווים, כולל UTF-8 בעברית, ועדיין מגביל payload חריג
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true, limit: "128kb" }));
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to QueenB API" });
@@ -36,6 +44,9 @@ app.get("/api/v1/health", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/meetings", meetingRoutes);
+app.use("/api/v1/availability", availabilityRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 
 app.use((err, req, res, next) => {
   if (err.type === "entity.parse.failed") {

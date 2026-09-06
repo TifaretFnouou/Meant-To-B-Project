@@ -1,67 +1,109 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Typography,
+  Alert,
   Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
+import { useLanguage } from "../../context/LanguageContext";
 
-export default function FeedbackDialog({ open, session, onClose }) {
+export default function FeedbackDialog({ open, meeting, onClose }) {
   const { currentUser } = useAuth();
   const { submitFeedback } = useScheduling();
+  const { t } = useLanguage();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  if (!session) return null;
+  useEffect(() => {
+    if (!open) return;
+    setRating(5);
+    setComment("");
+    setSubmitted(false);
+    setSubmitting(false);
+    setError("");
+  }, [open, meeting?.id]);
 
-  const role = currentUser.id === session.mentorId ? "mentor" : "mentee";
+  if (!meeting || !currentUser) return null;
 
-  const handleSubmit = () => {
-    submitFeedback(session.id, role, { rating, comment, submittedAt: new Date().toISOString() });
-    setSubmitted(true);
+  const role =
+    String(currentUser.id) === String(meeting.mentorId) ? "mentor" : "mentee";
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      await submitFeedback(meeting.id, role, {
+        rating,
+        comments: comment,
+        comment,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err?.response?.data?.error || err.message || t("calendar.actionFailed"));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     setRating(5);
     setComment("");
     setSubmitted(false);
-    onClose();
+    setError("");
+    onClose?.();
   };
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>משוב על הפגישה</DialogTitle>
+      <DialogTitle>{t("feedback.title")}</DialogTitle>
       <DialogContent>
         {submitted ? (
           <Box sx={{ textAlign: "center", py: 3 }}>
             <Typography variant="h6" color="primary" gutterBottom>
-              תודה על המשוב!
+              {t("feedback.thanks")}
             </Typography>
-            {role === "mentor" && (
-              <Typography variant="body2" color="text.secondary">
-                תודה על תרומתך לקהילה — המנטורינג שלך משנה חיים 💜
-              </Typography>
-            )}
+            <Typography variant="body2" color="text.secondary">
+              {role === "mentor"
+                ? t("feedback.thanksMentor")
+                : t("feedback.thanksMentee")}
+            </Typography>
           </Box>
         ) : (
           <>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              דרגי את הפגישה והוסיפי הערות
+            <Typography variant="body2" sx={{ mb: 1.5 }}>
+              {t("feedback.subtitle")}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              {role === "mentor" ? t("feedback.sentToAdmin") : t("feedback.sentToMentor")}
+            </Typography>
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+              {t("feedback.rating")}
             </Typography>
             <ToggleButtonGroup
               exclusive
               value={rating}
               onChange={(_, v) => v && setRating(v)}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, flexWrap: "wrap" }}
             >
               {[1, 2, 3, 4, 5].map((n) => (
                 <ToggleButton key={n} value={n}>
@@ -69,28 +111,32 @@ export default function FeedbackDialog({ open, session, onClose }) {
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
+
             <TextField
               fullWidth
               multiline
               rows={4}
-              label="הערות"
+              label={t("feedback.comments")}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              placeholder={t("feedback.commentsPlaceholder")}
             />
           </>
         )}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, py: 2 }}>
         {!submitted ? (
           <>
-            <Button onClick={handleClose}>ביטול</Button>
-            <Button variant="contained" onClick={handleSubmit}>
-              שליחה
+            <Button onClick={handleClose} disabled={submitting}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? <CircularProgress size={22} color="inherit" /> : t("feedback.submit")}
             </Button>
           </>
         ) : (
           <Button variant="contained" onClick={handleClose}>
-            סגירה
+            {t("common.close")}
           </Button>
         )}
       </DialogActions>

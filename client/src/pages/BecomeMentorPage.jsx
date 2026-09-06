@@ -18,7 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { useRoleMode } from "../context/RoleModeContext";
 import { useAdminConfig } from "../context/AdminConfigContext";
 import { useLanguage } from "../context/LanguageContext";
-import { ROLES, SESSION_LENGTHS, USER_MODES } from "../constants";
+import { ROLES, MEETING_LENGTHS, USER_MODES } from "../constants";
 
 export default function BecomeMentorPage() {
   const { currentUser, updateProfile, isMentor, isAdmin } = useAuth();
@@ -35,8 +35,8 @@ export default function BecomeMentorPage() {
   const [form, setForm] = useState({
     bio: existing?.bio || "",
     topics: existing?.topics || [],
-    maxSessions: existing?.maxSessions || 2,
-    sessionLengthMinutes: existing?.sessionLengthMinutes || 60,
+    maxMeetings: existing?.maxMeetings || 2,
+    meetingLengthMinutes: existing?.meetingLengthMinutes || 60,
   });
 
   if (isAdmin) {
@@ -44,7 +44,7 @@ export default function BecomeMentorPage() {
   }
 
   if (isMentorMode && !isMentor) {
-    return <Navigate to="/sessions" replace />;
+    return <Navigate to="/Meetings" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -71,14 +71,14 @@ export default function BecomeMentorPage() {
           ...currentUser.mentorProfile,
           isActive: true,
           ...form,
-          maxSessions: Number(form.maxSessions),
-          sessionLengthMinutes: Number(form.sessionLengthMinutes),
+          maxMeetings: Number(form.maxMeetings),
+          meetingLengthMinutes: Number(form.meetingLengthMinutes),
         },
       });
 
       if (isNewMentor) {
         setMode(USER_MODES.MENTOR);
-        navigate("/sessions");
+        navigate("/Meetings");
         return;
       }
 
@@ -99,7 +99,7 @@ export default function BecomeMentorPage() {
         </Typography>
 
         <Alert severity="info" sx={{ mb: 3 }}>
-            Fill out your mentoring details — they will be displayed in the mentor catalog
+            Fill out your mentoring details - they will be displayed in the mentor catalog
         </Alert>
         {saved && (
           <Alert severity="success" sx={{ mb: 2 }}>
@@ -155,9 +155,9 @@ export default function BecomeMentorPage() {
                 fullWidth
                 type="number"
                 required
-                label="Max Sessions"
-                value={form.maxSessions}
-                onChange={(e) => setForm((p) => ({ ...p, maxSessions: e.target.value }))}
+                label="Max Meetings"
+                value={form.maxMeetings}
+                onChange={(e) => setForm((p) => ({ ...p, maxMeetings: e.target.value }))}
                 inputProps={{ min: 1, max: 10 }}
               />
             </Grid>
@@ -166,13 +166,13 @@ export default function BecomeMentorPage() {
                 fullWidth
                 select
                 required
-                label="Session Length (minutes)"
-                value={form.sessionLengthMinutes}
+                label="Meeting Length (minutes)"
+                value={form.meetingLengthMinutes}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, sessionLengthMinutes: e.target.value }))
+                  setForm((p) => ({ ...p, meetingLengthMinutes: e.target.value }))
                 }
               >
-                {SESSION_LENGTHS.map((len) => (
+                {MEETING_LENGTHS.map((len) => (
                   <MenuItem key={len} value={len}>
                     {len} minutes
                   </MenuItem>
