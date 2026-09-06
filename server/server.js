@@ -1,19 +1,23 @@
-import "dotenv/config";
+
+
 import express from "express";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import meetingRoutes from "./routes/meetingRoutes.js";
-import availabilityRoutes from "./routes/availabilityRoutes.js";
-import notificationRoutes from "./routes/notificationRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 3000;
 
+// Middleware (אבטחה ועיבוד נתונים)
+app.use("/api/v1/chat", chatRoutes);
 app.use(helmet());
 app.use(cors());
 app.use(morgan("combined"));
@@ -27,10 +31,8 @@ app.use((req, res, next) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/meetings", meetingRoutes);
-app.use("/api/v1/availability", availabilityRoutes);
-app.use("/api/v1/notifications", notificationRoutes);
 
+// Health check endpoint
 app.get("/api/v1/health", (req, res) => {
   res.json({
     message: "QueenB Server is running!",
@@ -39,25 +41,23 @@ app.get("/api/v1/health", (req, res) => {
   });
 });
 
+// Root endpoint
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to QueenB API" });
 });
 
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || "Something went wrong!",
-  });
+  res.status(500).json({ error: "Something went wrong!" });
 });
 
 app.use("*", (req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-const mongoUri = process.env.MONGO_URI;
-
 mongoose
-  .connect(mongoUri)
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("🌱 Connected to MongoDB successfully!");
     app.listen(PORT, () => {
