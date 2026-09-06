@@ -26,7 +26,7 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd) {
 async function getBusyRanges(mentorId) {
   const meetings = await MeetingModel.find({
     mentorId,
-    status: { $in: ["MATCHED", "ATTENDANCE_CONFIRMED"] },
+    status: { $in: ["MATCHED", "ATTENDANCE_CONFIRMED", "PENDING_MENTOR_APPROVAL"] },
     "scheduledTime.startTime": { $exists: true },
   }).select("scheduledTime");
 
@@ -153,6 +153,27 @@ export async function consumeSlot(mentorId, startTime) {
 
   doc.slots = (doc.slots || []).filter((s) => !sameInstant(s.startTime, startTime));
   await doc.save();
+}
+
+/** Put a cancelled/rejected booking slot back on the mentor calendar. */
+export async function restoreSlot(mentorId, startTime, endTime) {
+  if (!startTime) return;
+  const start = new Date(startTime);
+  const end = endTime
+    ? new Date(endTime)
+    : new Date(start.getTime() + 60 * 60000);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+
+  let doc = await AvailabilityModel.findOne({ mentorId });
+  if (!doc) {
+    doc = new AvailabilityModel({ mentorId, slots: [] });
+  }
+  const exists = (doc.slots || []).some((s) => sameInstant(s.startTime, start));
+  if (!exists) {
+    doc.slots.push({ startTime: start, endTime: end });
+    doc.slots.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    await doc.save();
+  }
 }
 
 export async function assertSlotIsBookable(mentorId, startTime, endTime) {

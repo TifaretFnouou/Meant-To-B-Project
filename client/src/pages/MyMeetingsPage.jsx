@@ -1,210 +1,38 @@
-// import React, { useMemo, useState } from "react";
-// import {
-//   Typography,
-//   Tabs,
-//   Tab,
-//   Box,
-//   Alert,
-// } from "@mui/material";
-// import { Navigate } from "react-router-dom";
-// import MainLayout from "../components/layout/MainLayout";
-// import PageHeader from "../components/common/PageHeader";
-// import MeetingschedulingPanel from "../components/scheduling/MeetingschedulingPanel";
-// import FeedbackDialog from "../components/feedback/FeedbackDialog";
-// import AttendanceDialog from "../components/feedback/AttendanceDialog";
-// import { useAuth } from "../context/AuthContext";
-// import { useRoleMode } from "../context/RoleModeContext";
-// import { useScheduling } from "../context/SchedulingContext";
-// import { useLanguage } from "../context/LanguageContext";
-// import { MEETING_STATUS, SCHEDULING_STATE } from "../constants";
-
-// function categorizeMeetings(Meetings) {
-//   const now = new Date();
-//   const upcoming = [];
-//   const planned = [];
-//   const past = [];
-
-//   Meetings.forEach((s) => {
-//     if (s.status === MEETING_STATUS.COMPLETED || s.schedulingState === SCHEDULING_STATE.COMPLETED) {
-//       past.push(s);
-//     } else if (s.matchedSlot && new Date(s.matchedSlot) > now) {
-//       upcoming.push(s);
-//     } else if (s.status === MEETING_STATUS.MATCHED) {
-//       planned.push(s);
-//     } else {
-//       planned.push(s);
-//     }
-//   });
-
-//   return { upcoming, planned, past };
-// }
-
-// export default function MyMeetingsPage() {
-//   const { currentUser, users, isAdmin } = useAuth();
-//   const { isMenteeMode, isMentorMode } = useRoleMode();
-//   const { getMeetingsForUser, Meetings } = useScheduling();
-//   const [tab, setTab] = useState(0);
-//   const [feedbackMeeting, setFeedbackMeeting] = useState(null);
-//   const [attendanceMeeting, setAttendanceMeeting] = useState(null);
-
-//   const { t } = useLanguage();
-
-//   const allMeetings = getMeetingsForUser(currentUser?.id);
-//   const myMeetings = useMemo(() => {
-//     if (!currentUser) return [];
-//     if (isMenteeMode) {
-//       return allMeetings.filter((s) => s.menteeId === currentUser.id);
-//     }
-//     if (isMentorMode) {
-//       return allMeetings.filter((s) => s.mentorId === currentUser.id);
-//     }
-//     return allMeetings;
-//   }, [allMeetings, currentUser, isMenteeMode, isMentorMode]);
-//   const { upcoming, planned, past } = useMemo(
-//     () => categorizeMeetings(myMeetings),
-//     [myMeetings, Meetings]
-//   );
-
-//   if (isAdmin) {
-//     return <Navigate to="/admin" replace />;
-//   }
-
-//   const getUser = (id) => users.find((u) => u.id === id);
-
-//   const tabMeetings = [upcoming, planned, past][tab] || [];
-
-//   const needsFeedback = (meeting) => {
-//     const role = currentUser.id === meeting.mentorId ? "mentor" : "mentee";
-//     if (role === "mentor" && !isMentorMode) return false;
-//     if (role === "mentee" && !isMenteeMode) return false;
-//     return (
-//       meeting.schedulingState === SCHEDULING_STATE.COMPLETED &&
-//       !meeting.feedback?.[role]
-//     );
-//   };
-
-//   const needsAttendance = (meeting) => {
-//     const role = currentUser.id === meeting.mentorId ? "mentor" : "mentee";
-//     if (role === "mentor" && !isMentorMode) return false;
-//     if (role === "mentee" && !isMenteeMode) return false;
-//     const slotPassed = meeting.matchedSlot && new Date(meeting.matchedSlot) < new Date();
-//     return (
-//       slotPassed &&
-//       meeting.schedulingState === SCHEDULING_STATE.MATCHED &&
-//       meeting.attendance?.[role] === null
-//     );
-//   };
-
-//   return (
-//     <MainLayout>
-//       <PageHeader
-//         title={isMentorMode ? t("nav.MeetingsAsMentor") : t("Meetings.title")}
-//         subtitle={isMentorMode ? t("mode.mentoringDesc") : t("mode.MenteeDesc")}
-//       />
-
-//       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-//         <Tab label={`${t("Meetings.upcoming")} (${upcoming.length})`} />
-//         <Tab label={`${t("Meetings.planned")} (${planned.length})`} />
-//         <Tab label={`${t("Meetings.past")} (${past.length})`} />
-//       </Tabs>
-
-//       {tabMeetings.length === 0 && (
-//         <Alert severity="info">
-//           {isMentorMode ? t("Meetings.emptyMentor") : t("Meetings.emptyMentee")}
-//         </Alert>
-//       )}
-
-//       {tabMeetings.map((meeting) => {
-//         const mentor = getUser(meeting.mentorId);
-//         const mentee = getUser(meeting.menteeId);
-//         return (
-//           <Box key={meeting.id}>
-//             <MeetingschedulingPanel
-//               meeting={meeting}
-//               mentor={mentor}
-//               mentee={mentee}
-//             />
-//             {needsAttendance(meeting) && (
-//               <Alert
-//                 severity="warning"
-//                 action={
-//                   <button
-//                     type="button"
-//                     onClick={() => setAttendanceMeeting(meeting)}
-//                     style={{ cursor: "pointer", border: "none", background: "none", color: "#ed6c02", fontWeight: 600 }}
-//                   >
-//                     {t("Meetings.confirmAttendance")}
-//                   </button>
-//                 }
-//                 sx={{ mb: 2 }}
-//               >
-//                 האם הפגישה התקיימה?
-//               </Alert>
-//             )}
-//             {needsFeedback(meeting) && (
-//               <Alert
-//                 severity="info"
-//                 action={
-//                   <button
-//                     type="button"
-//                     onClick={() => setFeedbackMeeting(meeting)}
-//                     style={{ cursor: "pointer", border: "none", background: "none", color: "#1976d2", fontWeight: 600 }}
-//                   >
-//                     {t("Meetings.fillFeedback")}
-//                   </button>
-//                 }
-//                 sx={{ mb: 2 }}
-//               >
-//                 נדרש משוב על הפגישה
-//               </Alert>
-//             )}
-//           </Box>
-//         );
-//       })}
-
-//       <FeedbackDialog
-//         open={Boolean(feedbackMeeting)}
-//         meeting={feedbackMeeting}
-//         onClose={() => setFeedbackMeeting(null)}
-//       />
-//       <AttendanceDialog
-//         open={Boolean(attendanceMeeting)}
-//         meeting={attendanceMeeting}
-//         onClose={() => setAttendanceMeeting(null)}
-//       />
-//     </MainLayout>
-//   );
-// }
-
-
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Typography,
-  Tabs,
-  Tab,
-  Box,
   Alert,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
 } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { Navigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import PageHeader from "../components/common/PageHeader";
-import MeetingschedulingPanel from "../components/scheduling/MeetingsSchedulingPanel";
+import MeetingEventDialog from "../components/calendar/MeetingEventDialog";
 import FeedbackDialog from "../components/feedback/FeedbackDialog";
 import AttendanceDialog from "../components/feedback/AttendanceDialog";
+import StatusBadge from "../components/common/StatusBadge";
+import UserAvatar from "../components/common/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 import { useRoleMode } from "../context/RoleModeContext";
 import { useScheduling } from "../context/SchedulingContext";
 import { useLanguage } from "../context/LanguageContext";
 import { MEETING_STATUS, SCHEDULING_STATE } from "../constants";
+import { formatDateTime } from "../utils/calendar";
 
-// categorize Meetings: upcoming = matched in the future; planned = in progress; past = done/cancelled/past matched
-function categorizeMeetings(Meetings) {
+function categorizeMeetings(meetings) {
   const upcoming = [];
   const planned = [];
   const past = [];
   const now = Date.now();
 
-  Meetings.forEach((s) => {
+  meetings.forEach((s) => {
     const status = s.status || "";
     const isPastTerminal =
       status === MEETING_STATUS.COMPLETED ||
@@ -240,19 +68,86 @@ function categorizeMeetings(Meetings) {
   return { upcoming, planned, past };
 }
 
+function MeetingListCard({ meeting, otherUser, otherName, isMentor, locale, language, t, onOpen }) {
+  const when =
+    meeting.matchedSlot ||
+    meeting.proposedSlots?.[0] ||
+    null;
+
+  return (
+    <Paper
+      elevation={0}
+      onClick={onOpen}
+      sx={{
+        p: 2,
+        mb: 1.5,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        cursor: "pointer",
+        transition: "border-color 0.15s ease, background 0.15s ease",
+        "&:hover": {
+          borderColor: "primary.main",
+          bgcolor: "action.hover",
+        },
+      }}
+    >
+      <Stack direction="row" spacing={1.5} alignItems="center">
+        <UserAvatar user={otherUser} size={44} />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" fontWeight={700} noWrap>
+            {isMentor
+              ? t("calendar.requestFrom", { name: otherName || "—" })
+              : t("calendar.meetingWith", { name: otherName || "—" })}
+          </Typography>
+          {when ? (
+            <Typography variant="body2" color="text.secondary">
+              {formatDateTime(when, locale)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {t("calendar.eventPending")}
+            </Typography>
+          )}
+        </Box>
+        <StatusBadge status={meeting.status} schedulingState={meeting.schedulingState} />
+        <Button
+          size="small"
+          variant="outlined"
+          endIcon={language === "he" ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+        >
+          {t("Meetings.openDetails")}
+        </Button>
+      </Stack>
+    </Paper>
+  );
+}
+
 export default function MyMeetingsPage() {
   const { currentUser, users, isAdmin } = useAuth();
   const { isMenteeMode, isMentorMode } = useRoleMode();
   const { getMeetingsForUser, Meetings, refreshMeetings } = useScheduling();
+  const { language, t } = useLanguage();
+  const locale = language === "he" ? "he-IL" : "en-US";
+
+  const [tab, setTab] = useState(0);
+  const [tabReady, setTabReady] = useState(false);
+  const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+  const [feedbackMeeting, setFeedbackMeeting] = useState(null);
+  const [attendanceMeeting, setAttendanceMeeting] = useState(null);
 
   useEffect(() => {
     refreshMeetings();
   }, [refreshMeetings, currentUser?.id, isMentorMode, isMenteeMode]);
-  const [tab, setTab] = useState(0);
-  const [feedbackMeeting, setFeedbackMeeting] = useState(null);
-  const [attendanceMeeting, setAttendanceMeeting] = useState(null);
 
-  const { t } = useLanguage();
+  useEffect(() => {
+    setTabReady(false);
+    setSelectedMeetingId(null);
+  }, [currentUser?.id, isMentorMode, isMenteeMode]);
 
   const allMeetings = getMeetingsForUser(currentUser?.id);
   const myMeetings = useMemo(() => {
@@ -264,22 +159,38 @@ export default function MyMeetingsPage() {
       return allMeetings.filter((s) => String(s.mentorId) === String(currentUser.id));
     }
     return allMeetings;
-  }, [allMeetings, currentUser, isMenteeMode, isMentorMode]);
+  }, [allMeetings, currentUser, isMenteeMode, isMentorMode, Meetings]);
 
   const { upcoming, planned, past } = useMemo(
     () => categorizeMeetings(myMeetings),
     [myMeetings]
   );
 
+  // Matched meetings live under "upcoming" — open that tab first when it has items.
+  useEffect(() => {
+    if (tabReady || myMeetings.length === 0) return;
+    if (upcoming.length > 0) setTab(0);
+    else if (planned.length > 0) setTab(1);
+    else setTab(2);
+    setTabReady(true);
+  }, [tabReady, myMeetings.length, upcoming.length, planned.length]);
+
   if (isAdmin) {
     return <Navigate to="/admin" replace />;
   }
 
-  // fallback function in case the server didn't return a full object
   const getUser = (id) => users.find((u) => String(u.id) === String(id));
+  const tabMeetings = [upcoming, planned, past][tab] || [];
 
-  // note the order of the tabs (must match the tabs below)
-  const tabMeetings = [planned, upcoming, past][tab] || [];
+  const selectedMeeting = selectedMeetingId
+    ? myMeetings.find((m) => String(m.id) === String(selectedMeetingId))
+    : null;
+  const selectedMentor = selectedMeeting
+    ? selectedMeeting.mentorDetails || getUser(selectedMeeting.mentorId)
+    : null;
+  const selectedMentee = selectedMeeting
+    ? selectedMeeting.menteeDetails || getUser(selectedMeeting.menteeId)
+    : null;
 
   const needsFeedback = (meeting) => {
     const role = String(currentUser.id) === String(meeting.mentorId) ? "mentor" : "mentee";
@@ -304,12 +215,13 @@ export default function MyMeetingsPage() {
     const role = String(currentUser.id) === String(meeting.mentorId) ? "mentor" : "mentee";
     if (role === "mentor" && !isMentorMode) return false;
     if (role === "mentee" && !isMenteeMode) return false;
-    
+
     const slotPassed = meeting.matchedSlot && new Date(meeting.matchedSlot) < new Date();
-    
+
     return (
       slotPassed &&
-      (meeting.status === MEETING_STATUS.MATCHED || meeting.schedulingState === SCHEDULING_STATE.MATCHED) &&
+      (meeting.status === MEETING_STATUS.MATCHED ||
+        meeting.schedulingState === SCHEDULING_STATE.MATCHED) &&
       meeting.attendance?.[role] === null
     );
   };
@@ -322,8 +234,8 @@ export default function MyMeetingsPage() {
       />
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label={`${t("Meetings.planned")} (${planned.length})`} />
         <Tab label={`${t("Meetings.upcoming")} (${upcoming.length})`} />
+        <Tab label={`${t("Meetings.planned")} (${planned.length})`} />
         <Tab label={`${t("Meetings.past")} (${past.length})`} />
       </Tabs>
 
@@ -334,54 +246,61 @@ export default function MyMeetingsPage() {
       )}
 
       {tabMeetings.map((meeting) => {
-        // use the data that came directly from the populated meeting, and only if missing, look for local data
         const mentor = meeting.mentorDetails || getUser(meeting.mentorId);
         const mentee = meeting.menteeDetails || getUser(meeting.menteeId);
-        
+        const isMentor = String(currentUser.id) === String(meeting.mentorId);
+        const otherUser = isMentor ? mentee : mentor;
+        const otherName = `${otherUser?.firstName || ""} ${otherUser?.lastName || ""}`.trim();
+
         return (
-          <Box key={meeting.id} sx={{ mb: 3 }}>
-            <MeetingschedulingPanel
+          <Box key={meeting.id}>
+            <MeetingListCard
               meeting={meeting}
-              mentor={mentor}
-              mentee={mentee}
+              otherUser={otherUser}
+              otherName={otherName}
+              isMentor={isMentor}
+              locale={locale}
+              language={language}
+              t={t}
+              onOpen={() => setSelectedMeetingId(meeting.id)}
             />
             {needsAttendance(meeting) && (
               <Alert
                 severity="warning"
                 action={
-                  <button
-                    type="button"
-                    onClick={() => setAttendanceMeeting(meeting)}
-                    style={{ cursor: "pointer", border: "none", background: "none", color: "#ed6c02", fontWeight: 600 }}
-                  >
+                  <Button color="inherit" size="small" onClick={() => setAttendanceMeeting(meeting)}>
                     {t("Meetings.confirmAttendance")}
-                  </button>
+                  </Button>
                 }
-                sx={{ mb: 2, mt: 1 }}
+                sx={{ mb: 2 }}
               >
-                Did the meeting take place?
+                {t("Meetings.attendancePrompt")}
               </Alert>
             )}
             {needsFeedback(meeting) && (
               <Alert
                 severity="info"
                 action={
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackMeeting(meeting)}
-                    style={{ cursor: "pointer", border: "none", background: "none", color: "#1976d2", fontWeight: 600 }}
-                  >
+                  <Button color="inherit" size="small" onClick={() => setFeedbackMeeting(meeting)}>
                     {t("Meetings.fillFeedback")}
-                  </button>
+                  </Button>
                 }
-                sx={{ mb: 2, mt: 1 }}
+                sx={{ mb: 2 }}
               >
-                Feedback is required on the meeting
+                {t("Meetings.feedbackPrompt")}
               </Alert>
             )}
           </Box>
         );
       })}
+
+      <MeetingEventDialog
+        open={Boolean(selectedMeeting)}
+        meeting={selectedMeeting}
+        mentor={selectedMentor}
+        mentee={selectedMentee}
+        onClose={() => setSelectedMeetingId(null)}
+      />
 
       <FeedbackDialog
         open={Boolean(feedbackMeeting)}

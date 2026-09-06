@@ -34,6 +34,7 @@ const meetingSchema = new Schema(
       enum: [
         "PENDING_MENTOR_TIMES", // pending mentor times
         "PENDING_MENTEE_SELECTION", // pending mentee selection
+        "PENDING_MENTOR_APPROVAL", // mentee booked a slot; awaiting mentor confirm
         "MATCHED", // matched
         "ATTENDANCE_CONFIRMED", // attendance confirmed
         "COMPLETED", // completed

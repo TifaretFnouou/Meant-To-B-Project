@@ -11,6 +11,7 @@ export const USER_MODES = {
 
 export const MEETING_STATUS = {
   PENDING: "pending",
+  PENDING_APPROVAL: "pending_approval",
   SLOTS_PROPOSED: "slots_proposed",
   MATCHED: "matched",
   CANCELLED: "cancelled",
@@ -20,6 +21,7 @@ export const MEETING_STATUS = {
 
 export const SCHEDULING_STATE = {
   PENDING_REQUEST: "pending_request",
+  PENDING_MENTOR_APPROVAL: "pending_mentor_approval",
   REJECTED: "rejected",
   SLOTS_PROPOSED: "slots_proposed",
   SLOT_SELECTED: "slot_selected",

@@ -573,6 +573,10 @@ function mapMeetingToFrontend(meeting) {
           : SCHEDULING_STATE.SLOTS_PROPOSED;
       status = MEETING_STATUS.SLOTS_PROPOSED;
       break;
+    case "PENDING_MENTOR_APPROVAL":
+      schedulingState = SCHEDULING_STATE.PENDING_MENTOR_APPROVAL;
+      status = MEETING_STATUS.PENDING_APPROVAL;
+      break;
     case "MATCHED":
     case "ATTENDANCE_CONFIRMED":
       schedulingState = SCHEDULING_STATE.MATCHED;
@@ -671,17 +675,25 @@ export function toCalendarEvents(appointments, { userId, role } = {}) {
     if (meeting.matchedSlot) {
       const start = new Date(meeting.matchedSlot);
       const end = new Date(start.getTime() + duration * 60000);
+      const awaitingApproval =
+        meeting.schedulingState === SCHEDULING_STATE.PENDING_MENTOR_APPROVAL;
       events.push({
         id: `${meeting.id}-matched`,
         meetingId: meeting.id,
-        type: meeting.schedulingState === SCHEDULING_STATE.COMPLETED ? "completed" : "matched",
+        type: awaitingApproval
+          ? "pending"
+          : meeting.schedulingState === SCHEDULING_STATE.COMPLETED
+            ? "completed"
+            : "matched",
         start: start.toISOString(),
         end: end.toISOString(),
         status: meeting.status,
         schedulingState: meeting.schedulingState,
         mentorId: meeting.mentorId,
         menteeId: meeting.menteeId,
-        titleKey: "calendar.eventBooked",
+        titleKey: awaitingApproval
+          ? "calendar.eventPendingApproval"
+          : "calendar.eventBooked",
       });
     } else if (
       (meeting.schedulingState === SCHEDULING_STATE.SLOTS_PROPOSED ||
@@ -766,6 +778,11 @@ export const appointmentService = {
       endTime: new Date(endTime).toISOString(),
     };
     const response = await api.put(`/meetings/${meetingId}/rebook`, { selectedTime });
+    return mapMeetingToFrontend(response.data.meeting);
+  },
+
+  async approveMeeting(meetingId) {
+    const response = await api.put(`/meetings/${meetingId}/approve`);
     return mapMeetingToFrontend(response.data.meeting);
   },
 

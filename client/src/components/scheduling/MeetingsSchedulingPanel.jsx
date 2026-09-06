@@ -25,7 +25,13 @@ import UserAvatar from "../common/UserAvatar";
 
 const MAX_SLOTS = 3;
 
-export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
+export default function MeetingsSchedulingPanel({
+  meeting,
+  mentor,
+  mentee,
+  compact = false,
+  onDone,
+}) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const {
@@ -37,6 +43,7 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
     markUnavailable,
     getMentorAvailability,
     rebookFromAvailability,
+    approveRequest,
   } = useScheduling();
   const { language, t } = useLanguage();
   const locale = language === "he" ? "he-IL" : "en-US";
@@ -58,6 +65,8 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
   );
   const [openSlots, setOpenSlots] = useState([]);
   const [loadingOpen, setLoadingOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     setLocalSlots(meeting.proposedSlots || []);
@@ -76,15 +85,19 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
     return () => clearInterval(id);
   }, [meeting.schedulingState, meeting.matchedSlot]);
 
-  const isMentor = String(currentUser.id) === String(meeting.mentorId);
-  const isMentee = String(currentUser.id) === String(meeting.menteeId);
-  const actorName = `${currentUser.firstName} ${currentUser.lastName}`;
-  const state = meeting.schedulingState;
+  const isMentor = Boolean(currentUser) && String(currentUser.id) === String(meeting.mentorId);
+  const isMentee = Boolean(currentUser) && String(currentUser.id) === String(meeting.menteeId);
+  const actorName = `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim();
+  const state =
+    meeting.schedulingState ||
+    (meeting.matchedSlot ? SCHEDULING_STATE.MATCHED : SCHEDULING_STATE.PENDING_REQUEST);
 
   const awaitingMentor =
     state === SCHEDULING_STATE.PENDING_REQUEST ||
     state === SCHEDULING_STATE.RESCHEDULE_REQUESTED ||
     state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED;
+
+  const awaitingMentorApproval = state === SCHEDULING_STATE.PENDING_MENTOR_APPROVAL;
 
   useEffect(() => {
     if (!isMentee || !awaitingMentor || !meeting.mentorId) return undefined;
@@ -145,10 +158,11 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
 
   const showMenteeRebook = isMentee && awaitingMentor;
 
-  const run = async (fn) => {
+  const run = async (fn, { closeOnSuccess = false } = {}) => {
     setError("");
     try {
       await fn();
+      if (closeOnSuccess) onDone?.();
     } catch (err) {
       const status = err?.response?.status;
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
@@ -160,11 +174,25 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
     }
   };
 
-  const handleReject = () => run(() => rejectRequest(meeting.id, actorName));
-  const handleCancel = () => run(() => cancelMeeting(meeting.id, actorName));
+  const handleReject = () =>
+    run(() => rejectRequest(meeting.id, actorName), { closeOnSuccess: true });
+  const handleCancel = () =>
+    run(() => cancelMeeting(meeting.id, actorName), { closeOnSuccess: true });
   const handleRequestMore = () => run(() => requestMoreSlots(meeting.id, actorName));
   const handleUnavailable = () =>
-    run(() => markUnavailable(meeting.id, isMentor ? "mentor" : "mentee"));
+    run(() => markUnavailable(meeting.id, isMentor ? "mentor" : "mentee"), {
+      closeOnSuccess: true,
+    });
+
+  const handleApproveBooking = () => {
+    if (approving) return;
+    setApproving(true);
+    setSuccessMsg("");
+    run(async () => {
+      await approveRequest(meeting.id);
+      setSuccessMsg(t("calendar.meetingApprovedSuccess"));
+    }).finally(() => setApproving(false));
+  };
 
   const handleToggleSlot = (iso) => {
     setLocalSlots((prev) => {
@@ -217,14 +245,15 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
   };
 
   return (
-    <Paper
-      elevation={0}
+    <Box
+      component={compact ? "div" : Paper}
+      elevation={compact ? undefined : 0}
       sx={{
-        p: { xs: 2, sm: 3 },
-        mb: 2,
-        border: "1px solid",
+        p: compact ? 0 : { xs: 2, sm: 3 },
+        mb: compact ? 0 : 2,
+        border: compact ? "none" : "1px solid",
         borderColor: "divider",
-        borderRadius: 2,
+        borderRadius: compact ? 0 : 2,
       }}
     >
       <Box
@@ -238,8 +267,8 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-          <UserAvatar user={otherUser} size={42} />
-          <Typography variant="h6" fontWeight={700} noWrap>
+          <UserAvatar user={otherUser} size={compact ? 36 : 42} />
+          <Typography variant={compact ? "subtitle1" : "h6"} fontWeight={700} noWrap>
             {isMentor
               ? t("calendar.requestFrom", { name: otherName || "—" })
               : t("calendar.meetingWith", { name: otherName || "—" })}
@@ -252,6 +281,49 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
           {error}
         </Alert>
+      )}
+      {successMsg && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMsg("")}>
+          {successMsg}
+        </Alert>
+      )}
+
+      {awaitingMentorApproval && (
+        <Box sx={{ mb: 2 }}>
+          <Alert severity={isMentor ? "warning" : "info"} sx={{ mb: 2 }}>
+            {isMentor
+              ? t("calendar.approveBookingHint", {
+                  date: formatDateTime(meeting.matchedSlot, locale),
+                })
+              : t("calendar.waitingMentorApproval", {
+                  date: formatDateTime(meeting.matchedSlot, locale),
+                })}
+          </Alert>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            {isMentor && (
+              <Button
+                variant="contained"
+                color="success"
+                disabled={approving}
+                onClick={handleApproveBooking}
+              >
+                {approving ? (
+                  <CircularProgress size={22} color="inherit" />
+                ) : (
+                  t("calendar.approveMeeting")
+                )}
+              </Button>
+            )}
+            <Button
+              color="error"
+              variant="outlined"
+              disabled={approving}
+              onClick={isMentor ? handleReject : handleCancel}
+            >
+              {isMentor ? t("calendar.rejectRequest") : t("calendar.cancelMeeting")}
+            </Button>
+          </Stack>
+        </Box>
       )}
 
       {awaitingMentor && isMentor && (
@@ -360,13 +432,22 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
           <Alert severity="success" sx={{ mb: 2 }}>
             {t("calendar.slotsSentWaiting")}
           </Alert>
-          <WeekCalendar
-            weekStart={weekStart}
-            onWeekChange={setWeekStart}
-            mode="view"
-            events={calendarEvents}
-          />
-          <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+          {!compact && (
+            <WeekCalendar
+              weekStart={weekStart}
+              onWeekChange={setWeekStart}
+              mode="view"
+              events={calendarEvents}
+            />
+          )}
+          {compact && meeting.proposedSlots?.length > 0 && (
+            <Stack spacing={0.75} sx={{ mb: 2 }}>
+              {(meeting.proposedSlots || []).map((slot) => (
+                <Chip key={slot} label={formatDateTime(slot, locale)} variant="outlined" />
+              ))}
+            </Stack>
+          )}
+          <Stack direction="row" spacing={1} sx={{ mt: compact ? 0 : 2 }} flexWrap="wrap" useFlexGap>
             <Button
               variant="outlined"
               onClick={() => {
@@ -429,7 +510,16 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
         </Box>
       )}
 
-      {state === SCHEDULING_STATE.MATCHED && (
+      {(state === SCHEDULING_STATE.MATCHED ||
+        (Boolean(meeting.matchedSlot) &&
+          state !== SCHEDULING_STATE.CANCELLED &&
+          state !== SCHEDULING_STATE.COMPLETED &&
+          state !== SCHEDULING_STATE.PENDING_MENTOR_APPROVAL &&
+          !showMenteeRebook &&
+          !showMentorSlotPicker &&
+          !showMentorWaiting &&
+          !showMenteePicker &&
+          !awaitingMentorApproval)) && (
         <Box>
           <Alert severity="success" sx={{ mb: 2 }}>
             {t("calendar.matchedAt", {
@@ -498,13 +588,15 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
             </Box>
           )}
 
-          <WeekCalendar
-            weekStart={weekStart}
-            onWeekChange={setWeekStart}
-            mode="view"
-            events={calendarEvents}
-          />
-          <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+          {!compact && (
+            <WeekCalendar
+              weekStart={weekStart}
+              onWeekChange={setWeekStart}
+              mode="view"
+              events={calendarEvents}
+            />
+          )}
+          <Stack direction="row" spacing={1} sx={{ mt: compact ? 0 : 2 }} flexWrap="wrap" useFlexGap>
             {!meeting.rescheduleUsed && (
               <Button variant="outlined" color="warning" onClick={handleUnavailable}>
                 {t("calendar.markUnavailable")}
@@ -524,6 +616,6 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
       {state === SCHEDULING_STATE.COMPLETED && (
         <Alert severity="success">{t("calendar.completed")}</Alert>
       )}
-    </Paper>
+    </Box>
   );
 }

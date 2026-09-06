@@ -3,6 +3,7 @@ import {
   createMeetingController,
   bookFromAvailabilityController,
   rebookFromAvailabilityController,
+  approveMeetingController,
   proposeTimesController,
   selectTimeController,
   rejectMeetingController,
@@ -19,6 +20,7 @@ router.get("/my-meetings", getMyMeetingsController);
 router.put("/:id/propose-times", proposeTimesController);
 router.put("/:id/select-time", selectTimeController);
 router.put("/:id/rebook", rebookFromAvailabilityController);
+router.put("/:id/approve", approveMeetingController);
 router.put("/:id/reject", rejectMeetingController);
 router.put("/:id/request-more-slots", requestMoreSlotsController);
 router.put("/:id/mark-unavailable", markUnavailableController);

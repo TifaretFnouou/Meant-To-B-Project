@@ -86,8 +86,9 @@ export function SchedulingProvider({ children }) {
   const getMyAvailability = useCallback(async () => availabilityService.getMyAvailability(), []);
 
   const approveRequest = async (meetingId) => {
-    console.warn("approveRequest is deprecated. Mentors should publish availability.");
-    return Meetings.find((s) => s.id === meetingId);
+    const meeting = await appointmentService.approveMeeting(meetingId);
+    await afterMutation();
+    return meeting;
   };
 
   const rejectRequest = async (meetingId) => {

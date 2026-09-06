@@ -10,7 +10,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import PageHeader from "../components/common/PageHeader";
 import WeekCalendar from "../components/calendar/WeekCalendar";
@@ -21,15 +21,12 @@ import { useScheduling } from "../context/SchedulingContext";
 import { useLanguage } from "../context/LanguageContext";
 import { toCalendarEvents } from "../services/appointmentService";
 import { addDays, isSameSlot, startOfWeek } from "../utils/calendar";
-import { SCHEDULING_STATE } from "../constants";
 
 export default function CalendarPage() {
   const { currentUser, users, isAdmin } = useAuth();
   const { isMentorMode, isMenteeMode } = useRoleMode();
   const {
     Meetings,
-    markUnavailable,
-    cancelMeeting,
     getMeetingsForUser,
     refreshMeetings,
     getMyAvailability,
@@ -41,9 +38,8 @@ export default function CalendarPage() {
   }, [refreshMeetings, currentUser?.id, isMentorMode, isMenteeMode]);
 
   const { t } = useLanguage();
-  const navigate = useNavigate();
 
-  const [weekStart, setWeekStart] = useState(() => addDays(startOfWeek(new Date()), 7));
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [filter, setFilter] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [availSlots, setAvailSlots] = useState([]);
@@ -137,7 +133,7 @@ export default function CalendarPage() {
   if (isAdmin) return <Navigate to="/admin" replace />;
 
   const meetingForEvent = selectedEvent
-    ? myMeetings.find((s) => s.id === selectedEvent.meetingId)
+    ? myMeetings.find((s) => String(s.id) === String(selectedEvent.meetingId))
     : null;
   const mentor = meetingForEvent
     ? meetingForEvent.mentorDetails ||
@@ -147,8 +143,6 @@ export default function CalendarPage() {
     ? meetingForEvent.menteeDetails ||
       users.find((u) => String(u.id) === String(meetingForEvent.menteeId))
     : null;
-  const actorName = `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim();
-  const actorRole = isMentorMode ? "mentor" : "mentee";
 
   const handleToggleAvail = (iso) => {
     if (new Date(iso).getTime() <= Date.now()) {
@@ -287,7 +281,10 @@ export default function CalendarPage() {
           selectedSlots={isMentorMode ? availSlots : []}
           onToggleSlot={isMentorMode ? handleToggleAvail : undefined}
           events={calendarEvents}
-          onEventClick={isMentorMode ? undefined : setSelectedEvent}
+          onEventClick={(event) => {
+            if (!event?.meetingId || event.type === "available") return;
+            setSelectedEvent(event);
+          }}
           disablePast={isMentorMode}
         />
       )}
@@ -318,31 +315,6 @@ export default function CalendarPage() {
         mentor={mentor}
         mentee={mentee}
         onClose={() => setSelectedEvent(null)}
-        onGoToMeeting={() => {
-          setSelectedEvent(null);
-          navigate("/Meetings");
-        }}
-        onCancel={
-          meetingForEvent &&
-          ![SCHEDULING_STATE.CANCELLED, SCHEDULING_STATE.COMPLETED].includes(
-            meetingForEvent.schedulingState
-          )
-            ? async () => {
-                await cancelMeeting(meetingForEvent.id, actorName);
-                setSelectedEvent(null);
-              }
-            : undefined
-        }
-        onReschedule={
-          meetingForEvent?.schedulingState === SCHEDULING_STATE.MATCHED &&
-          !meetingForEvent?.rescheduleUsed
-            ? async () => {
-                await markUnavailable(meetingForEvent.id, actorRole);
-                setSelectedEvent(null);
-                navigate("/Meetings");
-              }
-            : undefined
-        }
       />
     </MainLayout>
   );

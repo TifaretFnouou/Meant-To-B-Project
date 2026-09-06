@@ -3,6 +3,7 @@ import {
   createMeeting,
   bookFromAvailability,
   rebookFromAvailability,
+  approveMeeting,
   proposeTimes,
   selectTime,
   rejectMeeting,
@@ -69,6 +70,19 @@ export const rebookFromAvailabilityController = async (req, res) => {
 
     const meeting = await rebookFromAvailability(req.params.id, actor.id, selectedTime);
     res.status(200).json({ message: "Meeting rebooked successfully", meeting });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const approveMeetingController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const meeting = await approveMeeting(req.params.id, actor.id);
+    res.status(200).json({
+      message: "Meeting approved successfully",
+      meeting,
+    });
   } catch (err) {
     res.status(statusFromError(err)).json({ error: err.message });
   }

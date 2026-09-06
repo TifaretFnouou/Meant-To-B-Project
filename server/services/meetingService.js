@@ -2,11 +2,19 @@ import MeetingModel from "../models/meeting.js";
 import {
   assertSlotIsBookable,
   consumeSlot,
+  restoreSlot,
   normalizeId,
   sameInstant,
 } from "./availabilityService.js";
 import { createNotification } from "./notificationService.js";
 import UserModel from "../models/user.js";
+
+const ACTIVE_MEETING_STATUSES = [
+  "PENDING_MENTOR_TIMES",
+  "PENDING_MENTEE_SELECTION",
+  "PENDING_MENTOR_APPROVAL",
+  "MATCHED",
+];
 
 /**
  * Shared video room for mentor + mentee.
@@ -50,7 +58,7 @@ async function assertNoActiveMeeting(menteeId, mentorId) {
 
   const activeForMentee = await MeetingModel.findOne({
     menteeId,
-    status: { $in: ["PENDING_MENTOR_TIMES", "PENDING_MENTEE_SELECTION", "MATCHED"] },
+    status: { $in: ACTIVE_MEETING_STATUSES },
   });
 
   if (activeForMentee) {
@@ -65,7 +73,7 @@ async function assertNoActiveMeeting(menteeId, mentorId) {
   const existingMeeting = await MeetingModel.findOne({
     menteeId,
     mentorId,
-    status: { $in: ["PENDING_MENTOR_TIMES", "PENDING_MENTEE_SELECTION", "MATCHED"] },
+    status: { $in: ACTIVE_MEETING_STATUSES },
   });
 
   if (existingMeeting) {
@@ -99,8 +107,8 @@ export async function createMeeting(menteeId, mentorId) {
 }
 
 /**
- * Book directly from mentor open availability → MATCHED.
- * Preferred flow: mentee picks a free calendar slot.
+ * Mentee books a free mentor slot → awaiting mentor approval.
+ * Mentor must confirm before the meeting becomes MATCHED.
  */
 export async function bookFromAvailability(menteeId, mentorId, selectedTime) {
   await assertNoActiveMeeting(menteeId, mentorId);
@@ -123,13 +131,10 @@ export async function bookFromAvailability(menteeId, mentorId, selectedTime) {
       startTime: booked.startTime,
       endTime: booked.endTime,
     },
-    status: "MATCHED",
+    status: "PENDING_MENTOR_APPROVAL",
   });
 
   await newMeeting.save();
-  newMeeting.meetLink = generateMeetLink(newMeeting._id);
-  await newMeeting.save();
-
   await consumeSlot(mentorId, booked.startTime);
 
   const menteeName = (await getUserDisplayName(menteeId)) || "Mentee";
@@ -138,13 +143,13 @@ export async function bookFromAvailability(menteeId, mentorId, selectedTime) {
 
   await notifyUser(
     mentorId,
-    "notif.meetingScheduledAt",
+    "notif.bookingAwaitingApproval",
     { name: menteeName, date },
     newMeeting._id
   );
   await notifyUser(
     menteeId,
-    "notif.meetingScheduledAt",
+    "notif.bookingPendingApproval",
     { name: mentorName, date },
     newMeeting._id
   );
@@ -152,7 +157,46 @@ export async function bookFromAvailability(menteeId, mentorId, selectedTime) {
   return newMeeting;
 }
 
-/** After reschedule: mentee picks a new open slot from mentor availability. */
+/** Mentor confirms a mentee booking → MATCHED + meet link. */
+export async function approveMeeting(meetingId, mentorId) {
+  const meeting = await MeetingModel.findById(meetingId);
+
+  if (!meeting) {
+    throw Object.assign(new Error("Meeting not found"), { status: 404 });
+  }
+
+  if (normalizeId(meeting.mentorId) !== normalizeId(mentorId)) {
+    throw Object.assign(new Error("Only the assigned mentor can approve this meeting"), {
+      status: 403,
+    });
+  }
+
+  if (meeting.status !== "PENDING_MENTOR_APPROVAL") {
+    throw Object.assign(new Error("Meeting is not awaiting mentor approval"), { status: 400 });
+  }
+
+  if (!meeting.scheduledTime?.startTime) {
+    throw Object.assign(new Error("Meeting has no scheduled time"), { status: 400 });
+  }
+
+  meeting.status = "MATCHED";
+  meeting.meetLink = generateMeetLink(meeting._id);
+  await meeting.save();
+
+  const mentorName = (await getUserDisplayName(mentorId)) || "Mentor";
+  const date = formatMeetingDate(meeting.scheduledTime.startTime);
+
+  await notifyUser(
+    meeting.menteeId,
+    "notif.meetingApproved",
+    { name: mentorName, date },
+    meeting._id
+  );
+
+  return meeting;
+}
+
+/** After reschedule: mentee picks a new open slot → awaiting mentor approval again. */
 export async function rebookFromAvailability(meetingId, menteeId, selectedTime) {
   const meeting = await MeetingModel.findById(meetingId);
 
@@ -185,8 +229,8 @@ export async function rebookFromAvailability(meetingId, menteeId, selectedTime) 
     startTime: booked.startTime,
     endTime: booked.endTime,
   };
-  meeting.status = "MATCHED";
-  meeting.meetLink = generateMeetLink(meeting._id);
+  meeting.status = "PENDING_MENTOR_APPROVAL";
+  meeting.meetLink = null;
 
   await meeting.save();
   await consumeSlot(meeting.mentorId, booked.startTime);
@@ -197,13 +241,13 @@ export async function rebookFromAvailability(meetingId, menteeId, selectedTime) 
 
   await notifyUser(
     meeting.mentorId,
-    "notif.meetingRescheduledAt",
+    "notif.bookingAwaitingApproval",
     { name: menteeName, date },
     meeting._id
   );
   await notifyUser(
     menteeId,
-    "notif.meetingRescheduledAt",
+    "notif.bookingPendingApproval",
     { name: mentorName, date },
     meeting._id
   );
@@ -324,8 +368,16 @@ export async function rejectMeeting(meetingId, userId) {
     throw Object.assign(new Error("Unauthorized to reject this meeting"), { status: 403 });
   }
 
+  const previousStatus = meeting.status;
+  const scheduledStart = meeting.scheduledTime?.startTime;
+  const scheduledEnd = meeting.scheduledTime?.endTime;
+
   meeting.status = "CANCELLED";
   await meeting.save();
+
+  if (previousStatus === "PENDING_MENTOR_APPROVAL" && scheduledStart) {
+    await restoreSlot(meeting.mentorId, scheduledStart, scheduledEnd);
+  }
 
   const actorName = (await getUserDisplayName(userId)) || "";
   const otherId =
