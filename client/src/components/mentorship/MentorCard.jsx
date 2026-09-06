@@ -119,7 +119,10 @@ import { brand } from "../../theme/brand";
 import UserAvatar from "../common/UserAvatar";
 // --- import our appointment service ---
 import { appointmentService } from "../../services/appointmentService";
+import { getStoredToken } from "../../services/api";
 import { useNotifications } from "../../context/NotificationContext";
+import { useAuth } from "../../context/AuthContext";
+import { useScheduling } from "../../context/SchedulingContext";
 
 export default function MentorCard({
   mentor,
@@ -129,7 +132,9 @@ export default function MentorCard({
 }) {
   const { t } = useLanguage();
   const profile = mentor.mentorProfile;
-  const { addNotification } = useNotifications(); 
+  const { addNotification } = useNotifications();
+  const { currentUser } = useAuth();
+  const { createRequest, refreshMeetings } = useScheduling(); 
 
   // --- manage the state for loading and messages to the user ---
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -147,7 +152,7 @@ export default function MentorCard({
   //     // 2. success message
   //     setFeedback({
   //       open: true,
-  //       message: "The request has been sent successfully to the mentor! You can track it in your personal area.",
+  //       message: "הבקשה נשלחה בהצלחה! אפשר לעקוב אחריה באזור הפגישות.",
   //       severity: "success"
   //     });
 
@@ -170,32 +175,53 @@ export default function MentorCard({
   const handleBookMeeting = async () => {
     setIsSubmitting(true);
     try {
-      // 1. call the server to create the meeting request
-      const response = await appointmentService.createMentorshipRequest({ mentorId: mentor.id });
-  
-      // 2. create the notification for the mentor
-      addNotification(
-        mentor.id, 
-        "A new meeting request has been received from a mentee.", 
-        { menteeName: "Mentee" }, // can put the name of the logged in user if available
-        response?.id || null
-      );
-  
-      // 3. success message
+      if (!getStoredToken()) {
+        setFeedback({
+          open: true,
+          message: "פג תוקף ההתחברות. יש להתחבר מחדש ואז לשלוח בקשה.",
+          severity: "error",
+        });
+        return;
+      }
+
+      const menteeName =
+        `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim() || "Mentee";
+
+      // Prefer SchedulingContext so lists refresh + mentor gets a notification
+      if (typeof createRequest === "function") {
+        await createRequest(mentor.id, currentUser.id, menteeName);
+      } else {
+        const response = await appointmentService.createMentorshipRequest({
+          mentorId: mentor.id,
+        });
+        addNotification(
+          String(mentor.id),
+          "notif.mentorshipRequest",
+          { name: menteeName },
+          response?.id || null
+        );
+        await refreshMeetings?.();
+      }
+
       setFeedback({
         open: true,
-        message: "The request has been sent successfully to the mentor! You can track it in your personal area.",
-        severity: "success"
+        message: "הבקשה נשלחה בהצלחה! אפשר לעקוב אחריה באזור הפגישות.",
+        severity: "success",
       });
-  
+
       if (onExpressInterest) {
-        onExpressInterest(mentor); 
+        onExpressInterest(mentor);
       }
     } catch (error) {
+      const status = error.response?.status;
+      const serverMsg = error.response?.data?.error || error.response?.data?.message;
       setFeedback({
         open: true,
-        message: error.response?.data?.error || error.message || "An error occurred while sending the request.",
-        severity: "error"
+        message:
+          status === 401
+            ? "פג תוקף ההתחברות. יש להתחבר מחדש ואז לשלוח בקשה."
+            : serverMsg || error.message || "אירעה שגיאה בשליחת הבקשה.",
+        severity: "error",
       });
     } finally {
       setIsSubmitting(false);

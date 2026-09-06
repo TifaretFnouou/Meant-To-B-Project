@@ -19,10 +19,15 @@ const meetingSchema = new Schema(
         endTime: { type: Date },
       }
     ],
-    // final time chosen by the mentor
+    // final time chosen by the mentee
     scheduledTime: {
       startTime: { type: Date },
       endTime: { type: Date },
+    },
+    // shared Google Meet link — created when the meeting becomes MATCHED
+    meetLink: {
+      type: String,
+      default: null,
     },
     status: {
       type: String,
@@ -53,7 +58,12 @@ const meetingSchema = new Schema(
       comments: { type: String },
     },
     
-    // counter of how many times they requested times again (to enforce the one iteration limit)
+    // mentee asked for different proposed slots during selection (max 1)
+    moreSlotsCount: {
+      type: Number,
+      default: 0,
+    },
+    // matched meeting marked unavailable / reschedule (max 1, then cancel)
     rescheduleCount: {
       type: Number,
       default: 0,

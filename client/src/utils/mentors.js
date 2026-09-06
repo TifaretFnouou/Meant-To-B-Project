@@ -11,7 +11,11 @@ export function isActiveMentor(user) {
 export function getCatalogMentors(users, excludeUserId = null) {
   if (!Array.isArray(users)) return [];
 
-  return users.filter(
-    (user) => isActiveMentor(user) && user.id !== excludeUserId
-  );
+  return users.filter((user) => {
+    if (!isActiveMentor(user)) return false;
+    if (excludeUserId != null && String(user.id) === String(excludeUserId)) {
+      return false;
+    }
+    return true;
+  });
 }

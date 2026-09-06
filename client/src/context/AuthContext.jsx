@@ -245,6 +245,7 @@ import {
   getStoredToken,
   loginRequest,
   registerRequest,
+  SESSION_EXPIRED_EVENT,
   setStoredToken,
   updateProfilePictureRequest,
   updateUserRequest,
@@ -275,6 +276,16 @@ export function AuthProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(loadStoredUser);
   const [authReady, setAuthReady] = useState(false);
+  // Track token in React state so UI cannot stay "logged in" after localStorage token disappears
+  const [hasToken, setHasToken] = useState(() => Boolean(getStoredToken()));
+
+  const clearSession = useCallback(() => {
+    clearStoredToken();
+    setHasToken(false);
+    setCurrentUser(null);
+    persistUser(null);
+    setUsers([]);
+  }, []);
 
   const refreshUsers = useCallback(async () => {
     try {
@@ -293,13 +304,12 @@ export function AuthProvider({ children }) {
     async function bootstrap() {
       const token = getStoredToken();
       if (!token) {
-        setCurrentUser(null);
-        persistUser(null);
-        setUsers([]);
+        clearSession();
         if (!cancelled) setAuthReady(true);
         return;
       }
 
+      setHasToken(true);
       try {
         const me = await fetchMe();
         if (cancelled) return;
@@ -308,10 +318,7 @@ export function AuthProvider({ children }) {
         await refreshUsers();
       } catch {
         if (cancelled) return;
-        clearStoredToken();
-        setCurrentUser(null);
-        persistUser(null);
-        setUsers([]);
+        clearSession();
       } finally {
         if (!cancelled) setAuthReady(true);
       }
@@ -321,12 +328,39 @@ export function AuthProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [refreshUsers]);
+  }, [refreshUsers, clearSession]);
+
+  // Cross-tab logout / token cleared elsewhere / 401 from API
+  useEffect(() => {
+    const onStorage = (event) => {
+      if (event.key !== "queenb_token") return;
+      if (!event.newValue) {
+        clearSession();
+      } else {
+        setHasToken(true);
+      }
+    };
+
+    const onSessionExpired = () => {
+      clearSession();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    };
+  }, [clearSession]);
 
   const login = async (email, password) => {
     try {
       const { user, token } = await loginRequest(email, password);
+      if (!token) {
+        throw new Error(t("auth.invalidCredentials"));
+      }
       setStoredToken(token);
+      setHasToken(true);
       setCurrentUser(user);
       persistUser(user);
       await refreshUsers();
@@ -381,7 +415,11 @@ export function AuthProvider({ children }) {
       }
 
       const { user, token } = await registerRequest(formData);
+      if (!token) {
+        throw new Error(t("auth.invalidCredentials"));
+      }
       setStoredToken(token);
+      setHasToken(true);
       setCurrentUser(user);
       persistUser(user);
       await refreshUsers();
@@ -438,10 +476,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    clearStoredToken();
-    setCurrentUser(null);
-    persistUser(null);
-    setUsers([]);
+    clearSession();
   };
 
   const value = useMemo(
@@ -454,12 +489,13 @@ export function AuthProvider({ children }) {
       updateProfile,
       logout,
       refreshUsers,
-      isAuthenticated: Boolean(currentUser),
+      // Require both user + token so protected pages cannot call APIs without Authorization
+      isAuthenticated: Boolean(currentUser && hasToken),
       isAdmin: currentUser?.roles?.includes(ROLES.ADMIN),
       isMentor: currentUser?.roles?.includes(ROLES.MENTOR),
       isMentee: currentUser?.roles?.includes(ROLES.MENTEE),
     }),
-    [currentUser, users, authReady, refreshUsers]
+    [currentUser, users, authReady, hasToken, refreshUsers]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

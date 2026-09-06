@@ -62,8 +62,8 @@
 //   const meetingForEvent = selectedEvent
 //     ? myMeetings.find((s) => s.id === selectedEvent.meetingId)
 //     : null;
-//   const mentor = meetingForEvent ? users.find((u) => u.id === meetingForEvent.mentorId) : null;
-//   const mentee = meetingForEvent ? users.find((u) => u.id === meetingForEvent.menteeId) : null;
+//   const mentor = meetingForEvent ? users.find((u) => String(u.id) === String(meetingForEvent.mentorId)) : null;
+//   const mentee = meetingForEvent ? users.find((u) => String(u.id) === String(meetingForEvent.menteeId)) : null;
 //   const actorName = `${currentUser.firstName} ${currentUser.lastName}`;
 
 //   const pendingCount = myMeetings.filter(
@@ -125,8 +125,8 @@
 //                 const s = myMeetings.find((x) => x.id === event.meetingId);
 //                 const other =
 //                   role === "mentor"
-//                     ? users.find((u) => u.id === s?.menteeId)
-//                     : users.find((u) => u.id === s?.mentorId);
+//                     ? users.find((u) => String(u.id) === String(s?.menteeId))
+//                     : users.find((u) => String(u.id) === String(s?.mentorId));
 //                 return (
 //                   <Alert
 //                     key={event.id}
@@ -203,7 +203,11 @@ import { SCHEDULING_STATE } from "../constants";
 export default function CalendarPage() {
   const { currentUser, users, isAdmin } = useAuth();
   const { isMentorMode, isMenteeMode } = useRoleMode();
-  const { Meetings, markUnavailable, cancelMeeting, getMeetingsForUser } = useScheduling();
+  const { Meetings, markUnavailable, cancelMeeting, getMeetingsForUser, refreshMeetings } = useScheduling();
+
+  useEffect(() => {
+    refreshMeetings();
+  }, [refreshMeetings, currentUser?.id, isMentorMode, isMenteeMode]);
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -216,8 +220,8 @@ export default function CalendarPage() {
   const myMeetings = useMemo(() => {
     if (!currentUser) return [];
     const all = getMeetingsForUser(currentUser.id);
-    if (isMentorMode) return all.filter((s) => s.mentorId === currentUser.id);
-    if (isMenteeMode) return all.filter((s) => s.menteeId === currentUser.id);
+    if (isMentorMode) return all.filter((s) => String(s.mentorId) === String(currentUser.id));
+    if (isMenteeMode) return all.filter((s) => String(s.menteeId) === String(currentUser.id));
     return all;
   }, [currentUser, getMeetingsForUser, isMentorMode, isMenteeMode, Meetings]);
 
@@ -241,9 +245,16 @@ export default function CalendarPage() {
   const meetingForEvent = selectedEvent
     ? myMeetings.find((s) => s.id === selectedEvent.meetingId)
     : null;
-  const mentor = meetingForEvent ? users.find((u) => u.id === meetingForEvent.mentorId) : null;
-  const mentee = meetingForEvent ? users.find((u) => u.id === meetingForEvent.menteeId) : null;
+  const mentor = meetingForEvent
+    ? meetingForEvent.mentorDetails ||
+      users.find((u) => String(u.id) === String(meetingForEvent.mentorId))
+    : null;
+  const mentee = meetingForEvent
+    ? meetingForEvent.menteeDetails ||
+      users.find((u) => String(u.id) === String(meetingForEvent.menteeId))
+    : null;
   const actorName = `${currentUser.firstName} ${currentUser.lastName}`;
+  const actorRole = isMentorMode ? "mentor" : "mentee";
 
   const pendingCount = myMeetings.filter(
     (s) => s.schedulingState === SCHEDULING_STATE.PENDING_REQUEST
@@ -304,8 +315,8 @@ export default function CalendarPage() {
                 const s = myMeetings.find((x) => x.id === event.meetingId);
                 const other =
                   role === "mentor"
-                    ? users.find((u) => u.id === s?.menteeId)
-                    : users.find((u) => u.id === s?.mentorId);
+                    ? users.find((u) => String(u.id) === String(s?.menteeId))
+                    : users.find((u) => String(u.id) === String(s?.mentorId));
                 return (
                   <Alert
                     key={event.id}
@@ -352,9 +363,10 @@ export default function CalendarPage() {
             : undefined
         }
         onReschedule={
-          meetingForEvent?.schedulingState === SCHEDULING_STATE.MATCHED
+          meetingForEvent?.schedulingState === SCHEDULING_STATE.MATCHED &&
+          !meetingForEvent?.rescheduleUsed
             ? async () => {
-                await markUnavailable(meetingForEvent.id);
+                await markUnavailable(meetingForEvent.id, actorRole);
                 setSelectedEvent(null);
                 navigate("/Meetings");
               }

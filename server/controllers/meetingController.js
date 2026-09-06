@@ -5,7 +5,8 @@ import {
   selectTime,
   rejectMeeting,
   getUserMeetings,
-  markUnavailable
+  requestMoreSlots,
+  markUnavailable,
 } from "../services/meetingService.js";
 
 function statusFromError(error, fallback = 400) {
@@ -38,6 +39,10 @@ export const proposeTimesController = async (req, res) => {
       return res.status(400).json({ message: "Please provide at least one proposed time" });
     }
 
+    if (proposedTimes.length > 3) {
+      return res.status(400).json({ message: "You can propose up to 3 time options" });
+    }
+
     const meeting = await proposeTimes(req.params.id, actor.id, proposedTimes);
     res.status(200).json({ message: "Times proposed successfully", meeting });
   } catch (err) {
@@ -48,13 +53,18 @@ export const proposeTimesController = async (req, res) => {
 export const selectTimeController = async (req, res) => {
   try {
     const actor = verifyToken(req); // the logged in user (the mentee who selects the time)
-    const { selectedTime } = req.body; // expect an object { startTime, endTime }
+    const selectedTime = req.body?.selectedTime;
 
     if (!selectedTime || !selectedTime.startTime || !selectedTime.endTime) {
       return res.status(400).json({ message: "Selected time is required" });
     }
 
-    const meeting = await selectTime(req.params.id, actor.id, selectedTime);
+    const actorId = actor.id || actor._id;
+    if (!actorId) {
+      return res.status(401).json({ error: "Invalid token payload" });
+    }
+
+    const meeting = await selectTime(req.params.id, actorId, selectedTime);
     res.status(200).json({ message: "Time selected successfully. It's a match!", meeting });
   } catch (err) {
     res.status(statusFromError(err)).json({ error: err.message });
@@ -81,27 +91,35 @@ export const getMyMeetingsController = async (req, res) => {
   }
 };
 
-// export const markUnavailableMeetingController = async (req, res) => {
-//   try {
-//     const actor = verifyToken(req);
-//     const meeting = await markUnavailableMeeting(req.params.id, actor.id);
-//     res.status(200).json({ message: "Meeting marked as unavailable successfully", meeting });
-//   } catch (err) {
-//     res.status(statusFromError(err)).json({ error: err.message });
-//   }
-export const markUnavailableController = async (req, res) => {
+export const requestMoreSlotsController = async (req, res) => {
   try {
-    const actor = verifyToken(req); // המשתמש/ת המחובר/ת
-    const { meeting, cancelled } = await markUnavailable(req.params.id, actor.id);
-    
-    res.status(200).json({ 
-      message: cancelled 
-        ? "Max reschedules reached. Meeting cancelled." 
-        : "Meeting marked unavailable. Awaiting new times.", 
+    const actor = verifyToken(req);
+    const actorId = actor.id || actor._id;
+    const { meeting, cancelled } = await requestMoreSlots(req.params.id, actorId);
+
+    res.status(200).json({
+      message: "More slots requested. Waiting for mentor to propose new times.",
       meeting,
-      cancelled 
+      cancelled,
     });
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message });
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const markUnavailableController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const { meeting, cancelled } = await markUnavailable(req.params.id, actor.id);
+
+    res.status(200).json({
+      message: cancelled
+        ? "Max reschedules reached. Meeting cancelled."
+        : "Meeting marked unavailable. Awaiting new times.",
+      meeting,
+      cancelled,
+    });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
   }
 };

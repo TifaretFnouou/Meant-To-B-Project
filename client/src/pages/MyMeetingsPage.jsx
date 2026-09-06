@@ -177,7 +177,7 @@
 // }
 
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Typography,
   Tabs,
@@ -197,29 +197,44 @@ import { useScheduling } from "../context/SchedulingContext";
 import { useLanguage } from "../context/LanguageContext";
 import { MEETING_STATUS, SCHEDULING_STATE } from "../constants";
 
-// categorize the Meetings according to the statuses of the server
+// categorize Meetings: upcoming = matched in the future; planned = in progress; past = done/cancelled/past matched
 function categorizeMeetings(Meetings) {
-  const upcoming = []; // Meetings that have been assigned a time (MATCHED)
-  const planned = []; // Meetings that are waiting for action (PENDING)
-  const past = []; // Meetings that have been completed or cancelled
+  const upcoming = [];
+  const planned = [];
+  const past = [];
+  const now = Date.now();
 
   Meetings.forEach((s) => {
     const status = s.status || "";
-    
-    if (
-      status === MEETING_STATUS.COMPLETED || 
-      status === MEETING_STATUS.CANCELLED || 
+    const isPastTerminal =
+      status === MEETING_STATUS.COMPLETED ||
+      status === MEETING_STATUS.CANCELLED ||
       status === "FEEDBACK_FILLED" ||
       s.schedulingState === SCHEDULING_STATE.COMPLETED ||
-      s.schedulingState === SCHEDULING_STATE.CANCELLED
-    ) {
+      s.schedulingState === SCHEDULING_STATE.CANCELLED;
+
+    if (isPastTerminal) {
       past.push(s);
-    } else if (status === MEETING_STATUS.MATCHED || s.schedulingState === SCHEDULING_STATE.MATCHED) {
-      upcoming.push(s);
-    } else {
-      // everything that doesn't fit into the above categories is considered "in progress"
-      planned.push(s);
+      return;
     }
+
+    const isMatched =
+      status === MEETING_STATUS.MATCHED || s.schedulingState === SCHEDULING_STATE.MATCHED;
+
+    if (isMatched) {
+      const start = s.matchedSlot ? new Date(s.matchedSlot).getTime() : NaN;
+      const end = Number.isNaN(start)
+        ? NaN
+        : start + (s.durationMinutes || 60) * 60000;
+      if (!Number.isNaN(end) && end < now) {
+        past.push(s);
+      } else {
+        upcoming.push(s);
+      }
+      return;
+    }
+
+    planned.push(s);
   });
 
   return { upcoming, planned, past };
@@ -228,7 +243,11 @@ function categorizeMeetings(Meetings) {
 export default function MyMeetingsPage() {
   const { currentUser, users, isAdmin } = useAuth();
   const { isMenteeMode, isMentorMode } = useRoleMode();
-  const { getMeetingsForUser, Meetings } = useScheduling();
+  const { getMeetingsForUser, Meetings, refreshMeetings } = useScheduling();
+
+  useEffect(() => {
+    refreshMeetings();
+  }, [refreshMeetings, currentUser?.id, isMentorMode, isMenteeMode]);
   const [tab, setTab] = useState(0);
   const [feedbackMeeting, setFeedbackMeeting] = useState(null);
   const [attendanceMeeting, setAttendanceMeeting] = useState(null);

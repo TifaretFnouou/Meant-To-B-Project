@@ -51,6 +51,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/meetings" element={<Navigate to="/Meetings" replace />} />
       <Route
         path="/calendar"
         element={

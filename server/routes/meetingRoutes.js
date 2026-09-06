@@ -5,16 +5,18 @@ import {
   selectTimeController,
   rejectMeetingController,
   getMyMeetingsController,
-  markUnavailableController
+  requestMoreSlotsController,
+  markUnavailableController,
 } from "../controllers/meetingController.js";
 const router = express.Router();
 
-router.post("/", createMeetingController); // create a new meeting
-router.put("/:id/propose-times", proposeTimesController); // propose times to the mentor
-router.put("/:id/select-time", selectTimeController); // select a time from the proposed times
-router.put("/:id/reject", rejectMeetingController); // reject the meeting
-router.get("/my-meetings", getMyMeetingsController); // get all the meetings of the logged in user
-router.put("/:id/mark-unavailable", markUnavailableController); // mark the meeting as unavailable
+router.post("/", createMeetingController);
+router.get("/my-meetings", getMyMeetingsController);
+router.put("/:id/propose-times", proposeTimesController);
+router.put("/:id/select-time", selectTimeController);
+router.put("/:id/reject", rejectMeetingController);
+router.put("/:id/request-more-slots", requestMoreSlotsController);
+router.put("/:id/mark-unavailable", markUnavailableController);
 
 export default router;
 

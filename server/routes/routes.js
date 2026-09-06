@@ -10,5 +10,4 @@ const baseURL = "api/v1";
 router.use(`/${baseURL}/users`, userRoutes);
 router.use(`/${baseURL}/auth`, authRoutes);
 router.use(`/${baseURL}/meetings`, meetingRoutes);
-router.use(`/${baseURL}/appointments`, appointmentRoutes);
 export default router;

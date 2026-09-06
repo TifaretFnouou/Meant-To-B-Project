@@ -144,6 +144,8 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import appointmentService from "../services/appointmentService";
+import { getStoredToken } from "../services/api";
+import { useAuth } from "./AuthContext";
 import { useNotifications } from "./NotificationContext";
 
 const SchedulingContext = createContext(null);
@@ -155,26 +157,44 @@ export function SchedulingProvider({ children }) {
   const [Meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addNotification } = useNotifications();
+  const { currentUser, authReady } = useAuth();
 
   // fetch the Meetings of the logged in user from the server
   const refreshMeetings = useCallback(async () => {
+    if (!getStoredToken()) {
+      setMeetings([]);
+      setLoading(false);
+      return [];
+    }
+
     try {
       const data = await appointmentService.getAppointmentsForUser();
       setMeetings(data || []);
+      return data || [];
     } catch (error) {
       console.error("Failed to fetch Meetings from server:", error);
       setMeetings([]);
+      return [];
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Must re-fetch when auth becomes ready / user switches — provider stays mounted across login.
   useEffect(() => {
+    if (!authReady) return;
+
+    if (!currentUser) {
+      setMeetings([]);
+      setLoading(false);
+      return;
+    }
+
     refreshMeetings();
-  }, [refreshMeetings]);
+  }, [authReady, currentUser?.id, refreshMeetings]);
 
   const createRequest = async (mentorId, menteeId, menteeName, durationMinutes = 60) => {
-    // the server only requires mentorId, the mentor is identified from the token
+    // the server only requires mentorId; the mentee is identified from the token
     const meeting = await appointmentService.createMentorshipRequest({ mentorId });
     await refreshMeetings();
     addNotification(mentorId, "notif.mentorshipRequest", { name: menteeName }, meeting.id);
@@ -196,26 +216,62 @@ export function SchedulingProvider({ children }) {
   };
 
   const proposeSlots = async (meetingId, slots, mentorName) => {
+    if (!Array.isArray(slots) || slots.length === 0) {
+      throw new Error("Please select at least one time slot");
+    }
+    if (slots.length > 3) {
+      throw new Error("You can propose up to 3 time options");
+    }
     const meeting = await appointmentService.proposeSlots(meetingId, slots);
     await refreshMeetings();
-    addNotification(meeting.menteeId, "notif.slotsProposed", { name: mentorName }, meetingId);
+    if (meeting.menteeId) {
+      addNotification(meeting.menteeId, "notif.slotsProposed", { name: mentorName }, meetingId);
+    }
     return meeting;
   };
 
   const selectSlot = async (meetingId, slot, menteeName) => {
-    const meeting = await appointmentService.bookSlot(meetingId, slot);
+    // Prefer exact endTime from the mentor's proposal when available
+    const existing = Meetings.find((m) => String(m.id) === String(meetingId));
+    const proposed = existing?.proposedTimes?.find(
+      (pt) => new Date(pt.startTime).getTime() === new Date(slot).getTime()
+    );
+    const durationMinutes = proposed
+      ? Math.max(
+          15,
+          Math.round((new Date(proposed.endTime) - new Date(proposed.startTime)) / 60000)
+        )
+      : existing?.durationMinutes || 60;
+
+    const meeting = await appointmentService.bookSlot(meetingId, slot, durationMinutes);
     await refreshMeetings();
-    addNotification(meeting.mentorId, "notif.slotSelected", { name: menteeName }, meetingId);
+    // Notify both sides: a new meeting was scheduled
+    if (meeting.mentorId) {
+      addNotification(meeting.mentorId, "notif.meetingScheduled", { name: menteeName }, meetingId);
+    }
+    if (meeting.menteeId) {
+      const mentorLabel = meeting.mentorDetails
+        ? `${meeting.mentorDetails.firstName || ""} ${meeting.mentorDetails.lastName || ""}`.trim()
+        : "";
+      addNotification(
+        meeting.menteeId,
+        "notif.meetingScheduled",
+        { name: mentorLabel || "mentor" },
+        meetingId
+      );
+    }
     return meeting;
   };
 
   const requestMoreSlots = async (meetingId, menteeName) => {
     const { meeting, cancelled } = await appointmentService.requestMoreSlots(meetingId);
     await refreshMeetings();
-    if (cancelled) {
-      addNotification(meeting.mentorId, "notif.requestCancelled", { name: menteeName }, meetingId);
-    } else {
-      addNotification(meeting.mentorId, "notif.moreSlotsRequested", { name: menteeName }, meetingId);
+    if (meeting?.mentorId) {
+      if (cancelled) {
+        addNotification(meeting.mentorId, "notif.requestCancelled", { name: menteeName }, meetingId);
+      } else {
+        addNotification(meeting.mentorId, "notif.moreSlotsRequested", { name: menteeName }, meetingId);
+      }
     }
     return meeting;
   };
@@ -232,8 +288,20 @@ export function SchedulingProvider({ children }) {
   };
 
   const markUnavailable = async (meetingId, role) => {
-    console.warn("markUnavailable not fully implemented in backend yet");
-    return Meetings.find(s => s.id === meetingId);
+    const { meeting, cancelled } = await appointmentService.markUnavailable(meetingId);
+    await refreshMeetings();
+    if (cancelled) {
+      if (meeting.mentorId) {
+        addNotification(meeting.mentorId, "notif.meetingCancelled", {}, meetingId);
+      }
+      if (meeting.menteeId) {
+        addNotification(meeting.menteeId, "notif.meetingCancelled", {}, meetingId);
+      }
+    } else {
+      const target = role === "mentor" ? meeting.menteeId : meeting.mentorId;
+      if (target) addNotification(target, "notif.rescheduleNeeded", {}, meetingId);
+    }
+    return meeting;
   };
 
   const submitAttendance = async (meetingId, role, attended) => {

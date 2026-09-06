@@ -1,15 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Paper,
-  Typography,
+  Alert,
   Box,
   Button,
-  Alert,
-  Stack,
   Chip,
+  Divider,
+  Paper,
+  Stack,
+  Typography,
 } from "@mui/material";
+import VideoCallIcon from "@mui/icons-material/VideoCall";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import StatusBadge from "../common/StatusBadge";
-import WeekCalendar from "../calendar/WeekCalendar"; 
+import WeekCalendar from "../calendar/WeekCalendar";
 import { SCHEDULING_STATE } from "../../constants";
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
@@ -17,6 +20,8 @@ import { useLanguage } from "../../context/LanguageContext";
 import { formatDateTime, isSameSlot, startOfWeek } from "../../utils/calendar";
 import { toCalendarEvents } from "../../services/appointmentService";
 import UserAvatar from "../common/UserAvatar";
+
+const MAX_SLOTS = 3;
 
 export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
   const { currentUser } = useAuth();
@@ -32,6 +37,11 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
   const locale = language === "he" ? "he-IL" : "en-US";
 
   const [localSlots, setLocalSlots] = useState(meeting.proposedSlots || []);
+  const [editingSlots, setEditingSlots] = useState(false);
+  const [error, setError] = useState("");
+  const [selectingSlot, setSelectingSlot] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [nowTick, setNowTick] = useState(() => Date.now());
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(
       meeting.proposedSlots?.[0]
@@ -44,78 +54,178 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
 
   useEffect(() => {
     setLocalSlots(meeting.proposedSlots || []);
-  }, [meeting.id, meeting.proposedSlots]);
+    setEditingSlots(false);
+    setError("");
+    setCopied(false);
+    const anchor = meeting.matchedSlot || meeting.proposedSlots?.[0] || null;
+    if (anchor) setWeekStart(startOfWeek(new Date(anchor)));
+  }, [meeting.id, meeting.proposedSlots, meeting.matchedSlot, meeting.schedulingState]);
 
-      // identify the current user
+  useEffect(() => {
+    if (meeting.schedulingState !== SCHEDULING_STATE.MATCHED || !meeting.matchedSlot) {
+      return undefined;
+    }
+    const id = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [meeting.schedulingState, meeting.matchedSlot]);
+
   const isMentor = String(currentUser.id) === String(meeting.mentorId);
   const isMentee = String(currentUser.id) === String(meeting.menteeId);
-  
   const actorName = `${currentUser.firstName} ${currentUser.lastName}`;
   const state = meeting.schedulingState;
+
+  const canJoinMeet = useMemo(() => {
+    if (!meeting.matchedSlot) return false;
+    const start = new Date(meeting.matchedSlot).getTime();
+    const end = start + (meeting.durationMinutes || 60) * 60000;
+    const openFrom = start - 15 * 60000;
+    return nowTick >= openFrom && nowTick <= end + 30 * 60000;
+  }, [meeting.matchedSlot, meeting.durationMinutes, nowTick]);
 
   const otherName = isMentor
     ? `${mentee?.firstName || ""} ${mentee?.lastName || ""}`.trim()
     : `${mentor?.firstName || ""} ${mentor?.lastName || ""}`.trim();
   const otherUser = isMentor ? mentee : mentor;
+  const calendarEvents = useMemo(() => toCalendarEvents([meeting]), [meeting]);
 
-  const calendarEvents = useMemo(
-    () => toCalendarEvents([meeting]),
-    [meeting]
-  );
-
-  // --- logic for the new server ---
-  
-  // mentor proposes times when the request is just created, or when they requested more slots/rescheduled
   const showMentorSlotPicker =
     isMentor &&
     (state === SCHEDULING_STATE.PENDING_REQUEST ||
       state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED ||
-      state === SCHEDULING_STATE.RESCHEDULE_REQUESTED);
+      state === SCHEDULING_STATE.RESCHEDULE_REQUESTED ||
+      ((state === SCHEDULING_STATE.SLOTS_PROPOSED ||
+        state === SCHEDULING_STATE.ADDITIONAL_SLOTS_PROPOSED) &&
+        editingSlots));
 
-  // mentor is waiting for the mentee to select a time
   const showMentorWaiting =
-    isMentor && state === SCHEDULING_STATE.SLOTS_PROPOSED;
+    isMentor &&
+    (state === SCHEDULING_STATE.SLOTS_PROPOSED ||
+      state === SCHEDULING_STATE.ADDITIONAL_SLOTS_PROPOSED) &&
+    !editingSlots;
 
-  // mentor can see the times and select one
   const showMenteePicker =
-    isMentee && state === SCHEDULING_STATE.SLOTS_PROPOSED && meeting.proposedSlots?.length > 0;
+    isMentee &&
+    (state === SCHEDULING_STATE.SLOTS_PROPOSED ||
+      state === SCHEDULING_STATE.ADDITIONAL_SLOTS_PROPOSED) &&
+    meeting.proposedSlots?.length > 0;
 
+  const awaitingMentor =
+    state === SCHEDULING_STATE.PENDING_REQUEST ||
+    state === SCHEDULING_STATE.RESCHEDULE_REQUESTED ||
+    state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED;
 
-  const handleReject = () => rejectRequest(meeting.id, actorName);
+  const run = async (fn) => {
+    setError("");
+    try {
+      await fn();
+    } catch (err) {
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      if (status === 403) {
+        setError(t("calendar.selectAsMenteeOnly"));
+      } else {
+        setError(serverMsg || err?.message || t("calendar.actionFailed"));
+      }
+    }
+  };
+
+  const handleReject = () => run(() => rejectRequest(meeting.id, actorName));
+  const handleCancel = () => run(() => cancelMeeting(meeting.id, actorName));
+  const handleRequestMore = () => run(() => requestMoreSlots(meeting.id, actorName));
+  const handleUnavailable = () =>
+    run(() => markUnavailable(meeting.id, isMentor ? "mentor" : "mentee"));
 
   const handleToggleSlot = (iso) => {
-    setLocalSlots((prev) =>
-      prev.some((s) => isSameSlot(s, iso))
-        ? prev.filter((s) => !isSameSlot(s, iso))
-        : [...prev, iso].sort((a, b) => new Date(a) - new Date(b))
-    );
+    setLocalSlots((prev) => {
+      if (prev.some((s) => isSameSlot(s, iso))) {
+        setError("");
+        return prev.filter((s) => !isSameSlot(s, iso));
+      }
+      if (prev.length >= MAX_SLOTS) {
+        setError(t("calendar.maxThreeSlots"));
+        return prev;
+      }
+      setError("");
+      return [...prev, iso].sort((a, b) => new Date(a) - new Date(b));
+    });
   };
 
   const handlePropose = () => {
-    if (localSlots.length === 0) return;
-    proposeSlots(meeting.id, localSlots, actorName);
+    if (localSlots.length === 0 || localSlots.length > MAX_SLOTS) return;
+    run(async () => {
+      await proposeSlots(meeting.id, localSlots, actorName);
+      setEditingSlots(false);
+    });
   };
 
-  const handleSelect = (slot) => selectSlot(meeting.id, slot, actorName);
-  const handleRequestMore = () => requestMoreSlots(meeting.id, actorName);
-  const handleCancel = () => cancelMeeting(meeting.id, actorName);
-  const handleUnavailable = () => markUnavailable(meeting.id, isMentor ? "mentor" : "mentee");
+  const handleSelect = (slot) => {
+    if (!isMentee) {
+      setError(t("calendar.selectAsMenteeOnly"));
+      return;
+    }
+    if (selectingSlot) return;
+    setSelectingSlot(slot);
+    run(async () => {
+      await selectSlot(meeting.id, slot, actorName);
+    }).finally(() => setSelectingSlot(null));
+  };
 
   return (
-    <Paper sx={{ p: 3, mb: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 1, flexWrap: "wrap" }}>
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, sm: 3 },
+        mb: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+          gap: 1,
+          flexWrap: "wrap",
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
           <UserAvatar user={otherUser} size={42} />
-          <Typography variant="h6" fontWeight={700}>
-            {isMentor ? t("calendar.requestFrom", { name: otherName }) : t("calendar.meetingWith", { name: otherName })}
+          <Typography variant="h6" fontWeight={700} noWrap>
+            {isMentor
+              ? t("calendar.requestFrom", { name: otherName || "—" })
+              : t("calendar.meetingWith", { name: otherName || "—" })}
           </Typography>
         </Box>
         <StatusBadge status={meeting.status} schedulingState={state} />
       </Box>
 
-      {/* message to the mentor that she is waiting for the mentor to propose times */}
-      {state === SCHEDULING_STATE.PENDING_REQUEST && isMentee && (
-        <Alert severity="warning">{t("calendar.pendingMenteeHint")}</Alert>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+          {error}
+        </Alert>
+      )}
+
+      {awaitingMentor && isMentee && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {state === SCHEDULING_STATE.PENDING_REQUEST
+            ? t("calendar.pendingMenteeHint")
+            : state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED
+              ? t("calendar.moreSlotsRequested")
+              : t("calendar.rescheduleWaiting")}
+        </Alert>
+      )}
+
+      {awaitingMentor && isMentor && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {state === SCHEDULING_STATE.RESCHEDULE_REQUESTED
+            ? t("calendar.rescheduleMentorHint")
+            : state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED
+              ? t("calendar.moreSlotsMentorHint")
+              : t("calendar.pendingMentorHint")}
+        </Alert>
       )}
 
       {state === SCHEDULING_STATE.REJECTED && (
@@ -125,12 +235,12 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
         </Alert>
       )}
 
-      {/* --- time proposal log (for the mentor) --- */}
       {showMentorSlotPicker && (
         <Box>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            {t("calendar.mentorPickSlots")}
-          </Alert>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {t("calendar.mentorPickSlots")} — {t("calendar.maxThreeSlots")} ({localSlots.length}/
+            {MAX_SLOTS})
+          </Typography>
           <WeekCalendar
             weekStart={weekStart}
             onWeekChange={setWeekStart}
@@ -150,28 +260,37 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
               />
             ))}
           </Stack>
-          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
             <Button
               variant="contained"
               onClick={handlePropose}
-              disabled={localSlots.length === 0}
+              disabled={localSlots.length === 0 || localSlots.length > MAX_SLOTS}
             >
               {t("calendar.sendSlots")}
             </Button>
-            
-            {/* reject/cancel button that appears for the mentor */}
-            <Button color="error" variant="outlined" onClick={state === SCHEDULING_STATE.PENDING_REQUEST ? handleReject : handleCancel}>
-              {state === SCHEDULING_STATE.PENDING_REQUEST ? t("calendar.rejectRequest") : t("calendar.cancelMeeting")}
+            {editingSlots && (
+              <Button variant="outlined" onClick={() => setEditingSlots(false)}>
+                {t("calendar.cancelEdit")}
+              </Button>
+            )}
+            <Button
+              color="error"
+              variant="outlined"
+              onClick={awaitingMentor ? handleReject : handleCancel}
+            >
+              {awaitingMentor ? t("calendar.rejectRequest") : t("calendar.cancelMeeting")}
             </Button>
           </Stack>
         </Box>
       )}
 
-      {/* message to the mentor that she is waiting for the mentee to select a time */}
       {showMentorWaiting && !showMentorSlotPicker && (
         <Box>
           <Alert severity="success" sx={{ mb: 2 }}>
             {t("calendar.slotsSentWaiting")}
+          </Alert>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {t("calendar.mentorWaitingForMentee")}
           </Alert>
           <WeekCalendar
             weekStart={weekStart}
@@ -179,60 +298,174 @@ export default function MeetingsSchedulingPanel({ meeting, mentor, mentee }) {
             mode="view"
             events={calendarEvents}
           />
-        </Box>
-      )}
-
-      {/* --- time selection log (for the mentee) --- */}
-      {showMenteePicker && (
-        <Box>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            {t("calendar.menteePickSlot")}
-          </Alert>
-          <WeekCalendar
-            weekStart={weekStart}
-            onWeekChange={setWeekStart}
-            mode="select-one"
-            selectableSlots={meeting.proposedSlots}
-            selectedSlots={[]}
-            onSelectSlot={handleSelect} 
-            events={calendarEvents}
-          />
           <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
-            {!meeting.rescheduleUsed && (
-              <Button variant="outlined" onClick={handleRequestMore}>
-                {t("calendar.requestMoreSlots")}
-              </Button>
-            )}
-            
-            <Button color="error" variant="contained" onClick={handleCancel}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setLocalSlots(meeting.proposedSlots || []);
+                setEditingSlots(true);
+              }}
+            >
+              {t("calendar.editProposedSlots")}
+            </Button>
+            <Button color="error" variant="outlined" onClick={handleCancel}>
               {t("calendar.cancelMeeting")}
             </Button>
           </Stack>
         </Box>
       )}
 
-      {state === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED && isMentee && (
-        <Alert severity="info">{t("calendar.moreSlotsRequested")}</Alert>
+      {showMenteePicker && (
+        <Box>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {t("calendar.menteePickSlot")}
+          </Alert>
+          <Typography variant="subtitle2" sx={{ mb: 1.5 }} fontWeight={700}>
+            {t("calendar.chooseOneSlot")}
+          </Typography>
+          <Stack direction="column" spacing={1.25} sx={{ mb: 1 }}>
+            {(meeting.proposedSlots || []).map((slot) => {
+              const busy = selectingSlot === slot;
+              return (
+                <Button
+                  key={slot}
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  disabled={Boolean(selectingSlot)}
+                  onClick={() => handleSelect(slot)}
+                  sx={{
+                    justifyContent: "space-between",
+                    py: 1.5,
+                    px: 2,
+                    textAlign: "start",
+                  }}
+                >
+                  <span>{formatDateTime(slot, locale)}</span>
+                  <span>{busy ? "…" : t("calendar.selectThisSlot")}</span>
+                </Button>
+              );
+            })}
+          </Stack>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            {!meeting.moreSlotsUsed && (
+              <Button
+                variant="outlined"
+                disabled={Boolean(selectingSlot)}
+                onClick={handleRequestMore}
+              >
+                {t("calendar.requestMoreSlots")}
+              </Button>
+            )}
+            <Button
+              color="error"
+              variant="outlined"
+              disabled={Boolean(selectingSlot)}
+              onClick={handleCancel}
+            >
+              {t("calendar.cancelMeeting")}
+            </Button>
+          </Stack>
+        </Box>
       )}
 
-      {/* meeting has been scheduled */}
       {state === SCHEDULING_STATE.MATCHED && (
         <Box>
           <Alert severity="success" sx={{ mb: 2 }}>
             {t("calendar.matchedAt", {
               date: formatDateTime(meeting.matchedSlot, locale),
-            })}
+            })}{" "}
+            {t("calendar.addedToBothCalendars")}
           </Alert>
+
+          {meeting.meetLink && (
+            <Box
+              sx={{
+                p: 2,
+                mb: 2,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(211,138,155,0.1)"
+                    : "rgba(211,138,155,0.06)",
+              }}
+            >
+              <Stack spacing={1.25}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <VideoCallIcon color="primary" />
+                  <Typography fontWeight={700}>{t("calendar.googleMeetTitle")}</Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  {canJoinMeet
+                    ? t("calendar.googleMeetJoinHint")
+                    : t("calendar.googleMeetWaitHint", {
+                        date: formatDateTime(meeting.matchedSlot, locale),
+                      })}
+                </Typography>
+                <Divider />
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<VideoCallIcon />}
+                    href={canJoinMeet ? meeting.meetLink : undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    disabled={!canJoinMeet}
+                  >
+                    {t("calendar.joinGoogleMeet")}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(meeting.meetLink);
+                        setError("");
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch {
+                        setError(t("calendar.copyMeetFailed"));
+                      }
+                    }}
+                  >
+                    {copied ? t("calendar.copied") : t("calendar.copyMeetLink")}
+                  </Button>
+                </Stack>
+                {!canJoinMeet && (
+                  <Typography variant="caption" color="text.secondary">
+                    {t("calendar.meetLinkLocked")}
+                  </Typography>
+                )}
+              </Stack>
+            </Box>
+          )}
+
           <WeekCalendar
             weekStart={weekStart}
             onWeekChange={setWeekStart}
             mode="view"
             events={calendarEvents}
           />
-          <Button variant="outlined" color="warning" sx={{ mt: 2 }} onClick={handleUnavailable}>
-            {t("calendar.markUnavailable")}
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            {!meeting.rescheduleUsed && (
+              <Button variant="outlined" color="warning" onClick={handleUnavailable}>
+                {t("calendar.markUnavailable")}
+              </Button>
+            )}
+            <Button color="error" variant="outlined" onClick={handleCancel}>
+              {t("calendar.cancelMeeting")}
+            </Button>
+          </Stack>
         </Box>
+      )}
+
+      {state === SCHEDULING_STATE.PENDING_REQUEST && isMentee && (
+        <Button color="error" variant="outlined" sx={{ mt: 1 }} onClick={handleCancel}>
+          {t("calendar.cancelMeeting")}
+        </Button>
       )}
 
       {state === SCHEDULING_STATE.CANCELLED && (

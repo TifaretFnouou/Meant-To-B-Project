@@ -404,7 +404,7 @@
 //     schedulingState,
 //     proposedSlots: meeting.proposedTimes?.map((pt) => pt.startTime) || [],
 //     matchedSlot: meeting.scheduledTime?.startTime || null,
-//     durationMinutes: 45,
+//     durationMinutes: 60,
 //     rescheduleUsed: meeting.rescheduleCount > 0,
 //     createdAt: meeting.createdAt,
 //   };
@@ -490,7 +490,7 @@
 //     return this.rejectRequest(meetingId);
 //   },
 
-//   async proposeSlots(meetingId, slots, durationMinutes = 45) {
+//   async proposeSlots(meetingId, slots, durationMinutes = 60) {
 //     const proposedTimes = slots.map((slotIso) => {
 //       const start = new Date(slotIso);
 //       const end = new Date(start.getTime() + durationMinutes * 60000);
@@ -501,7 +501,7 @@
 //     return mapMeetingToFrontend(response.data.meeting);
 //   },
 
-//   async bookSlot(meetingId, slotIso, durationMinutes = 45) {
+//   async bookSlot(meetingId, slotIso, durationMinutes = 60) {
 //     const start = new Date(slotIso);
 //     const end = new Date(start.getTime() + durationMinutes * 60000);
 //     const selectedTime = { startTime: start, endTime: end };
@@ -531,20 +531,50 @@
 import api from "./api";
 import { SCHEDULING_STATE, MEETING_STATUS } from "../constants";
 
+function refId(ref) {
+  if (ref == null) return null;
+  if (typeof ref === "object") return String(ref._id ?? ref.id ?? "");
+  return String(ref);
+}
+
+/** Same algorithm as server generateMeetLink — backfill older MATCHED meetings */
+function buildMeetLink(meetingId) {
+  const safeId = String(meetingId).replace(/[^a-zA-Z0-9]/g, "").slice(-16) || "room";
+  return `https://meet.jit.si/QueenB-${safeId}`;
+}
+
+function durationFromRange(start, end, fallback = 60) {
+  if (!start || !end) return fallback;
+  const mins = Math.round((new Date(end) - new Date(start)) / 60000);
+  return mins >= 15 ? mins : fallback;
+}
+
 function mapMeetingToFrontend(meeting) {
   let schedulingState = SCHEDULING_STATE.PENDING_REQUEST;
   let status = MEETING_STATUS.PENDING;
 
   switch (meeting.status) {
     case "PENDING_MENTOR_TIMES":
-      schedulingState = SCHEDULING_STATE.PENDING_REQUEST;
-      status = MEETING_STATUS.PENDING;
+      if ((meeting.rescheduleCount || 0) > 0) {
+        schedulingState = SCHEDULING_STATE.RESCHEDULE_REQUESTED;
+        status = MEETING_STATUS.RESCHEDULE;
+      } else if ((meeting.moreSlotsCount || 0) > 0) {
+        schedulingState = SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED;
+        status = MEETING_STATUS.PENDING;
+      } else {
+        schedulingState = SCHEDULING_STATE.PENDING_REQUEST;
+        status = MEETING_STATUS.PENDING;
+      }
       break;
     case "PENDING_MENTEE_SELECTION":
-      schedulingState = SCHEDULING_STATE.SLOTS_PROPOSED;
+      schedulingState =
+        (meeting.moreSlotsCount || 0) > 0
+          ? SCHEDULING_STATE.ADDITIONAL_SLOTS_PROPOSED
+          : SCHEDULING_STATE.SLOTS_PROPOSED;
       status = MEETING_STATUS.SLOTS_PROPOSED;
       break;
     case "MATCHED":
+    case "ATTENDANCE_CONFIRMED":
       schedulingState = SCHEDULING_STATE.MATCHED;
       status = MEETING_STATUS.MATCHED;
       break;
@@ -553,38 +583,72 @@ function mapMeetingToFrontend(meeting) {
       status = MEETING_STATUS.CANCELLED;
       break;
     case "COMPLETED":
+    case "FEEDBACK_FILLED":
       schedulingState = SCHEDULING_STATE.COMPLETED;
       status = MEETING_STATUS.COMPLETED;
       break;
+    default:
+      break;
   }
 
+  const mentorDetails = typeof meeting.mentorId === "object" ? meeting.mentorId : null;
+  const menteeDetails = typeof meeting.menteeId === "object" ? meeting.menteeId : null;
+  const durationMinutes = durationFromRange(
+    meeting.scheduledTime?.startTime,
+    meeting.scheduledTime?.endTime,
+    60
+  );
+
   return {
-    id: meeting._id || meeting.id,
-    mentorId: typeof meeting.mentorId === "object" ? meeting.mentorId._id : meeting.mentorId,
-    menteeId: typeof meeting.menteeId === "object" ? meeting.menteeId._id : meeting.menteeId,
-    mentorDetails: typeof meeting.mentorId === "object" ? meeting.mentorId : null,
-    menteeDetails: typeof meeting.menteeId === "object" ? meeting.menteeId : null,
+    id: String(meeting._id || meeting.id),
+    mentorId: refId(meeting.mentorId),
+    menteeId: refId(meeting.menteeId),
+    mentorDetails: mentorDetails
+      ? { ...mentorDetails, id: refId(mentorDetails) }
+      : null,
+    menteeDetails: menteeDetails
+      ? { ...menteeDetails, id: refId(menteeDetails) }
+      : null,
     status,
     schedulingState,
-    proposedSlots: meeting.proposedTimes?.map((pt) => pt.startTime) || [],
-    matchedSlot: meeting.scheduledTime?.startTime || null,
-    durationMinutes: 45,
-    rescheduleUsed: meeting.rescheduleCount > 0,
+    proposedSlots: (meeting.proposedTimes || [])
+      .map((pt) => (pt?.startTime ? new Date(pt.startTime).toISOString() : null))
+      .filter(Boolean),
+    proposedTimes: (meeting.proposedTimes || [])
+      .filter((pt) => pt?.startTime)
+      .map((pt) => ({
+        startTime: new Date(pt.startTime).toISOString(),
+        endTime: pt.endTime
+          ? new Date(pt.endTime).toISOString()
+          : new Date(new Date(pt.startTime).getTime() + 60 * 60000).toISOString(),
+      })),
+    matchedSlot: meeting.scheduledTime?.startTime
+      ? new Date(meeting.scheduledTime.startTime).toISOString()
+      : null,
+    meetLink:
+      meeting.meetLink ||
+      (meeting.status === "MATCHED" || meeting.status === "ATTENDANCE_CONFIRMED"
+        ? buildMeetLink(meeting._id || meeting.id)
+        : null),
+    durationMinutes,
+    moreSlotsUsed: (meeting.moreSlotsCount || 0) > 0,
+    rescheduleUsed: (meeting.rescheduleCount || 0) > 0,
     createdAt: meeting.createdAt,
   };
 }
 
 export function toCalendarEvents(appointments, { userId, role } = {}) {
   const events = [];
+  const uid = userId != null ? String(userId) : null;
 
   appointments.forEach((meeting) => {
-    if (role === "mentor" && meeting.mentorId !== userId) return;
-    if (role === "mentee" && meeting.menteeId !== userId) return;
-    if (userId && role !== "mentor" && role !== "mentee") {
-      if (meeting.mentorId !== userId && meeting.menteeId !== userId) return;
+    if (role === "mentor" && String(meeting.mentorId) !== uid) return;
+    if (role === "mentee" && String(meeting.menteeId) !== uid) return;
+    if (uid && role !== "mentor" && role !== "mentee") {
+      if (String(meeting.mentorId) !== uid && String(meeting.menteeId) !== uid) return;
     }
 
-    const duration = meeting.durationMinutes || 45;
+    const duration = meeting.durationMinutes || 60;
 
     if (meeting.matchedSlot) {
       const start = new Date(meeting.matchedSlot);
@@ -623,6 +687,25 @@ export function toCalendarEvents(appointments, { userId, role } = {}) {
           slot,
         });
       });
+    } else if (
+      meeting.schedulingState === SCHEDULING_STATE.PENDING_REQUEST ||
+      meeting.schedulingState === SCHEDULING_STATE.RESCHEDULE_REQUESTED ||
+      meeting.schedulingState === SCHEDULING_STATE.ADDITIONAL_SLOTS_REQUESTED
+    ) {
+      const created = meeting.createdAt || new Date().toISOString();
+      events.push({
+        id: `${meeting.id}-pending`,
+        meetingId: meeting.id,
+        type: "pending",
+        start: created,
+        end: created,
+        allDayHint: true,
+        status: meeting.status,
+        schedulingState: meeting.schedulingState,
+        mentorId: meeting.mentorId,
+        menteeId: meeting.menteeId,
+        titleKey: "calendar.eventPending",
+      });
     }
   });
 
@@ -631,8 +714,12 @@ export function toCalendarEvents(appointments, { userId, role } = {}) {
 
 export const appointmentService = {
   async getAppointmentsForUser() {
-    const response = await api.get("/meetings/my-meetings");
-    return response.data.data.map(mapMeetingToFrontend);
+    const response = await api.get("/meetings/my-meetings", {
+      headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      params: { _ts: Date.now() },
+    });
+    const list = response.data?.data || response.data?.meetings || [];
+    return list.map(mapMeetingToFrontend);
   },
 
   async getCalendarEvents(userId, role) {
@@ -654,7 +741,14 @@ export const appointmentService = {
     return this.rejectRequest(meetingId);
   },
 
-  async proposeSlots(meetingId, slots, durationMinutes = 45) {
+  async proposeSlots(meetingId, slots, durationMinutes = 60) {
+    if (!Array.isArray(slots) || slots.length === 0) {
+      throw new Error("Please select at least one time slot");
+    }
+    if (slots.length > 3) {
+      throw new Error("You can propose up to 3 time options");
+    }
+
     const proposedTimes = slots.map((slotIso) => {
       const start = new Date(slotIso);
       const end = new Date(start.getTime() + durationMinutes * 60000);
@@ -665,14 +759,17 @@ export const appointmentService = {
     return mapMeetingToFrontend(response.data.meeting);
   },
 
-  async bookSlot(meetingId, slotIso, durationMinutes = 45) {
+  async bookSlot(meetingId, slotIso, durationMinutes = 60) {
     const start = new Date(slotIso);
+    if (Number.isNaN(start.getTime())) {
+      throw new Error("Invalid time slot");
+    }
     const end = new Date(start.getTime() + durationMinutes * 60000);
-    
-      // send the time in the exact format the server expects
-    const selectedTime = { 
-      startTime: start.toISOString(), 
-      endTime: end.toISOString() 
+
+    // Server expects { selectedTime: { startTime, endTime } }
+    const selectedTime = {
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
     };
 
     const response = await api.put(`/meetings/${meetingId}/select-time`, { selectedTime });
@@ -680,8 +777,11 @@ export const appointmentService = {
   },
 
   async requestMoreSlots(meetingId) {
-    console.warn("Backend route for requesting more slots is missing!");
-    return { cancelled: true };
+    const response = await api.put(`/meetings/${meetingId}/request-more-slots`);
+    return {
+      meeting: mapMeetingToFrontend(response.data.meeting),
+      cancelled: Boolean(response.data.cancelled),
+    };
   },
 
   async submitAttendance(meetingId, role, attended) {
@@ -694,9 +794,12 @@ export const appointmentService = {
     return null;
   },
 
-  async markUnavailable(meetingId, userId) {
-    const response = await api.put(`/meetings/${meetingId}/mark-unavailable`, { userId });
-    return mapMeetingToFrontend(response.data.meeting);
+  async markUnavailable(meetingId) {
+    const response = await api.put(`/meetings/${meetingId}/mark-unavailable`);
+    return {
+      meeting: mapMeetingToFrontend(response.data.meeting),
+      cancelled: Boolean(response.data.cancelled),
+    };
   },
 };  
 
