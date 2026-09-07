@@ -5,6 +5,7 @@ import {
   restoreSlot,
   normalizeId,
   sameInstant,
+  rangesOverlap,
 } from "./availabilityService.js";
 import { createNotification } from "./notificationService.js";
 import UserModel from "../models/user.js";
@@ -14,6 +15,13 @@ const ACTIVE_MEETING_STATUSES = [
   "PENDING_MENTEE_SELECTION",
   "PENDING_MENTOR_APPROVAL",
   "MATCHED",
+];
+
+/** Statuses where the mentee already holds a concrete clock time. */
+const SCHEDULED_TIME_STATUSES = [
+  "PENDING_MENTOR_APPROVAL",
+  "MATCHED",
+  "ATTENDANCE_CONFIRMED",
 ];
 
 /**
@@ -56,20 +64,8 @@ async function assertNoActiveMeeting(menteeId, mentorId) {
     throw Object.assign(new Error("You cannot book a meeting with yourself"), { status: 400 });
   }
 
-  const activeForMentee = await MeetingModel.findOne({
-    menteeId,
-    status: { $in: ACTIVE_MEETING_STATUSES },
-  });
-
-  if (activeForMentee) {
-    throw Object.assign(
-      new Error(
-        "You already have an active meeting request. Cancel or complete it before booking another."
-      ),
-      { status: 400 }
-    );
-  }
-
+  // Allow multiple concurrent meetings with different mentors; block only a duplicate
+  // active request with the same mentor.
   const existingMeeting = await MeetingModel.findOne({
     menteeId,
     mentorId,
@@ -80,6 +76,44 @@ async function assertNoActiveMeeting(menteeId, mentorId) {
     throw Object.assign(new Error("An active meeting request already exists with this mentor"), {
       status: 400,
     });
+  }
+}
+
+/**
+ * Prevent a mentee from holding two overlapping clock times across mentors.
+ * Pending requests without a scheduledTime are allowed in parallel.
+ */
+async function assertMenteeTimeAvailable(menteeId, startTime, endTime, excludeMeetingId = null) {
+  const start = new Date(startTime).getTime();
+  const end = new Date(endTime).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+    throw Object.assign(new Error("Invalid meeting time range"), { status: 400 });
+  }
+
+  const query = {
+    menteeId,
+    status: { $in: SCHEDULED_TIME_STATUSES },
+    "scheduledTime.startTime": { $exists: true },
+  };
+  if (excludeMeetingId) {
+    query._id = { $ne: excludeMeetingId };
+  }
+
+  const meetings = await MeetingModel.find(query).select("scheduledTime");
+  const overlaps = meetings.some((meeting) => {
+    if (!meeting.scheduledTime?.startTime) return false;
+    const busyStart = new Date(meeting.scheduledTime.startTime).getTime();
+    const busyEnd = new Date(
+      meeting.scheduledTime.endTime || busyStart + 60 * 60000
+    ).getTime();
+    return rangesOverlap(start, end, busyStart, busyEnd);
+  });
+
+  if (overlaps) {
+    throw Object.assign(
+      new Error("You already have another meeting scheduled at this time"),
+      { status: 400 }
+    );
   }
 }
 
@@ -122,6 +156,8 @@ export async function bookFromAvailability(menteeId, mentorId, selectedTime) {
     selectedTime.startTime,
     selectedTime.endTime
   );
+
+  await assertMenteeTimeAvailable(menteeId, booked.startTime, booked.endTime);
 
   const newMeeting = new MeetingModel({
     menteeId,
@@ -179,6 +215,14 @@ export async function approveMeeting(meetingId, mentorId) {
     throw Object.assign(new Error("Meeting has no scheduled time"), { status: 400 });
   }
 
+  await assertMenteeTimeAvailable(
+    meeting.menteeId,
+    meeting.scheduledTime.startTime,
+    meeting.scheduledTime.endTime ||
+      new Date(new Date(meeting.scheduledTime.startTime).getTime() + 60 * 60000),
+    meeting._id
+  );
+
   meeting.status = "MATCHED";
   meeting.meetLink = generateMeetLink(meeting._id);
   await meeting.save();
@@ -223,6 +267,8 @@ export async function rebookFromAvailability(meetingId, menteeId, selectedTime) 
     selectedTime.startTime,
     selectedTime.endTime
   );
+
+  await assertMenteeTimeAvailable(menteeId, booked.startTime, booked.endTime, meeting._id);
 
   meeting.proposedTimes = [{ startTime: booked.startTime, endTime: booked.endTime }];
   meeting.scheduledTime = {
@@ -324,9 +370,14 @@ export async function selectTime(meetingId, menteeId, selectedTime) {
     });
   }
 
+  const startTime = new Date(matchedProposal.startTime);
+  const endTime = new Date(matchedProposal.endTime || selectedTime.endTime);
+
+  await assertMenteeTimeAvailable(menteeId, startTime, endTime, meeting._id);
+
   meeting.scheduledTime = {
-    startTime: new Date(matchedProposal.startTime),
-    endTime: new Date(matchedProposal.endTime || selectedTime.endTime),
+    startTime,
+    endTime,
   };
   meeting.status = "MATCHED";
   meeting.meetLink = generateMeetLink(meeting._id);

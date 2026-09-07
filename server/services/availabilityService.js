@@ -250,4 +250,4 @@ export async function requestMoreAvailability(menteeId, mentorId, message = "") 
   };
 }
 
-export { normalizeId, sameInstant };
+export { normalizeId, sameInstant, rangesOverlap };
