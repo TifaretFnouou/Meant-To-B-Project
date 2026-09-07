@@ -332,10 +332,16 @@ export default function MeetingChatModal({ open, onClose, meeting, otherUser }) 
                   p: 1.5,
                   borderRadius: 2,
                   maxWidth: "75%",
+                  minWidth: 0,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
               >
-                <Typography variant="body2">{msg.text || msg.content}</Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}
+                >
+                  {msg.text || msg.content}
+                </Typography>
               </Box>
             );
           })

@@ -53,9 +53,33 @@ export default function NotificationBell() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
-        PaperProps={{ sx: { width: 320, maxHeight: 400, borderRadius: 3 } }}
+        PaperProps={{
+          sx: {
+            width: 360,
+            maxWidth: "92vw",
+            maxHeight: 420,
+            borderRadius: 3,
+            overflowX: "hidden",
+          },
+        }}
+        MenuListProps={{
+          sx: { py: 0 },
+        }}
       >
-        <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 1,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 1,
+            position: "sticky",
+            top: 0,
+            bgcolor: "background.paper",
+            zIndex: 1,
+          }}
+        >
           <Typography variant="subtitle2" fontWeight={700}>{t("notif.title")}</Typography>
           {unread > 0 && (
             <Button size="small" onClick={() => markAllAsRead(currentUser.id)}>
@@ -73,11 +97,29 @@ export default function NotificationBell() {
           <MenuItem
             key={n.id}
             onClick={() => handleClickItem(n)}
-            sx={{ whiteSpace: "normal", bgcolor: n.read ? "inherit" : "action.hover" }}
+            sx={{
+              whiteSpace: "normal",
+              alignItems: "flex-start",
+              overflow: "visible",
+              height: "auto",
+              minHeight: "auto",
+              py: 1.25,
+              px: 2,
+              bgcolor: n.read ? "inherit" : "action.hover",
+            }}
           >
-            <Box>
-              <Typography variant="body2">{resolveMessage(n)}</Typography>
-              <Typography variant="caption" color="text.secondary">
+            <Box sx={{ width: "100%", minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                }}
+              >
+                {resolveMessage(n)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
                 {new Date(n.createdAt).toLocaleString()}
               </Typography>
             </Box>

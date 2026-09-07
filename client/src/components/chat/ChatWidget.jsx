@@ -12,10 +12,8 @@ import {
   Stack,
   Tooltip,
 } from "@mui/material";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import ChatBubbleRoundedIcon from "@mui/icons-material/ChatBubbleRounded";
 import { sendChatMessage } from "../../services/chatApiService";
 import { useLanguage } from "../../context/LanguageContext";
 import { brand } from "../../theme/brand";
@@ -24,6 +22,35 @@ import ChatMentorCard from "./ChatMentorCard";
 const SUGGESTION_KEYS = ["chat.suggestion1", "chat.suggestion2", "chat.suggestion3"];
 const MAX_INPUT_LENGTH = 2000;
 const MAX_UI_MESSAGES = 40;
+
+/** Simple cute user avatar for the chat logo */
+function CuteUserAvatar({ size = 36 }) {
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      aria-hidden
+      sx={{ display: "block", flexShrink: 0 }}
+    >
+      <circle cx="32" cy="32" r="32" fill={brand.pastelYellow} />
+      <circle cx="32" cy="26" r="12" fill={brand.peach} />
+      <ellipse cx="32" cy="48" rx="18" ry="12" fill={brand.peach} />
+      <circle cx="27" cy="25" r="2.2" fill={brand.charcoal} />
+      <circle cx="37" cy="25" r="2.2" fill={brand.charcoal} />
+      <path
+        d="M27 31c2.2 2.4 7.8 2.4 10 0"
+        fill="none"
+        stroke={brand.dustyRose}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <circle cx="22" cy="29" r="3" fill={brand.dustyRose} opacity="0.45" />
+      <circle cx="42" cy="29" r="3" fill={brand.dustyRose} opacity="0.45" />
+    </Box>
+  );
+}
 
 const typingDot = {
   width: 6,
@@ -212,17 +239,17 @@ export default function ChatWidget() {
               zIndex: 1600,
               width: 60,
               height: 60,
-              color: brand.white,
-              background: `linear-gradient(135deg, ${brand.dustyRose} 0%, ${brand.peach} 100%)`,
+              bgcolor: brand.white,
               boxShadow: `0 10px 28px ${brand.dustyRoseSoft}`,
+              overflow: "hidden",
               "&:hover": {
-                background: `linear-gradient(135deg, #B86F82 0%, ${brand.dustyRose} 100%)`,
+                bgcolor: brand.yellowSoft,
                 transform: "translateY(-2px)",
               },
               transition: "transform 0.25s ease",
             }}
           >
-            <ChatBubbleRoundedIcon />
+            <CuteUserAvatar size={56} />
           </Fab>
         </Tooltip>
       )}
@@ -262,8 +289,15 @@ export default function ChatWidget() {
               color: brand.white,
             }}
           >
-            <Avatar sx={{ width: 36, height: 36, bgcolor: "rgba(255,255,255,0.25)" }}>
-              <AutoAwesomeIcon fontSize="small" sx={{ color: brand.white }} />
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                bgcolor: "transparent",
+                overflow: "hidden",
+              }}
+            >
+              <CuteUserAvatar size={36} />
             </Avatar>
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
               <Typography id="chat-dialog-title" variant="subtitle2" fontWeight={800} noWrap>

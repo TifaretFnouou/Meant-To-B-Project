@@ -710,12 +710,13 @@ export async function addMessage(meetingId, userId, text) {
   const senderUser = await UserModel.findById(userId).select("firstName lastName");
   const senderName = senderUser ? `${senderUser.firstName || ""} ${senderUser.lastName || ""}`.trim() : "User";
 
-  // שליחת נוטיפיקציה לצד השני
+  // התראה + מייל לצד השני על הודעה חדשה בצ'אט
   if (recipientId) {
+    const preview = text.trim().slice(0, 160);
     await createNotification({
       userId: recipientId,
-      messageKey: `You have a new message from ${senderName}`,
-      messageParams: { name: senderName },
+      messageKey: "notif.chatMessage",
+      messageParams: { name: senderName, preview },
       meetingId: meeting._id,
     }).catch((err) => console.error("Failed to send message notification", err));
   }

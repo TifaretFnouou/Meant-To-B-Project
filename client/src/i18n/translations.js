@@ -301,6 +301,7 @@ export const he = {
       "{{name}} אישרה את הפגישה ל-{{date}}",
     setWeeklyAvailability:
       "היי מנטורית, תזכורת שבועית: עדכני ביומן את הימים והשעות הפנויות שלך לפגישות מנטורינג",
+    chatMessage: "הודעה חדשה מ{{name}}: {{preview}}",
   },
   status: {
     pending: "ממתין לאישור",
@@ -654,6 +655,7 @@ export const en = {
     newRequest: "{{name}} sent a new meeting request",
     setWeeklyAvailability:
       "Hi Mentor, weekly reminder: update your calendar with days and hours you're free for mentoring meetings",
+    chatMessage: "New message from {{name}}: {{preview}}",
   },
   status: {
     pending: "Pending Approval",
