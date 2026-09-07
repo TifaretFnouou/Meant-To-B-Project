@@ -9,16 +9,18 @@ import {
   Link,
   CircularProgress,
   InputAdornment,
+  Divider,
 } from "@mui/material";
 import PasswordRequirementsInfo from "../../components/common/PasswordRequirementsInfo";
 import PasswordVisibilityToggle from "../../components/common/PasswordVisibilityToggle";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import MainLayout from "../../components/layout/MainLayout";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,13 +32,30 @@ export default function LoginPage() {
 
   const from = location.state?.from?.pathname || "/";
 
+  const finishLogin = (user) => {
+    navigate(user.roles?.includes("admin") ? "/admin" : from);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
       const user = await login(email, password);
-      navigate(user.roles.includes("admin") ? "/admin" : from);
+      finishLogin(user);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleCredential = async (credential) => {
+    setError("");
+    setLoading(true);
+    try {
+      const user = await loginWithGoogle(credential);
+      finishLogin(user);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,7 +83,11 @@ export default function LoginPage() {
             {t("auth.loginSubtitle")}
           </Typography>
 
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
@@ -107,6 +130,19 @@ export default function LoginPage() {
             </Button>
           </Box>
 
+          <Divider sx={{ my: 3 }}>{t("auth.or")}</Divider>
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            align="center"
+            sx={{ mb: 1 }}
+          >
+            {t("auth.continueWithGoogle")}
+          </Typography>
+
+          <GoogleSignInButton onCredential={handleGoogleCredential} disabled={loading} />
+
           <Typography variant="body2" sx={{ mt: 2 }}>
             {t("auth.noAccount")}{" "}
             <Link component="button" variant="body2" onClick={() => navigate("/register")}>
@@ -118,10 +154,18 @@ export default function LoginPage() {
             <Typography variant="caption" fontWeight={600} display="block" gutterBottom>
               {t("auth.demoAccounts")}:
             </Typography>
-            <Typography variant="caption" display="block">admin@queenb.com / Admin123!</Typography>
-            <Typography variant="caption" display="block">mentor@queenb.com / Mentor123!</Typography>
-            <Typography variant="caption" display="block">mentee@queenb.com / Mentee123!</Typography>
-            <Typography variant="caption" display="block">dual@queenb.com / Dual123! (Mentor + Mentee)</Typography>
+            <Typography variant="caption" display="block">
+              admin@queenb.com / Admin123!
+            </Typography>
+            <Typography variant="caption" display="block">
+              mentor@queenb.com / Mentor123!
+            </Typography>
+            <Typography variant="caption" display="block">
+              mentee@queenb.com / Mentee123!
+            </Typography>
+            <Typography variant="caption" display="block">
+              dual@queenb.com / Dual123! (Mentor + Mentee)
+            </Typography>
           </Alert>
         </Paper>
       </Box>

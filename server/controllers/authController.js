@@ -1,5 +1,6 @@
 import {
   loginUser,
+  loginWithGoogle,
   registerUser,
   verifyToken,
   sanitizeUser,
@@ -38,6 +39,23 @@ export const login = async (req, res) => {
   } catch (error) {
     res.status(statusFromError(error, 400)).json({
       message: error.message || "Error occurred logging in the user",
+    });
+  }
+};
+
+export const googleLogin = async (req, res) => {
+  try {
+    const { credential, idToken } = req.body || {};
+    const { user, token } = await loginWithGoogle(credential || idToken);
+
+    res.status(200).json({
+      message: "User logged in successfully with Google",
+      user,
+      token,
+    });
+  } catch (error) {
+    res.status(statusFromError(error, 400)).json({
+      message: error.message || "Error occurred logging in with Google",
     });
   }
 };

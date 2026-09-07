@@ -1,5 +1,6 @@
 import UserModel from "../models/user.js";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import { uploadProfileImage } from "../config/cloudinary.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -217,11 +218,110 @@ export async function loginUser(body) {
     throw Object.assign(new Error("User not found"), { status: 400 });
   }
 
+  if (!user.password) {
+    throw Object.assign(
+      new Error("This account uses Google sign-in. Please continue with Google."),
+      { status: 400 }
+    );
+  }
+
   const passwordCheck = await user.comparePassword(body.password);
   if (!passwordCheck) {
     throw Object.assign(new Error("Invalid password, please try again"), {
       status: 400,
     });
+  }
+
+  return {
+    user: sanitizeUser(user),
+    token: signToken(user),
+  };
+}
+
+function normalizeGoogleName(value, fallback) {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (cleaned.length >= 2) return cleaned.slice(0, 20);
+  return fallback;
+}
+
+export async function loginWithGoogle(idToken) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    throw Object.assign(new Error("Google sign-in is not configured"), {
+      status: 503,
+    });
+  }
+
+  if (!idToken || typeof idToken !== "string") {
+    throw Object.assign(new Error("Google credential is required"), { status: 400 });
+  }
+
+  const client = new OAuth2Client(clientId);
+  let payload;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: clientId,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    throw Object.assign(new Error("Invalid Google credential"), { status: 401 });
+  }
+
+  if (!payload?.email || !payload.sub) {
+    throw Object.assign(new Error("Google account is missing required profile data"), {
+      status: 400,
+    });
+  }
+
+  if (payload.email_verified === false) {
+    throw Object.assign(new Error("Google email is not verified"), { status: 400 });
+  }
+
+  const email = String(payload.email).trim().toLowerCase();
+  const googleId = String(payload.sub);
+  const emailLocal = email.split("@")[0] || "user";
+
+  let user = await UserModel.findOne({
+    $or: [{ googleId }, { email }],
+  });
+
+  if (user) {
+    if (user.googleId && user.googleId !== googleId) {
+      throw Object.assign(new Error("Email is already linked to another Google account"), {
+        status: 409,
+      });
+    }
+
+    if (!user.googleId) {
+      user.googleId = googleId;
+    }
+
+    if (!user.profilePicture && payload.picture) {
+      user.profilePicture = payload.picture;
+    }
+
+    await user.save();
+  } else {
+    user = new UserModel({
+      firstName: normalizeGoogleName(payload.given_name, normalizeGoogleName(emailLocal, "User")),
+      lastName: normalizeGoogleName(
+        payload.family_name,
+        normalizeGoogleName(payload.name?.split(" ").slice(-1)[0], "Google")
+      ),
+      email,
+      googleId,
+      profilePicture: payload.picture || "",
+      roles: ["mentee"],
+      menteeProfile: {
+        isActive: true,
+        menteeGoals: "",
+      },
+    });
+    await user.save();
   }
 
   return {

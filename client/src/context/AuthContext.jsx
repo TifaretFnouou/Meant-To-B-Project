@@ -15,6 +15,7 @@ import {
   getErrorMessage,
   getStoredToken,
   loginRequest,
+  googleLoginRequest,
   registerRequest,
   SESSION_EXPIRED_EVENT,
   setStoredToken,
@@ -141,6 +142,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    try {
+      const { user, token } = await googleLoginRequest(credential);
+      if (!token) {
+        throw new Error(t("auth.googleFailed"));
+      }
+      setStoredToken(token);
+      setHasToken(true);
+      setCurrentUser(user);
+      persistUser(user);
+      await refreshUsers();
+      return user;
+    } catch (error) {
+      throw new Error(getErrorMessage(error, t("auth.googleFailed")));
+    }
+  };
+
   const register = async (payload) => {
     try {
       const formData = new FormData();
@@ -256,6 +274,7 @@ export function AuthProvider({ children }) {
       users,
       authReady,
       login,
+      loginWithGoogle,
       register,
       updateProfile,
       logout,

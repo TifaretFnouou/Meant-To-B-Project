@@ -24,9 +24,20 @@ const userSchema = new Schema(
       trim: true,
       validate: [validator.isEmail, "Please provide a valid email"],
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: undefined,
+    },
     password: {
       type: String,
-      required: [true, "Password is mandatory"],
+      required: [
+        function () {
+          return !this.googleId;
+        },
+        "Password is mandatory",
+      ],
       minlength: [8, "Password must be at least 8 characters"],
     },
     profilePicture: {
@@ -82,11 +93,12 @@ const userSchema = new Schema(
 );
 
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+  if (!this.isModified("password") || !this.password) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 

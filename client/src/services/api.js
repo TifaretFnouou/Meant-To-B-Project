@@ -27,7 +27,9 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url = String(error.config?.url || "");
     const isAuthForm =
-      url.includes("/auth/login") || url.includes("/auth/register");
+      url.includes("/auth/login") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/google");
 
     // Session gone / invalid — clear token so UI cannot keep acting as logged-in
     if (status === 401 && !isAuthForm) {
@@ -80,6 +82,14 @@ export async function loginRequest(email, password) {
     email,
     password,
   });
+  return {
+    user: normalizeUser(data.user),
+    token: data.token,
+  };
+}
+
+export async function googleLoginRequest(credential) {
+  const { data } = await api.post("/auth/google", { credential });
   return {
     user: normalizeUser(data.user),
     token: data.token,
