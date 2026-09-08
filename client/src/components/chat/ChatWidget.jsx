@@ -22,33 +22,26 @@ import ChatMentorCard from "./ChatMentorCard";
 const SUGGESTION_KEYS = ["chat.suggestion1", "chat.suggestion2", "chat.suggestion3"];
 const MAX_INPUT_LENGTH = 2000;
 const MAX_UI_MESSAGES = 40;
+const CHAT_BOT_LOGO = "/logo.png";
 
-/** Simple cute user avatar for the chat logo */
-function CuteUserAvatar({ size = 36 }) {
+/** Brand logo avatar for the chat FAB + header */
+function ChatBotAvatar({ size = 36 }) {
   return (
     <Box
-      component="svg"
-      viewBox="0 0 64 64"
-      width={size}
-      height={size}
+      component="img"
+      src={CHAT_BOT_LOGO}
+      alt=""
       aria-hidden
-      sx={{ display: "block", flexShrink: 0 }}
-    >
-      <circle cx="32" cy="32" r="32" fill={brand.pastelYellow} />
-      <circle cx="32" cy="26" r="12" fill={brand.peach} />
-      <ellipse cx="32" cy="48" rx="18" ry="12" fill={brand.peach} />
-      <circle cx="27" cy="25" r="2.2" fill={brand.charcoal} />
-      <circle cx="37" cy="25" r="2.2" fill={brand.charcoal} />
-      <path
-        d="M27 31c2.2 2.4 7.8 2.4 10 0"
-        fill="none"
-        stroke={brand.dustyRose}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <circle cx="22" cy="29" r="3" fill={brand.dustyRose} opacity="0.45" />
-      <circle cx="42" cy="29" r="3" fill={brand.dustyRose} opacity="0.45" />
-    </Box>
+      sx={{
+        width: size,
+        height: size,
+        display: "block",
+        flexShrink: 0,
+        objectFit: "contain",
+        borderRadius: "50%",
+        bgcolor: brand.white,
+      }}
+    />
   );
 }
 
@@ -249,7 +242,7 @@ export default function ChatWidget() {
               transition: "transform 0.25s ease",
             }}
           >
-            <CuteUserAvatar size={56} />
+            <ChatBotAvatar size={56} />
           </Fab>
         </Tooltip>
       )}
@@ -293,11 +286,11 @@ export default function ChatWidget() {
               sx={{
                 width: 36,
                 height: 36,
-                bgcolor: "transparent",
+                bgcolor: brand.white,
                 overflow: "hidden",
               }}
             >
-              <CuteUserAvatar size={36} />
+              <ChatBotAvatar size={32} />
             </Avatar>
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
               <Typography id="chat-dialog-title" variant="subtitle2" fontWeight={800} noWrap>

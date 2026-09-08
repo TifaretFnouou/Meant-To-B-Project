@@ -87,3 +87,31 @@ export const EVENT_COLORS = {
   available: { bg: "rgba(16,185,129,0.12)", border: "#34D399", text: "#065F46" },
   cancelled: { bg: "rgba(239, 68, 68, 0.12)", border: "#F87171", text: "#991B1B" },
 };
+
+/** Google Calendar "create event" URL — one click adds the meeting (no OAuth). */
+export function buildGoogleCalendarUrl({
+  title,
+  start,
+  end,
+  details = "",
+  location = "",
+}) {
+  if (!start) return null;
+  const startDate = new Date(start);
+  const endDate = end
+    ? new Date(end)
+    : new Date(startDate.getTime() + 60 * 60000);
+
+  const toCalStamp = (d) =>
+    d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title || "Mentoring meeting",
+    dates: `${toCalStamp(startDate)}/${toCalStamp(endDate)}`,
+    details: details || "",
+    location: location || "",
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
