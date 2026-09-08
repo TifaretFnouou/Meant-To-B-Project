@@ -31,6 +31,8 @@ const TEMPLATES = {
   "notif.setWeeklyAvailability":
     "היי מנטורית, תזכורת שבועית: עדכני ביומן את הימים והשעות הפנויות שלך לפגישות מנטורינג",
   "notif.chatMessage": "הודעה חדשה מ{{name}}: {{preview}}",
+  "notif.meetingReminder30m":
+    "תזכורת: הפגישה עם {{name}} מתחילה בעוד כ־30 דקות ({{date}}). קישור לפגישה: {{meetLink}}",
 };
 
 function interpolate(template, params = {}) {
@@ -52,6 +54,9 @@ export function formatNotificationMessage(messageKey, messageParams = {}) {
 }
 
 export function notificationEmailSubject(messageKey) {
+  if (messageKey === "notif.meetingReminder30m") {
+    return "Meant To B — תזכורת לפגישה בעוד 30 דקות";
+  }
   if (
     messageKey?.startsWith("notif.meeting") ||
     messageKey === "notif.mentorshipRequest" ||

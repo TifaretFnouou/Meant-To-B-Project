@@ -14,6 +14,7 @@ import meetingRoutes from "./routes/meetingRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import { startMeetingReminderJob } from "./services/meetingReminderService.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -88,6 +89,10 @@ async function start() {
   } catch (error) {
     console.error("❌ MongoDB connection error:", error.message);
     console.warn("⚠️ Starting API without MongoDB (chat still available)");
+  }
+
+  if (mongoose.connection.readyState === 1) {
+    startMeetingReminderJob();
   }
 
   const server = app.listen(PORT, () => {

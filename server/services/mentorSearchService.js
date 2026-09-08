@@ -1,4 +1,5 @@
 import User from "../models/user.js";
+import mongoose from "mongoose";
 
 const MAX_RESULTS = 5;
 const MAX_CRITERIA = 10;
@@ -83,11 +84,21 @@ const toPublicMentor = (user) => ({
   githubUrl: safeSocialUrl(user.githubUrl, "github.com"),
 });
 
-export async function findMentorsByCriteria({ techStack, adviceTopic, minExperience } = {}) {
+export async function findMentorsByCriteria({
+  techStack,
+  adviceTopic,
+  minExperience,
+  excludeUserId = null,
+} = {}) {
   const query = {
     roles: "mentor",
     "mentorProfile.isActive": { $ne: false },
   };
+
+  // Never suggest the logged-in user as a mentor to herself
+  if (excludeUserId && mongoose.Types.ObjectId.isValid(String(excludeUserId))) {
+    query._id = { $ne: excludeUserId };
+  }
 
   const techRegexes = toExactRegexList(techStack);
   if (techRegexes.length > 0) {
