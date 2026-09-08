@@ -155,16 +155,13 @@ export default function LoginPage() {
               {t("auth.demoAccounts")}:
             </Typography>
             <Typography variant="caption" display="block">
-              admin@queenb.com / Admin123!
+              shira_admin@queenb.com / Admin123!
             </Typography>
             <Typography variant="caption" display="block">
-              mentor@queenb.com / Mentor123!
+              mantor1@queenb.com / Mentor123! (Dual User)
             </Typography>
             <Typography variant="caption" display="block">
-              mentee@queenb.com / Mentee123!
-            </Typography>
-            <Typography variant="caption" display="block">
-              dual@queenb.com / Dual123! (Mentor + Mentee)
+              mentee1@queenb.com / Mentee123!
             </Typography>
           </Alert>
         </Paper>
