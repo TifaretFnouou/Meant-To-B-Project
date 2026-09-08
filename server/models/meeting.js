@@ -44,9 +44,14 @@ const meetingSchema = new Schema(
       ],
       default: "PENDING_MENTOR_TIMES",
     },
-    // approval of attendance before the meeting
-    menteeConfirmedAttendance: { type: Boolean, default: false },
-    mentorConfirmedAttendance: { type: Boolean, default: false },
+    // post-meeting attendance reports: null = not reported yet, true/false = happened / didn't
+    menteeConfirmedAttendance: { type: Boolean, default: null },
+    mentorConfirmedAttendance: { type: Boolean, default: null },
+    // thank-you / did-not-happen emails sent once after outcome is known
+    postMeetingOutcomeNotifiedAt: {
+      type: Date,
+      default: null,
+    },
     
     // feedback after the meeting
     menteeFeedback: {

@@ -11,6 +11,7 @@ import {
   requestMoreSlotsController,
   markUnavailableController,
   submitFeedbackController,
+  submitAttendanceController,
   getMeetingMessagesController,
   sendMeetingMessageController,
 } from "../controllers/meetingController.js";
@@ -27,6 +28,7 @@ router.put("/:id/reject", rejectMeetingController);
 router.put("/:id/request-more-slots", requestMoreSlotsController);
 router.put("/:id/mark-unavailable", markUnavailableController);
 router.put("/:id/feedback", submitFeedbackController);
+router.put("/:id/attendance", submitAttendanceController);
 router.get("/:meetingId/messages", getMeetingMessagesController);
 router.post("/:meetingId/messages", sendMeetingMessageController);
 

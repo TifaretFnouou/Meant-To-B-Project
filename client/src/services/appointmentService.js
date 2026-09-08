@@ -125,6 +125,25 @@ function mapMeetingToFrontend(meeting) {
           }
         : null,
     },
+    attendance: (() => {
+      const legacyUnset =
+        meeting.status === "MATCHED" &&
+        !meeting.postMeetingOutcomeNotifiedAt &&
+        meeting.menteeConfirmedAttendance !== true &&
+        meeting.mentorConfirmedAttendance !== true;
+
+      const mapFlag = (value) => {
+        if (legacyUnset) return null;
+        if (value === true) return true;
+        if (value === false) return false;
+        return null;
+      };
+
+      return {
+        mentee: mapFlag(meeting.menteeConfirmedAttendance),
+        mentor: mapFlag(meeting.mentorConfirmedAttendance),
+      };
+    })(),
     createdAt: meeting.createdAt,
   };
 }
@@ -309,8 +328,11 @@ export const appointmentService = {
   },
 
   async submitAttendance(meetingId, role, attended) {
-    console.warn("Backend route for attendance is missing!");
-    return null;
+    const response = await api.put(`/meetings/${meetingId}/attendance`, {
+      attended: Boolean(attended),
+      role,
+    });
+    return mapMeetingToFrontend(response.data.meeting);
   },
 
   async submitFeedback(meetingId, role, feedback) {
