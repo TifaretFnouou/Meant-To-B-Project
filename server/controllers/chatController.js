@@ -1,8 +1,16 @@
-import { processChatWithAI } from "../services/aiChatService.js";
+import { processChatWithAI, resetChatProvider } from "../services/aiChatService.js";
 
 const MAX_HISTORY = 20;
 const MAX_MESSAGE_LENGTH = 2000;
 const SUPPORTED_LANGUAGES = new Set(["he", "en"]);
+
+function isAuthCredentialError(error) {
+  if (error?.status === 401) return true;
+  const message = String(error?.message || "");
+  return /invalid auth|invalid api key|api key not valid|authentication|unauthenticated/i.test(
+    message
+  );
+}
 
   // The client can send any JSON, so we only keep valid role/content and prevent system prompt injection
 const sanitizeMessages = (messages) => {
@@ -69,12 +77,13 @@ export const handleChat = async (req, res) => {
   } catch (error) {
     console.error("Chat Controller Error:", error);
 
-    if (error.code === "CHAT_NOT_CONFIGURED") {
-      return res.status(503).json({ code: "NOT_CONFIGURED", error: "Chat service is not configured" });
-    }
-
-    if (error.status === 401) {
-      return res.status(503).json({ code: "NOT_CONFIGURED", error: "Chat service credentials are invalid" });
+    if (error.code === "CHAT_NOT_CONFIGURED" || isAuthCredentialError(error)) {
+      // Invalid/expired keys should not stay cached as a "working" provider
+      if (isAuthCredentialError(error)) resetChatProvider();
+      return res.status(503).json({
+        code: "NOT_CONFIGURED",
+        error: "Chat service credentials are missing or invalid",
+      });
     }
 
     if (error.status === 429) {
@@ -90,6 +99,11 @@ export const handleChat = async (req, res) => {
     }
 
     if (error.status >= 400 && error.status < 500) {
+      const message = String(error.message || "");
+      // Stale model names show up as 404 from Gemini — surface clearly in logs
+      if (/no longer available|not found|is not found/i.test(message)) {
+        console.error("[chat] Model rejected by provider — set CHAT_MODEL in server/.env", message);
+      }
       return res.status(502).json({ code: "PROVIDER_ERROR", error: "Chat provider rejected the request" });
     }
 

@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import VideoCallIcon from "@mui/icons-material/VideoCall";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EventIcon from "@mui/icons-material/Event";
 import ChatIcon from "@mui/icons-material/Chat";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../common/StatusBadge";
@@ -21,7 +22,7 @@ import { SCHEDULING_STATE } from "../../constants";
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
 import { useLanguage } from "../../context/LanguageContext";
-import { formatDateTime, isSameSlot, startOfWeek } from "../../utils/calendar";
+import { formatDateTime, isSameSlot, startOfWeek, buildGoogleCalendarUrl } from "../../utils/calendar";
 import { toCalendarEvents } from "../../services/appointmentService";
 import UserAvatar from "../common/UserAvatar";
 
@@ -137,6 +138,21 @@ export default function MeetingsSchedulingPanel({
     : `${mentor?.firstName || ""} ${mentor?.lastName || ""}`.trim();
   const otherUser = isMentor ? mentee : mentor;
   const calendarEvents = useMemo(() => toCalendarEvents([meeting]), [meeting]);
+
+  const googleCalendarUrl = useMemo(() => {
+    if (!meeting.matchedSlot) return null;
+    const start = new Date(meeting.matchedSlot);
+    const end = new Date(start.getTime() + (meeting.durationMinutes || 60) * 60000);
+    return buildGoogleCalendarUrl({
+      title: `QueenB mentoring${otherName ? `: ${otherName}` : ""}`,
+      start,
+      end,
+      details: meeting.meetLink
+        ? `Video link: ${meeting.meetLink}`
+        : "Mentoring session via Meant To B",
+      location: meeting.meetLink || "",
+    });
+  }, [meeting.matchedSlot, meeting.durationMinutes, meeting.meetLink, otherName]);
 
   const showMentorSlotPicker =
     isMentor &&
@@ -527,9 +543,25 @@ export default function MeetingsSchedulingPanel({
           <Alert severity="success" sx={{ mb: 2 }}>
             {t("calendar.matchedAt", {
               date: formatDateTime(meeting.matchedSlot, locale),
-            })}{" "}
-            {t("calendar.addedToBothCalendars")}
+            })}
+            <Box component="span" display="block" sx={{ mt: 0.5 }}>
+              {t("calendar.calendarInviteHint")}
+            </Box>
           </Alert>
+
+          {googleCalendarUrl && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<EventIcon />}
+              href={googleCalendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ mb: 2 }}
+            >
+              {t("calendar.addToGoogleCalendar")}
+            </Button>
+          )}
 
           {meeting.meetLink && (
             <Box

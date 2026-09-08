@@ -24,7 +24,7 @@ const meetingSchema = new Schema(
       startTime: { type: Date },
       endTime: { type: Date },
     },
-    // shared Google Meet link — created when the meeting becomes MATCHED
+    // shared video link — created when the meeting becomes MATCHED
     meetLink: {
       type: String,
       default: null,

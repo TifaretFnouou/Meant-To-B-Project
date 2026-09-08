@@ -8,6 +8,7 @@ import {
   rangesOverlap,
 } from "./availabilityService.js";
 import { createNotification } from "./notificationService.js";
+import { sendMeetingCalendarInvite } from "./calendarInviteService.js";
 import UserModel from "../models/user.js";
 
 const ACTIVE_MEETING_STATUSES = [
@@ -227,6 +228,9 @@ export async function approveMeeting(meetingId, mentorId) {
   meeting.meetLink = generateMeetLink(meeting._id);
   await meeting.save();
 
+  // ICS invite to each participant's login email (Add to Calendar)
+  void sendMeetingCalendarInvite(meeting);
+
   const mentorName = (await getUserDisplayName(mentorId)) || "Mentor";
   const date = formatMeetingDate(meeting.scheduledTime.startTime);
 
@@ -384,6 +388,8 @@ export async function selectTime(meetingId, menteeId, selectedTime) {
 
   await meeting.save();
 
+  void sendMeetingCalendarInvite(meeting);
+
   const menteeName = (await getUserDisplayName(menteeId)) || "Mentee";
   const mentorName = (await getUserDisplayName(meeting.mentorId)) || "Mentor";
   const date = formatMeetingDate(meeting.scheduledTime.startTime);
@@ -425,6 +431,8 @@ export async function rejectMeeting(meetingId, userId) {
 
   meeting.status = "CANCELLED";
   await meeting.save();
+
+  void sendMeetingCalendarInvite(meeting, { cancel: true });
 
   if (previousStatus === "PENDING_MENTOR_APPROVAL" && scheduledStart) {
     await restoreSlot(meeting.mentorId, scheduledStart, scheduledEnd);
@@ -534,6 +542,8 @@ export async function markUnavailable(meetingId, userId) {
     meeting.meetLink = null;
     await meeting.save();
 
+    void sendMeetingCalendarInvite(meeting, { cancel: true });
+
     await notifyUser(
       otherId,
       "notif.meetingCancelled",
@@ -545,6 +555,8 @@ export async function markUnavailable(meetingId, userId) {
   }
 
   meeting.rescheduleCount = (meeting.rescheduleCount || 0) + 1;
+  // Send cancel ICS while scheduledTime is still on the document
+  void sendMeetingCalendarInvite(meeting, { cancel: true });
   meeting.status = "PENDING_MENTOR_TIMES";
   meeting.proposedTimes = [];
   meeting.scheduledTime = null;

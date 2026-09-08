@@ -36,9 +36,10 @@ function getTransporter() {
 
 /**
  * Send an email from the admin mailbox.
+ * Optional icalEvent attaches a calendar invite (Gmail → Add to Calendar).
  * Failures are logged; callers should not block on delivery.
  */
-export async function sendMail({ to, subject, text, html }) {
+export async function sendMail({ to, subject, text, html, icalEvent }) {
   const transport = getTransporter();
   if (!transport) return { skipped: true };
 
@@ -46,13 +47,23 @@ export async function sendMail({ to, subject, text, html }) {
   const recipients = Array.isArray(to) ? to.filter(Boolean) : [to].filter(Boolean);
   if (recipients.length === 0) return { skipped: true };
 
-  const info = await transport.sendMail({
+  const mail = {
     from: `"Meant To B" <${user}>`,
     to: recipients.join(", "),
     subject,
     text,
     html: html || `<p>${escapeHtml(text)}</p>`,
-  });
+  };
+
+  if (icalEvent?.content) {
+    mail.icalEvent = {
+      filename: icalEvent.filename || "invite.ics",
+      method: icalEvent.method || "REQUEST",
+      content: icalEvent.content,
+    };
+  }
+
+  const info = await transport.sendMail(mail);
 
   console.log(`[email] Sent "${subject}" → ${recipients.join(", ")}`);
   return { ok: true, messageId: info.messageId };

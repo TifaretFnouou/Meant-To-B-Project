@@ -61,6 +61,10 @@ function loadGoogleScript() {
   });
 }
 
+/**
+ * Google sign-in via Identity Services (ID token popup).
+ * Calendar is handled separately (email ICS + "Add to Google Calendar" button).
+ */
 export default function GoogleSignInButton({ onCredential, disabled = false }) {
   const { t } = useLanguage();
   const [ready, setReady] = useState(false);

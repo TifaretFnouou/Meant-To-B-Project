@@ -47,7 +47,6 @@ export function sanitizeUser(user) {
   }
   const obj = user.toObject ? user.toObject() : { ...user };
   delete obj.password;
-  
   obj.id = String(obj._id || obj.id);
   return obj;
 }
@@ -246,31 +245,7 @@ function normalizeGoogleName(value, fallback) {
   return fallback;
 }
 
-export async function loginWithGoogle(idToken) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    throw Object.assign(new Error("Google sign-in is not configured"), {
-      status: 503,
-    });
-  }
-
-  if (!idToken || typeof idToken !== "string") {
-    throw Object.assign(new Error("Google credential is required"), { status: 400 });
-  }
-
-  const client = new OAuth2Client(clientId);
-  let payload;
-
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: clientId,
-    });
-    payload = ticket.getPayload();
-  } catch {
-    throw Object.assign(new Error("Invalid Google credential"), { status: 401 });
-  }
-
+async function upsertGoogleUser(payload) {
   if (!payload?.email || !payload.sub) {
     throw Object.assign(new Error("Google account is missing required profile data"), {
       status: 400,
@@ -328,6 +303,35 @@ export async function loginWithGoogle(idToken) {
     user: sanitizeUser(user),
     token: signToken(user),
   };
+}
+
+/** Google Identity Services — verify ID token and upsert user. */
+export async function loginWithGoogle(idToken) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    throw Object.assign(new Error("Google sign-in is not configured"), {
+      status: 503,
+    });
+  }
+
+  if (!idToken || typeof idToken !== "string") {
+    throw Object.assign(new Error("Google credential is required"), { status: 400 });
+  }
+
+  const client = new OAuth2Client(clientId);
+  let payload;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: clientId,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    throw Object.assign(new Error("Invalid Google credential"), { status: 401 });
+  }
+
+  return upsertGoogleUser(payload);
 }
 
 export function verifyToken(req) {
