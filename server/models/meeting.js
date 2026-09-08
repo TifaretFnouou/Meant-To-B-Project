@@ -70,6 +70,11 @@ const meetingSchema = new Schema(
       type: Number,
       default: 0,
     },
+    // email/in-app reminder ~30 minutes before start (sent once per scheduled time)
+    reminder30mSentAt: {
+      type: Date,
+      default: null,
+    },
     messages: [
       {
         sender: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },

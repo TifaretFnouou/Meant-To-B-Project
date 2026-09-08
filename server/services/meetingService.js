@@ -281,6 +281,7 @@ export async function rebookFromAvailability(meetingId, menteeId, selectedTime) 
   };
   meeting.status = "PENDING_MENTOR_APPROVAL";
   meeting.meetLink = null;
+  meeting.reminder30mSentAt = null;
 
   await meeting.save();
   await consumeSlot(meeting.mentorId, booked.startTime);
@@ -385,6 +386,7 @@ export async function selectTime(meetingId, menteeId, selectedTime) {
   };
   meeting.status = "MATCHED";
   meeting.meetLink = generateMeetLink(meeting._id);
+  meeting.reminder30mSentAt = null;
 
   await meeting.save();
 
@@ -561,6 +563,7 @@ export async function markUnavailable(meetingId, userId) {
   meeting.proposedTimes = [];
   meeting.scheduledTime = null;
   meeting.meetLink = null;
+  meeting.reminder30mSentAt = null;
 
   await meeting.save();
 
