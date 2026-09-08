@@ -158,7 +158,7 @@ export default function LoginPage() {
               shira_admin@queenb.com / Admin123!
             </Typography>
             <Typography variant="caption" display="block">
-              mantor1@queenb.com / Mentor123! (Dual User)
+              mantor@queenb.com / Mentor123! (Dual User)
             </Typography>
             <Typography variant="caption" display="block">
               mentee1@queenb.com / Mentee123!
