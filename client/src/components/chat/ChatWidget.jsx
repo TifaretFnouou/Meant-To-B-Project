@@ -14,12 +14,18 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import { useNavigate } from "react-router-dom";
 import { sendChatMessage } from "../../services/chatApiService";
 import { useLanguage } from "../../context/LanguageContext";
 import { brand } from "../../theme/brand";
 import ChatMentorCard from "./ChatMentorCard";
 
-const SUGGESTION_KEYS = ["chat.suggestion1", "chat.suggestion2", "chat.suggestion3"];
+const SUGGESTION_KEYS = [
+  "chat.suggestion1",
+  "chat.suggestion2",
+  "chat.suggestion3",
+  "chat.suggestionBook",
+];
 const MAX_INPUT_LENGTH = 2000;
 const MAX_UI_MESSAGES = 40;
 const CHAT_BOT_LOGO = "/logo.png";
@@ -55,6 +61,7 @@ const typingDot = {
 
 export default function ChatWidget() {
   const { t, language, isRtl } = useLanguage();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -174,6 +181,8 @@ export default function ChatWidget() {
           role: "assistant",
           content: result.reply,
           mentors: result.mentors,
+          slots: result.slots,
+          meeting: result.meeting,
         },
       ]);
       messagesRef.current = updatedMessages;
@@ -378,6 +387,20 @@ export default function ChatWidget() {
                       />
                     ))}
                   </Stack>
+                )}
+                {msg.meeting?.id && (
+                  <Chip
+                    size="small"
+                    label={t("chat.meetingRequested")}
+                    onClick={() => navigate("/Meetings")}
+                    sx={{
+                      alignSelf: "flex-start",
+                      bgcolor: brand.lavenderRgb,
+                      color: brand.charcoal,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  />
                 )}
               </React.Fragment>
             ))}

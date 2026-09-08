@@ -1,18 +1,29 @@
 import { processChatWithAI, resetChatProvider } from "../services/aiChatService.js";
+import { verifyToken } from "../services/authService.js";
 
 const MAX_HISTORY = 20;
 const MAX_MESSAGE_LENGTH = 2000;
 const SUPPORTED_LANGUAGES = new Set(["he", "en"]);
 
+/** Optional JWT — anonymous users can still search mentors; booking needs a mentee id. */
+function tryGetActorId(req) {
+  try {
+    const actor = verifyToken(req);
+    return actor?.id || actor?._id || null;
+  } catch {
+    return null;
+  }
+}
+
 function isAuthCredentialError(error) {
   if (error?.status === 401) return true;
   const message = String(error?.message || "");
-  return /invalid auth|invalid api key|api key not valid|authentication|unauthenticated/i.test(
+  return /incorrect auth|invalid api key|api key not valid|authentication|unauthenticated/i.test(
     message
   );
 }
 
-  // The client can send any JSON, so we only keep valid role/content and prevent system prompt injection
+// The client can send any JSON, so we only keep valid role/content and prevent system prompt injection
 const sanitizeMessages = (messages) => {
   const sanitized = messages
     .slice(-MAX_HISTORY * 2)
@@ -68,11 +79,16 @@ export const handleChat = async (req, res) => {
     }
 
     const safeLanguage = SUPPORTED_LANGUAGES.has(language) ? language : "he";
-    const { reply, mentors } = await processChatWithAI(sanitized, safeLanguage);
+    const actorId = tryGetActorId(req);
+    const { reply, mentors, slots, meeting } = await processChatWithAI(sanitized, safeLanguage, {
+      actorId,
+    });
 
     res.status(200).json({
       reply: typeof reply === "string" ? reply : "",
       mentors: Array.isArray(mentors) ? mentors : [],
+      slots: Array.isArray(slots) ? slots : [],
+      meeting: meeting && typeof meeting === "object" ? meeting : null,
     });
   } catch (error) {
     console.error("Chat Controller Error:", error);
@@ -86,7 +102,7 @@ export const handleChat = async (req, res) => {
       });
     }
 
-    if (error.status === 429) {
+    if (error.status === 429 || error.status === 503) {
       return res.status(429).json({ code: "RATE_LIMITED", error: "Chat service quota exceeded" });
     }
 

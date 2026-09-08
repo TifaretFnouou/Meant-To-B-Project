@@ -1,5 +1,52 @@
+import { getStoredToken } from "./api";
+
 const API_BASE_URL = (process.env.REACT_APP_API_URL || "/api/v1").replace(/\/+$/, "");
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = 55_000;
+
+function formatSlotHint(slot) {
+  if (!slot?.startTime) return null;
+  try {
+    return new Date(slot.startTime).toISOString();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Enrich assistant turns so the model remembers mentor ids / offered slots
+ * across turns (the UI cards are not sent as structured data otherwise).
+ */
+function toModelContent(message) {
+  let content = typeof message.content === "string" ? message.content.trim() : "";
+  if (!content) return "";
+
+  if (message.role === "assistant" && Array.isArray(message.mentors) && message.mentors.length) {
+    const mentorHints = message.mentors
+      .filter((mentor) => mentor?.id)
+      .map((mentor) => `${mentor.name || "Mentor"}|id=${mentor.id}`)
+      .join("; ");
+    if (mentorHints) {
+      content = `${content}\n[Mentors available to book: ${mentorHints}]`;
+    }
+  }
+
+  if (message.role === "assistant" && Array.isArray(message.slots) && message.slots.length) {
+    const slotHints = message.slots
+      .map(formatSlotHint)
+      .filter(Boolean)
+      .map((iso, index) => `${index + 1}:${iso}`)
+      .join(", ");
+    if (slotHints) {
+      content = `${content}\n[Open slots (ISO): ${slotHints}]`;
+    }
+  }
+
+  if (message.role === "assistant" && message.meeting?.id) {
+    content = `${content}\n[Meeting request created: id=${message.meeting.id} status=${message.meeting.status || "pending"}]`;
+  }
+
+  return content;
+}
 
 export async function sendChatMessage(messages, language = "he", { signal } = {}) {
   const controller = new AbortController();
@@ -16,19 +63,28 @@ export async function sendChatMessage(messages, language = "he", { signal } = {}
     // Just if we don't send back mentor ids and meeting tokens from the UI; just the chat content needed for the model
     const conversation = (Array.isArray(messages) ? messages : [])
       .slice(-20)
+      .map((message) => ({
+        role: message.role,
+        content: toModelContent(message),
+      }))
       .filter(
         ({ role, content }) =>
           (role === "user" || role === "assistant") &&
           typeof content === "string" &&
           content.trim()
-      )
-      .map(({ role, content }) => ({ role, content }));
+      );
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    const token = getStoredToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
 
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ messages: conversation, language }),
       signal: controller.signal,
     });
@@ -52,7 +108,12 @@ export async function sendChatMessage(messages, language = "he", { signal } = {}
       throw error;
     }
 
-    return { reply: data.reply, mentors: data.mentors || [] };
+    return {
+      reply: data.reply,
+      mentors: data.mentors || [],
+      slots: Array.isArray(data.slots) ? data.slots : [],
+      meeting: data.meeting && typeof data.meeting === "object" ? data.meeting : null,
+    };
   } catch (error) {
     if (error.name === "AbortError") {
       const abortError = new Error(signal?.aborted ? "Chat request cancelled" : "Chat request timed out");
