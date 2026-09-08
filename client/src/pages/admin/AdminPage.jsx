@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Box, Typography, Tabs, Tab, Paper, Grid, Alert, AlertTitle, Stack } from "@mui/material";
 import MainLayout from "../../components/layout/MainLayout";
 import { useAuth } from "../../context/AuthContext";
-
+import AnalyticsTab from "./AnalyticsTab";
+import AdminAlertsCarousel from "./AdminAlertsCarousel";
 import UsersTab from "./UsersTab";
 import MeetingsTab from "./MeetingsTab";
 import CalendarTab from "./CalendarTab";
@@ -11,6 +12,7 @@ import ConfigTab from "./ConfigTab";
 export default function AdminPage() {
   const { users, token } = useAuth();
   const [tab, setTab] = useState(0);
+  const [meetingsInitialStatusFilter, setMeetingsInitialStatusFilter] = useState("");
   const [alerts, setAlerts] = useState([]);
   const [meetings, setMeetings] = useState([]);
 
@@ -88,8 +90,6 @@ export default function AdminPage() {
   }, [meetings]);
 
   const activeMeetings = meetings.filter(s => !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(s.status));
-  const cancelledMeetings = meetings.filter(s => s.status === "CANCELLED");
-  const withFeedback = meetings.filter(s => s.status === "FEEDBACK_FILLED" || s.menteeFeedback?.isFilled || s.mentorFeedback?.isFilled);
 
   return (
     <MainLayout>
@@ -97,22 +97,11 @@ export default function AdminPage() {
         Control Panel - Community Manager
       </Typography>
 
-      {alerts.length > 0 && (
-        <Stack spacing={2} sx={{ mb: 4 }}>
-          {alerts.map((alert) => (
-            <Alert key={alert.id} severity={alert.type}>
-              <AlertTitle>{alert.title}</AlertTitle>
-              {alert.message}
-            </Alert>
-          ))}
-        </Stack>
-      )}
+      <AdminAlertsCarousel alerts={alerts} />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} md={3}><Paper sx={{ p: 2, textAlign: "center" }}><Typography variant="h4">{users.length}</Typography><Typography variant="body2" color="text.secondary">Users</Typography></Paper></Grid>
-        <Grid item xs={6} md={3}><Paper sx={{ p: 2, textAlign: "center" }}><Typography variant="h4">{activeMeetings.length}</Typography><Typography variant="body2" color="text.secondary">Active Meetings</Typography></Paper></Grid>
-        <Grid item xs={6} md={3}><Paper sx={{ p: 2, textAlign: "center" }}><Typography variant="h4">{cancelledMeetings.length}</Typography><Typography variant="body2" color="text.secondary">Cancelled</Typography></Paper></Grid>
-        <Grid item xs={6} md={3}><Paper sx={{ p: 2, textAlign: "center" }}><Typography variant="h4">{withFeedback.length}</Typography><Typography variant="body2" color="text.secondary">Feedback Filled</Typography></Paper></Grid>
+        <Grid item xs={6} md={6}><Paper sx={{ p: 2, textAlign: "center" }}><Typography variant="h4">{users.length}</Typography><Typography variant="body2" color="text.secondary">Users</Typography></Paper></Grid>
+        <Grid item xs={6} md={6}><Paper sx={{ p: 2, textAlign: "center" }}><Typography variant="h4">{activeMeetings.length}</Typography><Typography variant="body2" color="text.secondary">Active Meetings</Typography></Paper></Grid>
       </Grid>
 
       <Tabs value={tab} onChange={(_, v) => { console.log("[Tabs] switched to tab index:", v); setTab(v); }}>
@@ -120,13 +109,15 @@ export default function AdminPage() {
         <Tab label="Meetings Report" />
         <Tab label="Calendar" />
         <Tab label="Categories & Tags" />
+        <Tab label="Analytics" />
       </Tabs>
 
       <Box sx={{ pt: 3 }}>
         {tab === 0 && <UsersTab users={users} />}
-        {tab === 1 && <MeetingsTab meetings={meetings} users={users} />}
+        {tab === 1 && <MeetingsTab meetings={meetings} users={users} initialStatusFilter={meetingsInitialStatusFilter} />}
         {tab === 2 && <CalendarTab meetings={meetings} />}
         {tab === 3 && <ConfigTab />}
+        {tab === 4 && <AnalyticsTab meetings={meetings} />}
       </Box>
     </MainLayout>
   );
