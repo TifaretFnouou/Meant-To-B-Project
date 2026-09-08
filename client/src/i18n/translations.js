@@ -306,6 +306,10 @@ export const he = {
     chatMessage: "הודעה חדשה מ{{name}}: {{preview}}",
     meetingReminder30m:
       "תזכורת: הפגישה עם {{name}} מתחילה בעוד כ־30 דקות ({{date}}). קישור לפגישה: {{meetLink}}",
+    meetingThankYouMentor:
+      "תודה רבה שהעברת פגישת מנטורינג עם {{name}} ב־{{date}}! ההשפעה שלך משמעותית לקהילה של Meant To B ❤️",
+    meetingDidNotHappen:
+      "עדכון: הפגישה עם {{name}} שתוכננה ל־{{date}} לא התקיימה.",
   },
   status: {
     pending: "ממתין לאישור",
@@ -667,6 +671,10 @@ export const en = {
     chatMessage: "New message from {{name}}: {{preview}}",
     meetingReminder30m:
       "Reminder: your meeting with {{name}} starts in about 30 minutes ({{date}}). Join link: {{meetLink}}",
+    meetingThankYouMentor:
+      "Thank you for mentoring {{name}} on {{date}}! Your impact means a lot to the Meant To B community.",
+    meetingDidNotHappen:
+      "Update: the meeting with {{name}} scheduled for {{date}} did not take place.",
   },
   status: {
     pending: "Pending Approval",

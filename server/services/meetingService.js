@@ -701,7 +701,124 @@ if (isFirstCompletion) {
   });
 }
 
-return meeting;
+  return meeting;
+}
+
+/**
+ * After attendance is known: thank the mentor if it happened,
+ * or tell both parties if it did not. Emails go through createNotification.
+ * Idempotent via postMeetingOutcomeNotifiedAt.
+ */
+export async function notifyPostMeetingOutcome(meetingId, { happened }) {
+  const claimed = await MeetingModel.findOneAndUpdate(
+    {
+      _id: meetingId,
+      $or: [
+        { postMeetingOutcomeNotifiedAt: null },
+        { postMeetingOutcomeNotifiedAt: { $exists: false } },
+      ],
+    },
+    { $set: { postMeetingOutcomeNotifiedAt: new Date() } },
+    { new: true }
+  );
+  if (!claimed) return null;
+
+  const date = claimed.scheduledTime?.startTime
+    ? formatMeetingDate(claimed.scheduledTime.startTime)
+    : "";
+  const mentorName = (await getUserDisplayName(claimed.mentorId)) || "המנטורית";
+  const menteeName = (await getUserDisplayName(claimed.menteeId)) || "המנטורית";
+
+  if (happened) {
+    await notifyUser(
+      claimed.mentorId,
+      "notif.meetingThankYouMentor",
+      { name: menteeName, date },
+      claimed._id
+    );
+  } else {
+    await Promise.all([
+      notifyUser(
+        claimed.mentorId,
+        "notif.meetingDidNotHappen",
+        { name: menteeName, date },
+        claimed._id
+      ),
+      notifyUser(
+        claimed.menteeId,
+        "notif.meetingDidNotHappen",
+        { name: mentorName, date },
+        claimed._id
+      ),
+    ]);
+  }
+
+  return claimed;
+}
+
+/** Participant reports whether the scheduled meeting took place. */
+export async function submitAttendance(meetingId, userId, attended) {
+  const meeting = await MeetingModel.findById(meetingId);
+  if (!meeting) {
+    throw Object.assign(new Error("Meeting not found"), { status: 404 });
+  }
+
+  const isMentor = normalizeId(meeting.mentorId) === normalizeId(userId);
+  const isMentee = normalizeId(meeting.menteeId) === normalizeId(userId);
+  if (!isMentor && !isMentee) {
+    throw Object.assign(new Error("Unauthorized for this meeting"), { status: 403 });
+  }
+
+  if (!["MATCHED", "ATTENDANCE_CONFIRMED", "COMPLETED", "NO_SHOW"].includes(meeting.status)) {
+    throw Object.assign(new Error("Attendance can only be reported for a scheduled meeting"), {
+      status: 400,
+    });
+  }
+
+  const endTime = meeting.scheduledTime?.endTime
+    ? new Date(meeting.scheduledTime.endTime).getTime()
+    : meeting.scheduledTime?.startTime
+      ? new Date(meeting.scheduledTime.startTime).getTime() + 60 * 60000
+      : null;
+
+  if (endTime && Date.now() < endTime) {
+    throw Object.assign(new Error("Attendance opens after the meeting ends"), { status: 400 });
+  }
+
+  if (typeof attended !== "boolean") {
+    throw Object.assign(new Error("attended must be true or false"), { status: 400 });
+  }
+
+  if (isMentee) {
+    if (meeting.menteeConfirmedAttendance !== null && meeting.menteeConfirmedAttendance !== undefined) {
+      throw Object.assign(new Error("You already reported attendance for this meeting"), {
+        status: 400,
+      });
+    }
+    meeting.menteeConfirmedAttendance = attended;
+  } else {
+    if (meeting.mentorConfirmedAttendance !== null && meeting.mentorConfirmedAttendance !== undefined) {
+      throw Object.assign(new Error("You already reported attendance for this meeting"), {
+        status: 400,
+      });
+    }
+    meeting.mentorConfirmedAttendance = attended;
+  }
+
+  if (attended) {
+    if (meeting.status === "MATCHED" || meeting.status === "NO_SHOW") {
+      meeting.status = "ATTENDANCE_CONFIRMED";
+    }
+  } else {
+    meeting.status = "NO_SHOW";
+  }
+
+  await meeting.save();
+  await notifyPostMeetingOutcome(meeting._id, { happened: attended });
+
+  return MeetingModel.findById(meeting._id)
+    .populate("menteeId", "firstName lastName email profilePicture")
+    .populate("mentorId", "firstName lastName email profilePicture");
 }
 
 export async function getMessages(meetingId) {

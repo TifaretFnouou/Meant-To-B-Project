@@ -11,6 +11,7 @@ import {
   requestMoreSlots,
   markUnavailable,
   submitFeedback,
+  submitAttendance,
   getMessages,
   addMessage,
 } from "../services/meetingService.js";
@@ -165,6 +166,24 @@ export const submitFeedbackController = async (req, res) => {
 
     const meeting = await submitFeedback(req.params.id, actor.id, { rating, comments });
     res.status(200).json({ message: "Feedback submitted successfully", meeting });
+  } catch (err) {
+    res.status(statusFromError(err)).json({ error: err.message });
+  }
+};
+
+export const submitAttendanceController = async (req, res) => {
+  try {
+    const actor = verifyToken(req);
+    const attended = req.body?.attended;
+    if (typeof attended !== "boolean") {
+      return res.status(400).json({ message: "attended (boolean) is required" });
+    }
+
+    const meeting = await submitAttendance(req.params.id, actor.id, attended);
+    res.status(200).json({
+      message: attended ? "Attendance confirmed" : "Marked as did not take place",
+      meeting,
+    });
   } catch (err) {
     res.status(statusFromError(err)).json({ error: err.message });
   }

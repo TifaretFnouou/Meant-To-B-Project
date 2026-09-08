@@ -33,6 +33,10 @@ const TEMPLATES = {
   "notif.chatMessage": "הודעה חדשה מ{{name}}: {{preview}}",
   "notif.meetingReminder30m":
     "תזכורת: הפגישה עם {{name}} מתחילה בעוד כ־30 דקות ({{date}}). קישור לפגישה: {{meetLink}}",
+  "notif.meetingThankYouMentor":
+    "תודה רבה שהעברת פגישת מנטורינג עם {{name}} ב־{{date}}! ההשפעה שלך משמעותית לקהילה של Meant To B ❤️",
+  "notif.meetingDidNotHappen":
+    "עדכון: הפגישה עם {{name}} שתוכננה ל־{{date}} לא התקיימה.",
 };
 
 function interpolate(template, params = {}) {
@@ -56,6 +60,12 @@ export function formatNotificationMessage(messageKey, messageParams = {}) {
 export function notificationEmailSubject(messageKey) {
   if (messageKey === "notif.meetingReminder30m") {
     return "Meant To B — תזכורת לפגישה בעוד 30 דקות";
+  }
+  if (messageKey === "notif.meetingThankYouMentor") {
+    return "Meant To B — תודה על הפגישה!";
+  }
+  if (messageKey === "notif.meetingDidNotHappen") {
+    return "Meant To B — הפגישה לא התקיימה";
   }
   if (
     messageKey?.startsWith("notif.meeting") ||

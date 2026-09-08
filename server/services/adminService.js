@@ -2,36 +2,42 @@
 
 import Meeting from "../models/meeting.js";
 import User from "../models/user.js";
+import { notifyPostMeetingOutcome } from "./meetingService.js";
 
 // how many hours after the meeting time are we waiting before automatically setting NO_SHOW.
 // can be adjusted to whatever makes sense in the business (e.g. 2 hours, 24 hours, etc.).
 const NO_SHOW_GRACE_PERIOD_HOURS = 2;
 
 /**
- * Finds meetings with status ATTENDANCE_CONFIRMED where the meeting time 
- * has passed by NO_SHOW_GRACE_PERIOD_HOURS hours and nobody updated them, 
- * and automatically updates them to NO_SHOW status.
- *
- * Important: This does not check if anyone actually missed the meeting. 
- * It checks if nobody updated the status after the scheduled time. 
- * This matches the agreed definition: scheduled meeting, no cancellation, 
- * and no feedback filled = NO_SHOW.
+ * Finds MATCHED meetings whose scheduled time has passed by NO_SHOW_GRACE_PERIOD_HOURS
+ * without attendance/feedback updates, marks them NO_SHOW, and emails both parties.
  */
-
-
 async function sweepStaleMeetingsToNoShow() {
   const cutoff = new Date();
   cutoff.setHours(cutoff.getHours() - NO_SHOW_GRACE_PERIOD_HOURS);
 
-  const result = await Meeting.updateMany(
-    {
-      status: "ATTENDANCE_CONFIRMED",
-      "scheduledTime.startTime": { $lt: cutoff },
-    },
-    { $set: { status: "NO_SHOW" } }
-  );
+  const stale = await Meeting.find({
+    status: "MATCHED",
+    "scheduledTime.startTime": { $lt: cutoff },
+    $or: [
+      { postMeetingOutcomeNotifiedAt: null },
+      { postMeetingOutcomeNotifiedAt: { $exists: false } },
+    ],
+  }).select("_id");
 
-  return result.modifiedCount || 0;
+  let modified = 0;
+  for (const meeting of stale) {
+    const updated = await Meeting.findOneAndUpdate(
+      { _id: meeting._id, status: "MATCHED" },
+      { $set: { status: "NO_SHOW" } },
+      { new: true }
+    );
+    if (!updated) continue;
+    modified += 1;
+    await notifyPostMeetingOutcome(updated._id, { happened: false });
+  }
+
+  return modified;
 }
 
 // function 1: fetch meetings with filtering options
@@ -62,11 +68,9 @@ export const generateAlerts = async () => {
   const alerts = [];
   const now = new Date();
   
-  // alert A: meeting that has status "ATTENDANCE_CONFIRMED" but the time has passed (not updated)
-  // after the sweep above, it will only catch meetings that are still within the grace period -
-  // meaning the time has passed, but nobody has updated the status yet.
+  // alert A: MATCHED meeting whose time has passed without attendance/outcome update
   const missedMeetings = await Meeting.find({
-    status: "ATTENDANCE_CONFIRMED",
+    status: "MATCHED",
     "scheduledTime.startTime": { $lt: now }
   }).populate("mentorId menteeId", "firstName lastName");
 
