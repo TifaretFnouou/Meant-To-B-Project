@@ -333,12 +333,15 @@ export const he = {
     rateLimit: "הצ'אט קיבל הרבה בקשות כרגע. אפשר לנסות שוב בעוד דקה.",
     timeout: "התגובה מתעכבת יותר מהרגיל. אפשר לנסות שוב.",
     notConfigured: "מפתח הצ'אט לא תקין או חסר. עדכני GEMINI_API_KEY ב־server/.env מ־Google AI Studio.",
-    greeting: "היי! אני העוזרת החכמה של Meant To B. אפשר לחפש מנטורית לפי טכנולוגיה, תחום ייעוץ או שנות ניסיון.",
+    greeting:
+      "היי! שמחה שהגעת 😊 אני העוזרת של Meant To B — אפשר לחפש מנטורית, לבדוק שעות פנויות, ולבקש בשבילך פגישה. אם משהו לא מסתדר, אציע לך גם חלופות.",
     suggestion1: "מנטורית ל-React",
     suggestion2: "הכנה לראיונות",
     suggestion3: "מנטורית עם 5+ שנות ניסיון",
+    suggestionBook: "אני רוצה פגישה על קורות חיים",
     viewCatalog: "לצפייה בקטלוג המנטוריות",
     yearsExp: "{{count}} שנות ניסיון",
+    meetingRequested: "הבקשה נשלחה · לפגישות שלי",
   },
   common: {
     loading: "טוען...",
@@ -689,12 +692,15 @@ export const en = {
     rateLimit: "The chat received too many requests right now. Please try again in a minute.",
     timeout: "The response is taking longer than usual. Please try again.",
     notConfigured: "Chat API key is missing or invalid. Update GEMINI_API_KEY in server/.env from Google AI Studio.",
-    greeting: "Hi! I'm the Meant To B smart assistant. Ask me for a mentor by tech stack, advice topic, or years of experience.",
+    greeting:
+      "Hi! Glad you're here 😊 I'm the Meant To B assistant — I can find mentors, check open slots, and submit a meeting request for you. If something gets stuck, I'll suggest alternatives too.",
     suggestion1: "A React mentor",
     suggestion2: "Interview preparation",
     suggestion3: "Mentor with 5+ years experience",
+    suggestionBook: "I want a meeting about my CV",
     viewCatalog: "View in mentor catalog",
     yearsExp: "{{count}} years of experience",
+    meetingRequested: "Request sent · My meetings",
   },
   common: {
     loading: "Loading...",
