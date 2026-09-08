@@ -4,7 +4,8 @@ const TOKEN_KEY = "queenb_token";
 export const SESSION_EXPIRED_EVENT = "queenb:session-expired";
 
 const api = axios.create({
-  baseURL: "/api/v1",
+  //  baseURL: "/api/v1",
+  baseURL: "http://localhost:5001/api/v1",
 });
 
 api.interceptors.request.use((config) => {
@@ -125,6 +126,35 @@ export async function updateProfilePictureRequest(userId, file) {
   formData.append("profilePicture", file);
   const { data } = await api.put(`/users/${userId}/profile-picture`, formData);
   return normalizeUser(data.user);
+}
+
+// ============================================================
+// חדש: Categories & Tags (Admin Config)
+// ============================================================
+
+export async function fetchAdminConfig() {
+  const { data } = await api.get("/admin/config");
+  return data.data; // { techStack, adviceTopics }
+}
+
+export async function addTechRequest(item) {
+  const { data } = await api.post("/admin/config/tech-stack", { item });
+  return data.data; // techStack מעודכן
+}
+
+export async function removeTechRequest(item) {
+  const { data } = await api.delete(`/admin/config/tech-stack/${encodeURIComponent(item)}`);
+  return data.data;
+}
+
+export async function addTopicRequest(item) {
+  const { data } = await api.post("/admin/config/advice-topics", { item });
+  return data.data; // adviceTopics מעודכן
+}
+
+export async function removeTopicRequest(item) {
+  const { data } = await api.delete(`/admin/config/advice-topics/${encodeURIComponent(item)}`);
+  return data.data;
 }
 
 export default api;

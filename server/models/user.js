@@ -77,6 +77,8 @@ const userSchema = new Schema(
         default: 45,
         enum: [45, 60, 90],
       },
+// for the admin to track the number of meetings completed by the mentor
+      completedMeetings: { type: Number, default: 0 },
     },
     menteeProfile: {
       isActive: {
@@ -87,6 +89,8 @@ const userSchema = new Schema(
         type: String,
         trim: true,
       },
+      // for the admin to track the number of meetings completed by the mentee
+      completedMeetings: { type: Number, default: 0 },
     },
   },
   { timestamps: true }

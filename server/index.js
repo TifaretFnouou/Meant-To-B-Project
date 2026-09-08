@@ -1,4 +1,4 @@
-// חייב להיטען לפני שאר ה-imports כדי שמודולים שקוראים ל-process.env בזמן טעינה יקבלו ערכים
+// must be loaded before other imports so that modules that call process.env at loading time will receive values
 import "dotenv/config";
 
 import express from "express";
@@ -13,6 +13,7 @@ import chatRoutes from "./routes/chat.routes.js";
 import meetingRoutes from "./routes/meetingRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -20,7 +21,7 @@ const PORT = process.env.PORT || 5001;
 app.use(helmet());
 app.use(cors());
 app.use(morgan("combined"));
-// תואם ל-20 הודעות × 2,000 תווים, כולל UTF-8 בעברית, ועדיין מגביל payload חריג
+// matches 20 messages × 2,000 characters, including UTF-8 and still limits the payload
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true, limit: "128kb" }));
 
@@ -47,6 +48,7 @@ app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/meetings", meetingRoutes);
 app.use("/api/v1/availability", availabilityRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 app.use((err, req, res, next) => {
   if (err.type === "entity.parse.failed") {
@@ -57,7 +59,7 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ code: "PAYLOAD_TOO_LARGE", error: "Request body is too large" });
   }
 
-  // שגיאות מכוונות (4xx) מעבירות הודעה שימושית ללקוח, אך תקלות שרת לא חושפות פרטים פנימיים
+    // error codes (4xx) send a useful message to the client, but server errors do not expose internal details
   const status = err.status || 500;
   if (status >= 500) {
     console.error(err.stack);

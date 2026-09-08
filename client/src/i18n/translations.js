@@ -590,7 +590,7 @@ export const en = {
   },
   feedback: {
     title: "Meeting feedback",
-    subtitle: "Rate the meeting and add comments — it helps improve mentorship in the community",
+    subtitle: "Rate the meeting and add comments - it helps improve mentorship in the community",
     rating: "Rating",
     comments: "Comments",
     commentsPlaceholder: "What went well? What could improve?",

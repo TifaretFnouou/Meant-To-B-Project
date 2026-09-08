@@ -38,8 +38,9 @@ const meetingSchema = new Schema(
         "MATCHED", // matched
         "ATTENDANCE_CONFIRMED", // attendance confirmed
         "COMPLETED", // completed
-        "CANCELLED", // cancelled
-        "FEEDBACK_FILLED" // feedback filled
+        "CANCELLED", // cancelled - one of the participants cancelled the meeting
+        "NO_SHOW", // no show - one of the participants did not show up for the meeting without cancelling
+        "FEEDBACK_FILLED" // feedback filled - both participants have filled out the feedback - isFilled is true in both menteeFeedback and mentorFeedback
       ],
       default: "PENDING_MENTOR_TIMES",
     },

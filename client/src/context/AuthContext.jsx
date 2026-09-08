@@ -172,7 +172,7 @@ export function AuthProvider({ children }) {
         mentorProfile,
         ...rest
       } = payload;
-      
+
       delete rest.profilePicture;
       delete rest.profilePictureUrl;
       // We also don't extract 'roles' anymore, because the backend determines it based on 'isMentor'
@@ -184,7 +184,7 @@ export function AuthProvider({ children }) {
 
       formData.append("yearsOfExperience", String(Number(yearsOfExperience) || 0));
       formData.append("techStack", JSON.stringify(techStack));
-      
+
       if (menteeGoals) {
         formData.append("menteeGoals", menteeGoals);
       }
@@ -193,7 +193,7 @@ export function AuthProvider({ children }) {
       if (isMentor !== undefined) {
         formData.append("isMentor", isMentor);
       }
-      
+
       // If the user wants to be a mentor, append the stringified profile object
       if (isMentor && mentorProfile) {
         formData.append("mentorProfile", JSON.stringify(mentorProfile));
@@ -268,6 +268,8 @@ export function AuthProvider({ children }) {
     clearSession();
   };
 
+  const token = hasToken ? getStoredToken() : null;
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -279,13 +281,14 @@ export function AuthProvider({ children }) {
       updateProfile,
       logout,
       refreshUsers,
+      token,
       // Require both user + token so protected pages cannot call APIs without Authorization
       isAuthenticated: Boolean(currentUser && hasToken),
       isAdmin: currentUser?.roles?.includes(ROLES.ADMIN),
       isMentor: currentUser?.roles?.includes(ROLES.MENTOR),
       isMentee: currentUser?.roles?.includes(ROLES.MENTEE),
     }),
-    [currentUser, users, authReady, hasToken, refreshUsers]
+    [currentUser, users, authReady, hasToken, token, refreshUsers]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

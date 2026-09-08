@@ -4,6 +4,7 @@ import { useLanguage } from "../../context/LanguageContext";
 
 const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
+// http://localhost:3000/api/v1/auth/google/callback
 
 function GoogleLogoIcon({ size = 28 }) {
   return (

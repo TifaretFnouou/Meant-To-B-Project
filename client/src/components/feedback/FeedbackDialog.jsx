@@ -8,6 +8,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  Paper,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -16,6 +18,36 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useScheduling } from "../../context/SchedulingContext";
 import { useLanguage } from "../../context/LanguageContext";
+
+function getDisplayName(person) {
+  if (!person) return "";
+  if (typeof person === "string") return person; 
+  const first = person.firstName || "";
+  const last = person.lastName || "";
+  const full = `${first} ${last}`.trim();
+  return full || person.name || person.email || "";
+}
+
+function formatMeetingDateTime(meeting) {
+  const start =
+    meeting?.scheduledTime?.startTime ||
+    meeting?.startTime ||
+    meeting?.date ||
+    null;
+
+  if (!start) return null;
+
+  const d = new Date(start);
+  if (Number.isNaN(d.getTime())) return null;
+
+  return d.toLocaleString("he-IL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function FeedbackDialog({ open, meeting, onClose }) {
   const { currentUser } = useAuth();
@@ -40,6 +72,12 @@ export default function FeedbackDialog({ open, meeting, onClose }) {
 
   const role =
     String(currentUser.id) === String(meeting.mentorId) ? "mentor" : "mentee";
+  
+  const otherPersonRaw =
+    role === "mentor" ? meeting.menteeDetails : meeting.mentorDetails;
+  const otherPersonName = getDisplayName(otherPersonRaw);
+
+  const meetingDateTime = formatMeetingDateTime(meeting);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -70,6 +108,27 @@ export default function FeedbackDialog({ open, meeting, onClose }) {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>{t("feedback.title")}</DialogTitle>
       <DialogContent>
+          {/* meeting details - to distinguish between different meetings if there are many waiting for feedback */}
+        {(otherPersonName || meetingDateTime) && (
+          <Paper
+            variant="outlined"
+            sx={{ p: 1.5, mb: 2, bgcolor: "grey.50" }}
+          >
+            {otherPersonName && (
+              <Typography variant="body2" fontWeight={600}>
+                {role === "mentor"
+                  ? `Mentee: ${otherPersonName}`
+                  : ` Mentor: ${otherPersonName}`}
+              </Typography>
+            )}
+            {meetingDateTime && (
+              <Typography variant="body2" color="text.secondary">
+                {meetingDateTime}
+              </Typography>
+            )}
+          </Paper>
+        )}
+
         {submitted ? (
           <Box sx={{ textAlign: "center", py: 3 }}>
             <Typography variant="h6" color="primary" gutterBottom>

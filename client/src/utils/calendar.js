@@ -85,4 +85,5 @@ export const EVENT_COLORS = {
   completed: { bg: "rgba(59,59,59,0.08)", border: "#9CA3AF", text: brand.charcoal },
   selected: { bg: brand.dustyRoseSoft, border: brand.dustyRose, text: brand.dustyRose },
   available: { bg: "rgba(16,185,129,0.12)", border: "#34D399", text: "#065F46" },
+  cancelled: { bg: "rgba(239, 68, 68, 0.12)", border: "#F87171", text: "#991B1B" },
 };

@@ -23,6 +23,7 @@ import { brand } from "../../theme/brand";
  *  - "select-multi" - mentor picks availability slots
  *  - "select-one"   - mentee picks one proposed slot
  */
+
 export default function WeekCalendar({
   weekStart,
   onWeekChange,

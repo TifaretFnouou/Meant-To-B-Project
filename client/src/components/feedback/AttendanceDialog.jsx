@@ -25,22 +25,22 @@ export default function AttendanceDialog({ open, meeting, onClose }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>אישור הגעה לפגישה</DialogTitle>
+      <DialogTitle>Confirm attendance for the meeting</DialogTitle>
       <DialogContent>
         <Typography variant="body1">
-          האם הפגישה שהייתה מתוכננת ל-
+          Did the meeting scheduled for
           {meeting.matchedSlot
             ? new Date(meeting.matchedSlot).toLocaleString("he-IL")
             : "-"}{" "}
-          התקיימה?
+          happen?
         </Typography>
       </DialogContent>
       <DialogActions>
         <Button color="error" onClick={() => handleAnswer(false)}>
-          לא
+          No
         </Button>
         <Button variant="contained" onClick={() => handleAnswer(true)}>
-          כן
+          Yes
         </Button>
       </DialogActions>
     </Dialog>

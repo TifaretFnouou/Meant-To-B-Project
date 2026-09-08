@@ -659,16 +659,34 @@ export async function submitFeedback(meetingId, userId, { rating, comments }) {
     );
   }
 
-  const menteeDone = Boolean(meeting.menteeFeedback?.isFilled);
-  const mentorDone = Boolean(meeting.mentorFeedback?.isFilled);
-  if (menteeDone && mentorDone) {
-    meeting.status = "FEEDBACK_FILLED";
-  } else {
-    meeting.status = "COMPLETED";
-  }
+const menteeDone = Boolean(meeting.menteeFeedback?.isFilled);
+const mentorDone = Boolean(meeting.mentorFeedback?.isFilled);
 
-  await meeting.save();
-  return meeting;
+// we need to capture the status before it's updated, to know if this is the first time
+// the meeting is "completed" (and then we count it), or if it has already been counted before
+// (e.g. when the other side fills feedback and transitions from COMPLETED -> FEEDBACK_FILLED).
+const previousStatus = meeting.status;
+const isFirstCompletion = !["COMPLETED", "FEEDBACK_FILLED"].includes(previousStatus);
+
+if (menteeDone && mentorDone) {
+  meeting.status = "FEEDBACK_FILLED";
+} else {
+  meeting.status = "COMPLETED";
+}
+
+await meeting.save();
+
+// count the meeting once only, only if it's actually "completed" for the first time
+if (isFirstCompletion) {
+  await UserModel.findByIdAndUpdate(meeting.mentorId, {
+    $inc: { "mentorProfile.completedMeetings": 1 },
+  });
+  await UserModel.findByIdAndUpdate(meeting.menteeId, {
+    $inc: { "menteeProfile.completedMeetings": 1 },
+  });
+}
+
+return meeting;
 }
 
 export async function getMessages(meetingId) {
@@ -704,13 +722,13 @@ export async function addMessage(meetingId, userId, text) {
   meeting.messages.push(newMessage);
   await meeting.save();
 
-  // זיהוי מי הצד השני שצריך לקבל את ההתראה
+  // recognize who the other side is that needs to receive the notification
   const isSenderMentor = String(meeting.mentorId) === String(userId);
   const recipientId = isSenderMentor ? meeting.menteeId : meeting.mentorId;
   const senderUser = await UserModel.findById(userId).select("firstName lastName");
   const senderName = senderUser ? `${senderUser.firstName || ""} ${senderUser.lastName || ""}`.trim() : "User";
 
-  // התראה + מייל לצד השני על הודעה חדשה בצ'אט
+  // notification + email to the other side about a new message in the chat
   if (recipientId) {
     const preview = text.trim().slice(0, 160);
     await createNotification({
